@@ -1,4 +1,9 @@
-"""Seed demo users, sites, and chargers. Idempotent — existing rows are left unchanged."""
+"""Seed demo users, sites, and chargers. Idempotent — existing rows are left unchanged.
+
+Demo users are sample profile rows for local data. They are not Supabase Auth
+accounts and cannot sign in. Real sign-in creates a users row whose id matches
+auth.users.id.
+"""
 
 from __future__ import annotations
 
@@ -43,9 +48,8 @@ def seed(db=None) -> dict[str, int]:
                 db.add(
                     User(
                         id=raw["id"],
-                        name=raw["name"],
+                        full_name=raw["name"],
                         email=raw["email"],
-                        password_hash=None,
                         role=raw["role"],
                         created_at=now,
                     )

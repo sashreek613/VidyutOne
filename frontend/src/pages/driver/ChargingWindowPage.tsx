@@ -3,12 +3,11 @@ import { useNavigate, useParams } from "react-router-dom";
 
 import { StatusBar } from "../../components/driver/StatusBar";
 import { ScreenState } from "../../components/common/ScreenState";
+import { useAuth } from "../../hooks/useAuth";
 import { createBooking } from "../../services/api";
 import { useCharger } from "../../hooks/useApiData";
 import { formatInr } from "../../utils/format";
 import { getErrorMessage } from "../../utils/errors";
-
-const DEMO_USER_ID = "user-driver-demo";
 
 interface WindowOption {
   id: string;
@@ -49,6 +48,7 @@ const WINDOWS: WindowOption[] = [
 export function ChargingWindowPage() {
   const { chargerId } = useParams<{ chargerId: string }>();
   const navigate = useNavigate();
+  const { profile } = useAuth();
   const { data: charger, error, loading } = useCharger(chargerId);
   const [selectedId, setSelectedId] = useState("later");
   const [submitting, setSubmitting] = useState(false);
@@ -73,12 +73,15 @@ export function ChargingWindowPage() {
     if (!charger) {
       return;
     }
+    if (!profile) {
+      setSubmitError("You must be signed in to book a charger.");
+      return;
+    }
     setSubmitting(true);
     setSubmitError(null);
     try {
       const slot = new Date(Date.now() + selected.offsetMinutes * 60_000);
       const booking = await createBooking({
-        user_id: DEMO_USER_ID,
         charger_id: charger.id,
         slot_time: slot.toISOString(),
         price: selected.price,

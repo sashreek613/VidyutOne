@@ -13,7 +13,6 @@ class BookingStatus(str, Enum):
 
 
 class BookingCreate(BaseModel):
-    user_id: str
     charger_id: str
     slot_time: datetime
     price: float

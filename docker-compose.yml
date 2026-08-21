@@ -21,6 +21,9 @@ services:
       SECRET_KEY: dev-only-change-me
       CORS_ORIGINS: http://localhost:5173,http://127.0.0.1:5173
       DATA_DIR: /data
+      SUPABASE_URL: ${SUPABASE_URL:-}
+      SUPABASE_JWT_ISSUER: ${SUPABASE_JWT_ISSUER:-}
+      SUPABASE_JWKS_URL: ${SUPABASE_JWKS_URL:-}
     volumes:
       - ./backend/app:/app/app
       - ./data:/data

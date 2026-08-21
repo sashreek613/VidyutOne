@@ -7,21 +7,22 @@ from app.database.session import utcnow
 from app.models.booking import Booking
 from app.models.charger import Charger
 from app.models.user import User
+from app.schemas.auth import AuthUser
 from app.schemas.booking import BookingCreate, BookingRead, BookingStatus
 
 
-def create_booking(db: Session, payload: BookingCreate) -> BookingRead:
+def create_booking(db: Session, payload: BookingCreate, user_id: str) -> BookingRead:
     charger = db.get(Charger, payload.charger_id)
     if charger is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Charger not found")
 
-    user = db.get(User, payload.user_id)
+    user = db.get(User, user_id)
     if user is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
     booking = Booking(
         id=str(uuid4()),
-        user_id=payload.user_id,
+        user_id=user_id,
         charger_id=payload.charger_id,
         slot_time=payload.slot_time,
         price=payload.price,
@@ -34,8 +35,10 @@ def create_booking(db: Session, payload: BookingCreate) -> BookingRead:
     return BookingRead.model_validate(booking)
 
 
-def get_booking(db: Session, booking_id: str) -> BookingRead:
+def get_booking(db: Session, booking_id: str, current_user: AuthUser) -> BookingRead:
     booking = db.get(Booking, booking_id)
     if booking is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Booking not found")
+    if booking.user_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
     return BookingRead.model_validate(booking)

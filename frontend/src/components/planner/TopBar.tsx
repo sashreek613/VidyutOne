@@ -1,4 +1,8 @@
 import { Search } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+
+import { useAuth } from "../../hooks/useAuth";
+import { initialsFromName } from "../../utils/format";
 
 interface TopBarProps {
   title: string;
@@ -6,6 +10,15 @@ interface TopBarProps {
 }
 
 export function TopBar({ title, contextLabel = "Bengaluru Urban" }: TopBarProps) {
+  const navigate = useNavigate();
+  const { profile, signOut } = useAuth();
+  const initials = initialsFromName(profile?.full_name ?? "Planner");
+
+  async function handleSignOut() {
+    await signOut();
+    navigate("/", { replace: true });
+  }
+
   return (
     <header className="flex h-[64px] items-center justify-between border-b border-vo-line px-6">
       <div className="flex items-center gap-3">
@@ -21,8 +34,15 @@ export function TopBar({ title, contextLabel = "Bengaluru Urban" }: TopBarProps)
           />
         </label>
         <span className="rounded-full border border-vo-border px-3 py-1.5 text-[12px] text-vo-soft">FY 26-27</span>
+        <button
+          type="button"
+          onClick={() => void handleSignOut()}
+          className="rounded-full border border-vo-border px-3 py-1.5 text-[12px] text-vo-soft hover:border-white/20 hover:text-white"
+        >
+          Logout
+        </button>
         <span className="flex h-8 w-8 items-center justify-center rounded-full bg-vo-accent text-[11px] font-semibold text-[#06231b]">
-          AR
+          {initials}
         </span>
       </div>
     </header>

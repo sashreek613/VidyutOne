@@ -1,5 +1,6 @@
 import { ArrowUpRight } from "lucide-react";
 import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 import { BatteryCard } from "../../components/driver/BatteryCard";
 import { ChargerCard } from "../../components/driver/ChargerCard";
@@ -7,10 +8,13 @@ import { DriverMap } from "../../components/driver/DriverMap";
 import { StatusBar } from "../../components/driver/StatusBar";
 import { ScreenState } from "../../components/common/ScreenState";
 import { useChargers } from "../../hooks/useApiData";
-import { greetingForHour } from "../../utils/format";
+import { useAuth } from "../../hooks/useAuth";
+import { firstNameFromFullName, greetingForHour, initialsFromName } from "../../utils/format";
 import { centroid, haversineKm } from "../../utils/geo";
 
 export function DriverHomePage() {
+  const navigate = useNavigate();
+  const { profile, signOut } = useAuth();
   const { data: chargers, error, loading } = useChargers();
   const [query, setQuery] = useState("");
   const hour = new Date().getHours();
@@ -35,11 +39,22 @@ export function DriverHomePage() {
       <div className="px-5 pt-4">
         <p className="text-[11px] tracking-[0.2em] text-driver-muted">BENGALURU</p>
         <div className="mt-1 flex items-center justify-between">
-          <h1 className="text-[28px] font-semibold tracking-tight">{greetingForHour(hour)}, Nikhil</h1>
+          <h1 className="text-[28px] font-semibold tracking-tight">
+            {greetingForHour(hour)}, {firstNameFromFullName(profile?.full_name ?? "there")}
+          </h1>
           <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#111417] text-[12px] font-semibold text-white">
-            NK
+            {initialsFromName(profile?.full_name ?? "Driver")}
           </span>
         </div>
+        <button
+          type="button"
+          onClick={() => {
+            void signOut().then(() => navigate("/", { replace: true }));
+          }}
+          className="mt-1 text-[12px] text-driver-muted"
+        >
+          Logout
+        </button>
         <div className="mt-4">
           <BatteryCard percent={42} rangeKm={86} />
         </div>
