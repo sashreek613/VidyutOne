@@ -15,6 +15,14 @@ export interface User {
   role: UserRole;
 }
 
+export interface Profile {
+  id: string;
+  full_name: string;
+  email: string;
+  role: UserRole;
+  created_at: string;
+}
+
 export interface Site {
   id: string;
   name: string;
@@ -51,7 +59,6 @@ export interface Booking {
 }
 
 export interface BookingCreate {
-  user_id: string;
   charger_id: string;
   slot_time: string;
   price: number;

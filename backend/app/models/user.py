@@ -2,22 +2,29 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import DateTime, String
+from sqlalchemy import CheckConstraint, DateTime, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database.session import Base, utcnow
 
-ROLE_PLANNER = "PLANNER"
-ROLE_DRIVER = "DRIVER"
+ROLE_PLANNER = "planner"
+ROLE_DRIVER = "driver"
+VALID_ROLES = frozenset({ROLE_PLANNER, ROLE_DRIVER})
 
 
 class User(Base):
+    """Application profile. Authentication itself is handled by Supabase Auth.
+
+    `id` matches `auth.users.id` (UUID string) for registered accounts.
+    Demo seed rows keep their original string ids and are not login accounts.
+    """
+
     __tablename__ = "users"
+    __table_args__ = (CheckConstraint("role IN ('planner', 'driver')", name="ck_users_role"),)
 
     id: Mapped[str] = mapped_column(String(64), primary_key=True)
-    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    full_name: Mapped[str] = mapped_column(String(255), nullable=False)
     email: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
-    password_hash: Mapped[str | None] = mapped_column(String(255), nullable=True)
     role: Mapped[str] = mapped_column(String(32), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=utcnow)
 

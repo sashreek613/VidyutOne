@@ -1,6 +1,7 @@
 import axios from "axios";
 
-import type { Booking, BookingCreate, Charger, HealthStatus, Site } from "../types";
+import { supabase } from "../lib/supabase";
+import type { Booking, BookingCreate, Charger, HealthStatus, Profile, Site } from "../types";
 
 const baseURL = import.meta.env.VITE_API_BASE_URL;
 
@@ -14,8 +15,26 @@ const client = axios.create({
   timeout: 10_000,
 });
 
+client.interceptors.request.use(async (config) => {
+  if (supabase) {
+    const { data } = await supabase.auth.getSession();
+    const token = data.session?.access_token;
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+  }
+  return config;
+});
+
 export async function getHealth(): Promise<HealthStatus> {
   const { data } = await client.get<HealthStatus>("/api/health");
+  return data;
+}
+
+export async function getMe(accessToken?: string): Promise<Profile> {
+  const { data } = await client.get<Profile>("/api/me", {
+    headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
+  });
   return data;
 }
 
