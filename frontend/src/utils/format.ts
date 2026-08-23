@@ -2,6 +2,10 @@ export function formatInr(value: number): string {
   return `₹${value.toLocaleString("en-IN", { maximumFractionDigits: 2 })}`;
 }
 
+export function formatKwh(value: number): string {
+  return `${value.toLocaleString("en-IN", { maximumFractionDigits: 1 })} kWh`;
+}
+
 export function formatKm(km: number): string {
   return `${km.toFixed(1)} km`;
 }

@@ -18,6 +18,7 @@ import { BookingPage } from "./pages/driver/BookingPage";
 import { ChargerDetailsPage } from "./pages/driver/ChargerDetailsPage";
 import { ChargingWindowPage } from "./pages/driver/ChargingWindowPage";
 import { DriverHomePage } from "./pages/driver/DriverHomePage";
+import { DriverSavingsPage } from "./pages/driver/DriverSavingsPage";
 import { PlannerBuildPlanPage } from "./pages/planner/PlannerBuildPlanPage";
 import { PlannerDashboardPage } from "./pages/planner/PlannerDashboardPage";
 import { PlannerExplorerPage } from "./pages/planner/PlannerExplorerPage";
@@ -107,6 +108,7 @@ function App() {
             }
           >
             <Route index element={<DriverHomePage />} />
+            <Route path="savings" element={<DriverSavingsPage />} />
             <Route path="charger/:chargerId" element={<ChargerDetailsPage />} />
             <Route path="charger/:chargerId/book" element={<ChargingWindowPage />} />
             <Route path="booking/:bookingId" element={<BookingPage />} />

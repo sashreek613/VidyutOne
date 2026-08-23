@@ -1,6 +1,6 @@
 import { ArrowUpRight, LogOut } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import { VehicleWidget } from "../../components/driver/VehicleWidget";
 import { VehicleModal } from "../../components/driver/VehicleModal";
@@ -121,6 +121,17 @@ export function DriverHomePage() {
           }}
           onUpdateBattery={handleUpdateBattery}
         />
+
+        <Link
+          to="/driver/savings"
+          className="block rounded-2xl border border-emerald-500/20 bg-gradient-to-r from-emerald-500/10 to-transparent p-4"
+        >
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-emerald-400">
+            Charging cost & savings
+          </p>
+          <p className="mt-1 text-[16px] font-bold text-white">See live tariffs, history, and off-peak savings</p>
+          <p className="mt-1 text-[12px] text-vo-muted">Powered by the existing pricing engine · your bookings only</p>
+        </Link>
 
         <label className="flex h-12 items-center gap-3 rounded-2xl border border-vo-line bg-vo-card px-4 shadow-inner">
           <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-emerald-400 text-black shrink-0">

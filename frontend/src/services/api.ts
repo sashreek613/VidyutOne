@@ -1,7 +1,20 @@
 import axios from "axios";
 
 import { supabase } from "../lib/supabase";
-import type { Booking, BookingCreate, Charger, HealthStatus, PricingTier, Profile, Site, Vehicle, VehicleCreate, VehicleUpdate } from "../types";
+import type {
+  Booking,
+  BookingCreate,
+  Charger,
+  ChargingQuote,
+  ChargingSummary,
+  HealthStatus,
+  PricingTier,
+  Profile,
+  Site,
+  Vehicle,
+  VehicleCreate,
+  VehicleUpdate,
+} from "../types";
 
 const baseURL = import.meta.env.VITE_API_BASE_URL;
 
@@ -59,7 +72,10 @@ export async function getCharger(id: string): Promise<Charger> {
 }
 
 export async function createBooking(payload: BookingCreate): Promise<Booking> {
-  const { data } = await client.post<Booking>("/api/bookings", payload);
+  const { data } = await client.post<Booking>("/api/bookings", {
+    charger_id: payload.charger_id,
+    slot_time: payload.slot_time,
+  });
   return data;
 }
 
@@ -90,6 +106,27 @@ export async function deleteVehicle(id: string): Promise<void> {
 export async function getSlotPrice(slotIso: string, basePrice: number = 120.0): Promise<PricingTier> {
   const { data } = await client.get<PricingTier>("/api/pricing/calculate", {
     params: { slot_time: slotIso, base_price: basePrice },
+  });
+  return data;
+}
+
+export async function getPricingSchedule(slots: string[], basePrice: number): Promise<PricingTier[]> {
+  const { data } = await client.post<{ schedule: PricingTier[] }>("/api/pricing/schedule", {
+    slots,
+    base_price: basePrice,
+  });
+  return data.schedule;
+}
+
+export async function getChargingSummary(): Promise<ChargingSummary> {
+  const { data } = await client.get<ChargingSummary>("/api/driver/charging-summary");
+  return data;
+}
+
+export async function getChargingQuote(chargerId: string, slots: string[]): Promise<ChargingQuote> {
+  const { data } = await client.post<ChargingQuote>("/api/driver/charging-quote", {
+    charger_id: chargerId,
+    slots,
   });
   return data;
 }
