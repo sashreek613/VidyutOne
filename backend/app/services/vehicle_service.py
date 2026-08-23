@@ -13,6 +13,13 @@ def list_user_vehicles(db: Session, user_id: str) -> list[Vehicle]:
     return list(db.scalars(stmt).all())
 
 
+def get_primary_vehicle(db: Session, user_id: str) -> Vehicle | None:
+    vehicles = list_user_vehicles(db, user_id)
+    if not vehicles:
+        return None
+    return next((item for item in vehicles if item.is_primary), vehicles[0])
+
+
 def get_vehicle_by_id(db: Session, vehicle_id: str, user_id: str) -> Vehicle | None:
     stmt = select(Vehicle).where(Vehicle.id == vehicle_id, Vehicle.user_id == user_id)
     return db.scalar(stmt)

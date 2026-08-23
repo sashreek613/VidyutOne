@@ -16,6 +16,12 @@ def test_health_remains_public() -> None:
     assert response.json()["status"] == "ok"
 
 
+def test_root_health_is_public() -> None:
+    response = client.get("/")
+    assert response.status_code == 200
+    assert response.json() == {"status": "ok", "service": "VidyutOne backend"}
+
+
 def test_me_without_jwt_is_401() -> None:
     response = client.get("/api/me")
     assert response.status_code == 401
@@ -59,6 +65,71 @@ def test_driver_cannot_call_planner_endpoint() -> None:
     try:
         response = client.get("/api/me/planner")
         assert response.status_code == 403
+    finally:
+        app.dependency_overrides.clear()
+
+
+def test_charging_summary_without_jwt_is_401() -> None:
+    response = client.get("/api/driver/charging-summary")
+    assert response.status_code == 401
+
+
+def test_charging_quote_without_jwt_is_401() -> None:
+    response = client.post(
+        "/api/driver/charging-quote",
+        json={
+            "charger_id": "chg-koramangala-01",
+            "slots": ["2026-08-20T23:00:00+00:00"],
+        },
+    )
+    assert response.status_code == 401
+
+
+def test_planner_cannot_read_driver_charging_summary() -> None:
+    planner = AuthUser(
+        id="user-planner-test",
+        email="planner@example.com",
+        full_name="Planner Test",
+        role=ROLE_PLANNER,
+    )
+    app.dependency_overrides[get_current_user] = lambda: planner
+    try:
+        response = client.get("/api/driver/charging-summary")
+        assert response.status_code == 403
+        history = client.get("/api/driver/charging-history")
+        assert history.status_code == 403
+        quote = client.post(
+            "/api/driver/charging-quote",
+            json={
+                "charger_id": "chg-koramangala-01",
+                "slots": ["2026-08-20T23:00:00+00:00"],
+            },
+        )
+        assert quote.status_code == 403
+    finally:
+        app.dependency_overrides.clear()
+
+
+def test_driver_charging_summary_returns_only_own_empty_history() -> None:
+    driver = AuthUser(
+        id="user-driver-charging-test-no-rows",
+        email="driver.charging@example.com",
+        full_name="Charging Test",
+        role=ROLE_DRIVER,
+    )
+    app.dependency_overrides[get_current_user] = lambda: driver
+    try:
+        response = client.get("/api/driver/charging-summary")
+        assert response.status_code == 200
+        body = response.json()
+        assert body["history"] == []
+        assert body["month"]["sessions"] == 0
+        assert body["last_session"] is None
+        assert body["insight"] is None
+        assert body["total_energy_kwh"] is None
+        history = client.get("/api/driver/charging-history")
+        assert history.status_code == 200
+        assert history.json() == []
     finally:
         app.dependency_overrides.clear()
 

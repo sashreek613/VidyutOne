@@ -1,4 +1,4 @@
-import { getChargers, getCharger, getSite, getSites, getBooking } from "../services/api";
+import { getChargers, getCharger, getChargingSummary, getSite, getSites, getBooking } from "../services/api";
 import { useAsync } from "./useAsync";
 
 export function useSites() {
@@ -34,4 +34,8 @@ export function useBooking(bookingId: string | undefined) {
     }
     return getBooking(bookingId);
   }, [bookingId]);
+}
+
+export function useChargingSummary() {
+  return useAsync(() => getChargingSummary(), []);
 }
