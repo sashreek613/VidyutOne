@@ -17,7 +17,10 @@ export interface AuthContextValue {
     email: string;
     password: string;
     role: UserRole;
+    organization?: string;
+    phoneNumber?: string;
   }) => Promise<{ needsVerification: boolean; profile: Profile | null }>;
+
   signOut: () => Promise<void>;
   requestPasswordReset: (email: string) => Promise<void>;
   updatePassword: (password: string) => Promise<void>;

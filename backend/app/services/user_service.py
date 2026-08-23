@@ -51,20 +51,22 @@ def get_or_create_profile(
             detail="An account with this email already exists.",
         )
 
-    role = _role_from_metadata(metadata)
-    if role is None:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="A valid application role is required. Sign up again as Planner or Driver.",
-        )
+    role = _role_from_metadata(metadata) or ROLE_DRIVER
+
+
+    org = metadata.get("organization") if isinstance(metadata, dict) and isinstance(metadata.get("organization"), str) else None
+    phone = metadata.get("phone_number") if isinstance(metadata, dict) and isinstance(metadata.get("phone_number"), str) else None
 
     user = User(
         id=user_id,
         full_name=_full_name_from_metadata(metadata, email),
         email=email,
         role=role if role in (ROLE_PLANNER, ROLE_DRIVER) else ROLE_DRIVER,
+        organization=org,
+        phone_number=phone,
         created_at=utcnow(),
     )
+
     db.add(user)
     try:
         db.commit()

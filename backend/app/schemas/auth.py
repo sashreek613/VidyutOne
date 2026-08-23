@@ -27,4 +27,7 @@ class ProfileRead(BaseModel):
     full_name: str
     email: str
     role: str
+    organization: str | None = None
+    phone_number: str | None = None
     created_at: datetime
+

@@ -93,9 +93,10 @@ export function LoginPage() {
             <Link to="/forgot-password" className="hover:text-white">
               Forgot password?
             </Link>
-            <Link to="/signup" className="hover:text-white">
+            <Link to="/get-started" className="hover:text-white">
               Create account
             </Link>
+
           </div>
         </AuthCard>
       </form>

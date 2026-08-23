@@ -4,18 +4,25 @@ import { GuestRoute, ProtectedRoute, RoleProtectedRoute } from "./components/aut
 import { AuthProvider } from "./context/AuthProvider";
 import { DriverLayout } from "./layouts/DriverLayout";
 import { PlannerLayout } from "./layouts/PlannerLayout";
+import { LandingPage } from "./pages/LandingPage";
 import { AuthCallbackPage } from "./pages/auth/AuthCallbackPage";
+import { DriverSignupPage } from "./pages/auth/DriverSignupPage";
 import { ForbiddenPage } from "./pages/auth/ForbiddenPage";
 import { ForgotPasswordPage } from "./pages/auth/ForgotPasswordPage";
 import { LoginPage } from "./pages/auth/LoginPage";
+import { PlannerSignupPage } from "./pages/auth/PlannerSignupPage";
 import { ResetPasswordPage } from "./pages/auth/ResetPasswordPage";
-import { SignupPage } from "./pages/auth/SignupPage";
+import { RoleSelectPage } from "./pages/auth/RoleSelectPage";
 import { VerifyEmailPage } from "./pages/auth/VerifyEmailPage";
 import { BookingPage } from "./pages/driver/BookingPage";
 import { ChargerDetailsPage } from "./pages/driver/ChargerDetailsPage";
 import { ChargingWindowPage } from "./pages/driver/ChargingWindowPage";
 import { DriverHomePage } from "./pages/driver/DriverHomePage";
+import { PlannerBuildPlanPage } from "./pages/planner/PlannerBuildPlanPage";
 import { PlannerDashboardPage } from "./pages/planner/PlannerDashboardPage";
+import { PlannerExplorerPage } from "./pages/planner/PlannerExplorerPage";
+import { PlannerGridPage } from "./pages/planner/PlannerGridPage";
+import { PlannerReportsPage } from "./pages/planner/PlannerReportsPage";
 import { PlannerSiteDetailsPage } from "./pages/planner/PlannerSiteDetailsPage";
 
 function App() {
@@ -23,20 +30,37 @@ function App() {
     <BrowserRouter>
       <AuthProvider>
         <Routes>
+          <Route path="/" element={<LandingPage />} />
           <Route
-            path="/"
+            path="/login"
             element={
               <GuestRoute>
                 <LoginPage />
               </GuestRoute>
             }
           />
-          <Route path="/login" element={<Navigate to="/" replace />} />
           <Route
-            path="/signup"
+            path="/get-started"
             element={
               <GuestRoute>
-                <SignupPage />
+                <RoleSelectPage />
+              </GuestRoute>
+            }
+          />
+          <Route path="/signup" element={<Navigate to="/get-started" replace />} />
+          <Route
+            path="/signup/planner"
+            element={
+              <GuestRoute>
+                <PlannerSignupPage />
+              </GuestRoute>
+            }
+          />
+          <Route
+            path="/signup/driver"
+            element={
+              <GuestRoute>
+                <DriverSignupPage />
               </GuestRoute>
             }
           />
@@ -68,6 +92,10 @@ function App() {
             }
           >
             <Route index element={<PlannerDashboardPage />} />
+            <Route path="explorer" element={<PlannerExplorerPage />} />
+            <Route path="grid" element={<PlannerGridPage />} />
+            <Route path="plan" element={<PlannerBuildPlanPage />} />
+            <Route path="reports" element={<PlannerReportsPage />} />
             <Route path="site/:siteId" element={<PlannerSiteDetailsPage />} />
           </Route>
           <Route
