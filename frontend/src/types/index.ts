@@ -64,7 +64,51 @@ export interface BookingCreate {
   price: number;
 }
 
-export interface HealthStatus {
-  status: string;
-  service: string;
+export interface Vehicle {
+  id: string;
+  user_id: string;
+  make: string;
+  model: string;
+  battery_capacity_kwh: number;
+  current_battery_pct: number;
+  efficiency_wh_km: number;
+  is_primary: boolean;
+  created_at: string;
+  updated_at: string;
 }
+
+export interface VehicleCreate {
+  make: string;
+  model: string;
+  battery_capacity_kwh: number;
+  current_battery_pct?: number;
+  efficiency_wh_km?: number;
+  is_primary?: boolean;
+}
+
+export interface VehicleUpdate {
+  make?: string;
+  model?: string;
+  battery_capacity_kwh?: number;
+  current_battery_pct?: number;
+  efficiency_wh_km?: number;
+  is_primary?: boolean;
+}
+
+export interface RangeEstimate {
+  battery_capacity_kwh: number;
+  current_battery_pct: number;
+  available_kwh: number;
+  efficiency_wh_km: number;
+  estimated_range_km: number;
+}
+
+export interface PricingTier {
+  slot_iso: string;
+  price: number;
+  is_peak: boolean;
+  is_off_peak: boolean;
+  savings_amount: number;
+  description: string;
+}
+

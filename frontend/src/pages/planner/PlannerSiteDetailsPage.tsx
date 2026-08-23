@@ -4,6 +4,7 @@ import { Bar, BarChart, ResponsiveContainer, XAxis } from "recharts";
 
 import { ScreenState } from "../../components/common/ScreenState";
 import { ChartCard } from "../../components/planner/ChartCard";
+import { ExplainableVerdictCard } from "../../components/planner/ExplainableVerdictCard";
 import { SiteMap } from "../../components/planner/SiteMap";
 import { SiteRecommendationPanel } from "../../components/planner/SiteRecommendationPanel";
 import { TopBar } from "../../components/planner/TopBar";
@@ -43,10 +44,11 @@ function SiteIntelligence({
 
   return (
     <div className="space-y-5 px-6 py-5">
-      <Link to="/planner" className="inline-flex items-center gap-2 text-[12px] text-vo-muted hover:text-white">
+      <Link to="/planner/explorer" className="inline-flex items-center gap-2 text-[12px] font-medium text-vo-muted hover:text-white transition-colors">
         <ArrowLeft size={14} />
-        Back to siting map
+        Back to candidate sites
       </Link>
+
 
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
@@ -65,9 +67,10 @@ function SiteIntelligence({
       </div>
 
       <div className="grid gap-4 xl:grid-cols-[0.9fr_1.1fr_0.95fr]">
+
         <div className="space-y-4">
-          <SiteRecommendationPanel value={site.recommendation} />
-          <ChartCard title="Why">
+          <ExplainableVerdictCard site={site} />
+          <ChartCard title="Site Headroom Breakdown">
             <ul className="space-y-2 text-[13px] leading-5 text-vo-soft">
               <li>Feeder spare capacity {insights.headroomKva} kVA at 19:00 peak.</li>
               <li>Nearest working charger in the demo set is {formatKm(insights.chargerGapKm)} on the gap score.</li>
@@ -75,6 +78,7 @@ function SiteIntelligence({
             </ul>
           </ChartCard>
         </div>
+
 
         <div className="space-y-4">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">

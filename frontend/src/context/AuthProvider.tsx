@@ -16,7 +16,7 @@ function isEmailVerified(user: User | null): boolean {
   if (!user) {
     return false;
   }
-  return Boolean(user.email_confirmed_at);
+  return Boolean(user.email_confirmed_at || (user as { confirmed_at?: string }).confirmed_at);
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -120,11 +120,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         storePendingEmail(email);
         const me = await applySession(data.session);
         if (!me) {
+          if (data.user && isEmailVerified(data.user)) {
+            throw new Error("Could not load your user profile from the backend API. Please check that the API server is running.");
+          }
           throw new Error("Please verify your email before signing in.");
         }
         return me;
       },
-      signUp: async ({ fullName, email, password, role }) => {
+
+      signUp: async ({ fullName, email, password, role, organization, phoneNumber }) => {
         if (!supabase) {
           throw new Error("Supabase configuration error. Set VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY.");
         }
@@ -135,10 +139,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           email,
           password,
           options: {
-            data: { full_name: fullName, role },
+            data: { full_name: fullName, role, organization, phone_number: phoneNumber },
             emailRedirectTo: getAuthCallbackUrl(),
           },
         });
+
         if (error) {
           logAuthError("signup-error", error);
           throw new Error(mapAuthError(error));
@@ -204,6 +209,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!supabase) {
           throw new Error("Supabase configuration error. Set VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY.");
         }
+        const { data } = await supabase.auth.getSession();
+        if (data.session?.user && isEmailVerified(data.session.user)) {
+          throw new Error("Your email is already verified. You can sign in now.");
+        }
         const { error } = await supabase.auth.resend({
           type: "signup",
           email,
@@ -214,6 +223,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           throw new Error(mapAuthError(error));
         }
       },
+
       refreshProfile: async () => {
         if (!supabase) {
           await applySession(null);

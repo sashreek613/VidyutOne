@@ -112,11 +112,12 @@ export function AuthCallbackPage() {
             </>
           ) : (
             <Link
-              to={profile ? homeForRole(profile.role) : "/?verified=1"}
+              to={profile ? homeForRole(profile.role) : "/login?verified=1"}
               className="flex h-12 items-center justify-center rounded-xl bg-vo-accent text-[14px] font-semibold text-[#06231b]"
             >
               Continue
             </Link>
+
           )}
         </div>
       </AuthCard>

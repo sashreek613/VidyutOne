@@ -1,7 +1,7 @@
 import axios from "axios";
 
 import { supabase } from "../lib/supabase";
-import type { Booking, BookingCreate, Charger, HealthStatus, Profile, Site } from "../types";
+import type { Booking, BookingCreate, Charger, HealthStatus, PricingTier, Profile, Site, Vehicle, VehicleCreate, VehicleUpdate } from "../types";
 
 const baseURL = import.meta.env.VITE_API_BASE_URL;
 
@@ -67,3 +67,30 @@ export async function getBooking(id: string): Promise<Booking> {
   const { data } = await client.get<Booking>(`/api/bookings/${id}`);
   return data;
 }
+
+export async function getVehicles(): Promise<Vehicle[]> {
+  const { data } = await client.get<Vehicle[]>("/api/vehicles");
+  return data;
+}
+
+export async function createVehicle(payload: VehicleCreate): Promise<Vehicle> {
+  const { data } = await client.post<Vehicle>("/api/vehicles", payload);
+  return data;
+}
+
+export async function updateVehicle(id: string, payload: VehicleUpdate): Promise<Vehicle> {
+  const { data } = await client.patch<Vehicle>(`/api/vehicles/${id}`, payload);
+  return data;
+}
+
+export async function deleteVehicle(id: string): Promise<void> {
+  await client.delete(`/api/vehicles/${id}`);
+}
+
+export async function getSlotPrice(slotIso: string, basePrice: number = 120.0): Promise<PricingTier> {
+  const { data } = await client.get<PricingTier>("/api/pricing/calculate", {
+    params: { slot_time: slotIso, base_price: basePrice },
+  });
+  return data;
+}
+

@@ -6,11 +6,32 @@ import { useAuth } from "../../hooks/useAuth";
 import { mapAuthError, readPendingEmail } from "../../lib/authErrors";
 
 export function VerifyEmailPage() {
-  const { resendVerification, user } = useAuth();
+  const { resendVerification, user, emailVerified, profile } = useAuth();
   const email = user?.email ?? readPendingEmail() ?? "";
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
+
+  if (emailVerified) {
+    return (
+      <AuthShell>
+        <AuthCard>
+          <h2 className="text-[28px] font-semibold text-white">Email Verified</h2>
+          <p className="mt-3 text-[14px] leading-6 text-vo-accent">
+            Your email is confirmed and verified. You can now access VidyutOne.
+          </p>
+          <div className="mt-6 flex flex-col gap-3">
+            <Link
+              to={profile ? `/` : "/login?verified=1"}
+              className="flex h-12 items-center justify-center rounded-xl bg-vo-accent text-[14px] font-semibold text-[#06231b]"
+            >
+              {profile ? "Go to Dashboard" : "Sign in now"}
+            </Link>
+          </div>
+        </AuthCard>
+      </AuthShell>
+    );
+  }
 
   async function handleResend(event: FormEvent) {
     event.preventDefault();
@@ -47,7 +68,7 @@ export function VerifyEmailPage() {
           <AuthSubmit disabled={submitting || !email}>{submitting ? "Sending…" : "Resend verification email"}</AuthSubmit>
         </form>
         <p className="mt-4 text-center text-[12px] text-vo-muted">
-          <Link to="/" className="text-white hover:underline">
+          <Link to="/login" className="text-white hover:underline">
             Back to sign in
           </Link>
         </p>
@@ -55,3 +76,4 @@ export function VerifyEmailPage() {
     </AuthShell>
   );
 }
+
