@@ -9,3 +9,4 @@ test.db
 backend/test.db
 data/development.db
 .DS_Store
+*.log

@@ -60,8 +60,13 @@ export function DriverSavingsPage() {
   }, []);
 
   useEffect(() => {
-    const charger = chargersQuery.data?.[0];
-    if (!charger || vehicles === null) {
+    // Deliberately the first BOOKABLE charger, not just data[0] -- a REAL
+    // (OpenChargeMap) charger has no meaningful price_per_kwh to quote
+    // against (see charger_service.py's provenance split), and picking one
+    // here would either crash on a null price or fabricate a number this
+    // app has no basis for.
+    const charger = chargersQuery.data?.find((item) => item.bookable !== false && item.price_per_kwh !== null);
+    if (!charger || vehicles === null || charger.price_per_kwh === null) {
       return;
     }
     const now = new Date();

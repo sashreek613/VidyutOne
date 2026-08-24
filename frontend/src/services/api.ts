@@ -8,10 +8,12 @@ import type {
   ChargingQuote,
   ChargingSummary,
   ClassifiedSite,
+  DrivingProfile,
   HealthStatus,
   LocationSuggestion,
   PricingTier,
   Profile,
+  RangeEstimate,
   RecommendedSite,
   Site,
   Vehicle,
@@ -106,6 +108,16 @@ export async function getCharger(id: string): Promise<Charger> {
   return data;
 }
 
+/** Explicit, user-triggered live OpenChargeMap call for the given area --
+ * never call this automatically (on page load, battery-% change, etc.).
+ * See DriverHomePage.tsx's "Refresh nearby chargers" control. */
+export async function refreshNearbyChargers(lat: number, lon: number, radiusKm: number = 10): Promise<Charger[]> {
+  const { data } = await client.post<Charger[]>("/api/chargers/refresh", null, {
+    params: { lat, lon, radius_km: radiusKm },
+  });
+  return data;
+}
+
 export async function createBooking(payload: BookingCreate): Promise<Booking> {
   const { data } = await client.post<Booking>("/api/bookings", {
     charger_id: payload.charger_id,
@@ -136,6 +148,28 @@ export async function updateVehicle(id: string, payload: VehicleUpdate): Promise
 
 export async function deleteVehicle(id: string): Promise<void> {
   await client.delete(`/api/vehicles/${id}`);
+}
+
+export interface RangeQueryParams {
+  /** Driver's current location (not the vehicle's -- vehicles have no
+   * stored location), used server-side only to look up ambient
+   * temperature. Omit either one to skip the temperature adjustment. */
+  lat?: number;
+  lon?: number;
+  climateControl?: boolean;
+  drivingProfile?: DrivingProfile;
+}
+
+export async function getVehicleRange(id: string, params: RangeQueryParams = {}): Promise<RangeEstimate> {
+  const { data } = await client.get<RangeEstimate>(`/api/vehicles/${id}/range`, {
+    params: {
+      lat: params.lat,
+      lon: params.lon,
+      climate_control: params.climateControl,
+      driving_profile: params.drivingProfile,
+    },
+  });
+  return data;
 }
 
 export async function getSlotPrice(slotIso: string, basePrice: number = 120.0): Promise<PricingTier> {

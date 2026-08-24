@@ -178,12 +178,16 @@ export function ChargingWindowPage() {
       : null;
 
   const chargeMinutes =
-    charger && energyKwh != null && charger.power_kw > 0
+    charger && energyKwh != null && charger.power_kw !== null && charger.power_kw > 0
       ? Math.max(1, Math.round((energyKwh / charger.power_kw) * 60))
       : null;
 
   async function confirm() {
     if (!charger) {
+      return;
+    }
+    if (charger.bookable === false) {
+      setSubmitError("This station is info-only -- booking isn't available for it yet.");
       return;
     }
     if (!profile) {
@@ -228,6 +232,13 @@ export function ChargingWindowPage() {
               — {charger.name.replace(" (demo)", "").toUpperCase()}
             </p>
             <h1 className="mt-2 text-[28px] leading-tight font-semibold">Pick a charging window</h1>
+
+            {charger.bookable === false ? (
+              <div className="mt-3 rounded-2xl border border-[#c7d2fe] bg-[#eef2ff] px-4 py-3 text-[13px] text-[#4338ca]">
+                This is a real (OpenChargeMap) station -- info only, booking isn't available for it yet.
+              </div>
+            ) : null}
+
             <p className="mt-2 text-[13px] text-driver-muted">
               Live tariffs come from the VidyutOne pricing engine. Off-peak windows cost less because the feeder is
               under less load.
@@ -240,7 +251,7 @@ export function ChargingWindowPage() {
               </p>
             ) : (
               <p className="mt-3 text-[12px] text-driver-muted">
-                Energy uses a 30-minute session at {charger.power_kw} kW until you add a vehicle.
+                Energy uses a 30-minute session at {charger.power_kw !== null ? `${charger.power_kw} kW` : "an unknown power rating"} until you add a vehicle.
               </p>
             )}
 
