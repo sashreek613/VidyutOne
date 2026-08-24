@@ -97,16 +97,28 @@ export interface LocationSuggestion {
   kind: "candidate_site" | "locality";
 }
 
+export type ChargerProvenance = "DEMO" | "REAL";
+
 export interface Charger {
   id: string;
   name: string;
   latitude: number;
   longitude: number;
-  power_kw: number;
-  price_per_kwh: number;
-  availability: boolean;
+  // Nullable because REAL (OpenChargeMap) entries honestly don't always
+  // have these -- DEMO entries always populate every one. Not a rename;
+  // mirrors backend/app/schemas/charger.py's ChargerBase exactly.
+  power_kw: number | null;
+  price_per_kwh: number | null;
+  // Infrastructure-operational status for REAL chargers (OCM's StatusType),
+  // NOT live per-plug occupancy -- null means OCM had no status data.
+  // DEMO chargers keep the old true/false live-occupancy meaning.
+  availability: boolean | null;
   connector_type: string;
-  site_id: string;
+  site_id: string | null;
+  // Optional so any code still constructing a Charger against the old
+  // shape keeps compiling; the live API always sends both.
+  provenance?: ChargerProvenance;
+  bookable?: boolean;
 }
 
 export interface Booking {
@@ -136,6 +148,10 @@ export interface Vehicle {
   current_battery_pct: number;
   efficiency_wh_km: number;
   is_primary: boolean;
+  // Registration/purchase date (YYYY-MM-DD), null if unknown. Age is always
+  // derived fresh from this on every range calculation -- never re-typed.
+  // See backend/app/services/battery_health_service.py.
+  registration_date: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -147,6 +163,7 @@ export interface VehicleCreate {
   current_battery_pct?: number;
   efficiency_wh_km?: number;
   is_primary?: boolean;
+  registration_date?: string | null;
 }
 
 export interface VehicleUpdate {
@@ -156,6 +173,18 @@ export interface VehicleUpdate {
   current_battery_pct?: number;
   efficiency_wh_km?: number;
   is_primary?: boolean;
+  registration_date?: string | null;
+}
+
+export type DrivingProfile = "city" | "mixed" | "highway";
+
+// One multiplier in range_service.py's transparent adjustment chain --
+// same "show your work" pattern as ScoredFactor on the planner side.
+export interface RangeFactor {
+  key: string;
+  label: string;
+  multiplier: number;
+  detail: string;
 }
 
 export interface RangeEstimate {
@@ -164,6 +193,16 @@ export interface RangeEstimate {
   available_kwh: number;
   efficiency_wh_km: number;
   estimated_range_km: number;
+  // Reserve-adjusted figures -- see RESERVE_BATTERY_PCT in
+  // backend/app/services/range_service.py. buffered_range_km is the one to
+  // use for any "can I reach this charger" decision.
+  buffered_range_km: number;
+  reserve_pct: number;
+  // Temperature / climate control / driving profile / battery health by
+  // age adjustments -- always 4 entries, each defaulting to multiplier 1.0
+  // (no-op) when the caller doesn't opt into them / the vehicle has no
+  // registration_date on file.
+  factors: RangeFactor[];
 }
 
 export interface PricingTier {

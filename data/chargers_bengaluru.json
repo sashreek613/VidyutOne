@@ -8,6 +8,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "JIO BP Pulse (India)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -19,6 +21,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "Chargezone (India)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -30,6 +34,8 @@
     "power_kw": null,
     "connector_type": "CHAdeMO",
     "operator": "(Business Owner at Location)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -41,6 +47,8 @@
     "power_kw": 3.6,
     "connector_type": "Blue Commando (2P+E)",
     "operator": "(Business Owner at Location)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -52,6 +60,8 @@
     "power_kw": 30,
     "connector_type": "CCS (Type 2)",
     "operator": "Statiq (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -63,6 +73,8 @@
     "power_kw": 90,
     "connector_type": "CCS (Type 2)",
     "operator": "Chargezone (India)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -74,6 +86,8 @@
     "power_kw": 24,
     "connector_type": "CCS (Type 2)",
     "operator": "(Unknown Operator)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -85,6 +99,8 @@
     "power_kw": 3,
     "connector_type": "Type M",
     "operator": "(Unknown Operator)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -96,6 +112,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "Statiq (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -107,6 +125,8 @@
     "power_kw": 30,
     "connector_type": "CCS (Type 2)",
     "operator": "Tata Power",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -118,6 +138,8 @@
     "power_kw": 25,
     "connector_type": "CCS (Type 2)",
     "operator": "Bolt.Earth (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -129,6 +151,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "Statiq (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -140,6 +164,8 @@
     "power_kw": null,
     "connector_type": "CCS (Type 2)",
     "operator": "(Unknown Operator)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -151,6 +177,8 @@
     "power_kw": 7,
     "connector_type": "Type 2 (Tethered Connector) ",
     "operator": "Zeon Charging",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -162,6 +190,8 @@
     "power_kw": 30,
     "connector_type": "CCS (Type 2)",
     "operator": "Statiq (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -173,6 +203,8 @@
     "power_kw": 30,
     "connector_type": "CCS (Type 2)",
     "operator": "Statiq (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -184,6 +216,8 @@
     "power_kw": 30,
     "connector_type": "CCS (Type 2)",
     "operator": "Statiq (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -195,6 +229,8 @@
     "power_kw": 30,
     "connector_type": "CCS (Type 2)",
     "operator": "Statiq (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -206,6 +242,8 @@
     "power_kw": 30,
     "connector_type": "CCS (Type 2)",
     "operator": "Tata Power",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -217,6 +255,8 @@
     "power_kw": 7.4,
     "connector_type": "Type 2 (Tethered Connector) ",
     "operator": "Tata Power",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -228,6 +268,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "Chargezone (India)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -239,6 +281,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "Statiq (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -250,6 +294,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "Tata Power",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -261,6 +307,8 @@
     "power_kw": 30,
     "connector_type": "CCS (Type 2)",
     "operator": "Rebolt (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -272,6 +320,8 @@
     "power_kw": 7.4,
     "connector_type": "CCS (Type 2)",
     "operator": "Rebolt (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -283,6 +333,8 @@
     "power_kw": 30,
     "connector_type": "CCS (Type 2)",
     "operator": "Tata Power",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -294,6 +346,8 @@
     "power_kw": 3.3,
     "connector_type": "IEC 60309 3-pin",
     "operator": "Tata Power",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -305,6 +359,8 @@
     "power_kw": 30,
     "connector_type": "CCS (Type 2)",
     "operator": "Tata Power",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -316,6 +372,8 @@
     "power_kw": 7.4,
     "connector_type": "Type 2 (Tethered Connector) ",
     "operator": "Tata Power",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -327,6 +385,8 @@
     "power_kw": 22,
     "connector_type": "Type 2 (Tethered Connector) ",
     "operator": "Zeon Charging",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -338,6 +398,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "Statiq (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -349,6 +411,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "Statiq (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -360,6 +424,8 @@
     "power_kw": 3,
     "connector_type": "Unknown",
     "operator": "(Unknown Operator)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -371,6 +437,8 @@
     "power_kw": 24,
     "connector_type": "CCS (Type 2)",
     "operator": "Zeon Charging",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -382,6 +450,8 @@
     "power_kw": 22,
     "connector_type": "Type 2 (Tethered Connector) ",
     "operator": "Zeon Charging",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -393,6 +463,8 @@
     "power_kw": 24,
     "connector_type": "CCS (Type 2)",
     "operator": "Zeon Charging",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -404,6 +476,8 @@
     "power_kw": 22,
     "connector_type": "Type 2 (Tethered Connector) ",
     "operator": "Zeon Charging",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -415,6 +489,8 @@
     "power_kw": 3,
     "connector_type": "Unknown",
     "operator": "(Unknown Operator)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -426,6 +502,8 @@
     "power_kw": 2,
     "connector_type": "Unknown",
     "operator": "Unknown",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -437,6 +515,8 @@
     "power_kw": 25,
     "connector_type": "CCS (Type 2)",
     "operator": "Tata Power",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -448,6 +528,8 @@
     "power_kw": 25,
     "connector_type": "CHAdeMO",
     "operator": "Tata Power",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -459,6 +541,8 @@
     "power_kw": 3,
     "connector_type": "Unknown",
     "operator": "(Unknown Operator)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -470,6 +554,8 @@
     "power_kw": 22,
     "connector_type": "CCS (Type 2)",
     "operator": "Tata Power",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -481,6 +567,8 @@
     "power_kw": 3,
     "connector_type": "Unknown",
     "operator": "(Unknown Operator)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -492,6 +580,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "JIO BP Pulse (India)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -503,6 +593,8 @@
     "power_kw": 7.4,
     "connector_type": "Type 2 (Tethered Connector) ",
     "operator": "JIO BP Pulse (India)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -514,6 +606,8 @@
     "power_kw": 15,
     "connector_type": "CCS (Type 2)",
     "operator": "(Unknown Operator)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -525,6 +619,8 @@
     "power_kw": 30,
     "connector_type": "CCS (Type 2)",
     "operator": "Zeon Charging",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -536,6 +632,8 @@
     "power_kw": 22,
     "connector_type": "Type 2 (Tethered Connector) ",
     "operator": "Zeon Charging",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -547,6 +645,8 @@
     "power_kw": 22,
     "connector_type": "Type 2 (Tethered Connector) ",
     "operator": "Zeon Charging",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -558,6 +658,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "Statiq (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -569,6 +671,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "JIO BP Pulse (India)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -580,6 +684,8 @@
     "power_kw": 7.5,
     "connector_type": "Type 2 (Tethered Connector) ",
     "operator": "JIO BP Pulse (India)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -591,6 +697,8 @@
     "power_kw": 30,
     "connector_type": "CCS (Type 2)",
     "operator": "Chargezone (India)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -602,6 +710,8 @@
     "power_kw": 3,
     "connector_type": "Unknown",
     "operator": "(Unknown Operator)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -613,6 +723,8 @@
     "power_kw": 24,
     "connector_type": "CCS (Type 2)",
     "operator": "Zeon Charging",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -624,6 +736,8 @@
     "power_kw": 50,
     "connector_type": "CCS (Type 2)",
     "operator": "Zeon Charging",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -635,6 +749,8 @@
     "power_kw": 120,
     "connector_type": "CCS (Type 2)",
     "operator": "Shell Recharge (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -646,6 +762,8 @@
     "power_kw": 3.3,
     "connector_type": "IEC 60309 3-pin",
     "operator": "Shell Recharge (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -657,6 +775,8 @@
     "power_kw": 3.3,
     "connector_type": "IEC 60309 3-pin",
     "operator": "Shell Recharge (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -668,6 +788,8 @@
     "power_kw": 3.3,
     "connector_type": "IEC 60309 3-pin",
     "operator": "Shell Recharge (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -679,6 +801,8 @@
     "power_kw": 3,
     "connector_type": "Unknown",
     "operator": "(Unknown Operator)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -690,6 +814,8 @@
     "power_kw": 150,
     "connector_type": "CCS (Type 2)",
     "operator": "Chargezone (India)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -701,6 +827,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "Chargezone (India)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -712,6 +840,8 @@
     "power_kw": 30,
     "connector_type": "CCS (Type 2)",
     "operator": "Chargezone (India)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -723,6 +853,8 @@
     "power_kw": 25,
     "connector_type": "CCS (Type 2)",
     "operator": "Tata Power",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -734,6 +866,8 @@
     "power_kw": 25,
     "connector_type": "CHAdeMO",
     "operator": "Tata Power",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -745,6 +879,8 @@
     "power_kw": 30,
     "connector_type": "CCS (Type 2)",
     "operator": "Chargezone (India)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -756,6 +892,8 @@
     "power_kw": 120,
     "connector_type": "CCS (Type 2)",
     "operator": "Shell Recharge (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -767,6 +905,8 @@
     "power_kw": 3.3,
     "connector_type": "Unknown",
     "operator": "Shell Recharge (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -778,6 +918,8 @@
     "power_kw": 25,
     "connector_type": "CCS (Type 2)",
     "operator": "Chargezone (India)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -789,6 +931,8 @@
     "power_kw": 30,
     "connector_type": "CCS (Type 2)",
     "operator": "(Unknown Operator)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -800,6 +944,8 @@
     "power_kw": 120,
     "connector_type": "CCS (Type 2)",
     "operator": "Shell Recharge (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -811,6 +957,8 @@
     "power_kw": 3.3,
     "connector_type": "IEC 60309 3-pin",
     "operator": "Shell Recharge (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -822,6 +970,8 @@
     "power_kw": 3.3,
     "connector_type": "IEC 60309 3-pin",
     "operator": "Shell Recharge (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -833,6 +983,8 @@
     "power_kw": 25,
     "connector_type": "CCS (Type 2)",
     "operator": "(Unknown Operator)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -844,6 +996,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "Zeon Charging",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -855,6 +1009,8 @@
     "power_kw": 22,
     "connector_type": "Type 2 (Tethered Connector) ",
     "operator": "Zeon Charging",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -866,6 +1022,8 @@
     "power_kw": 30,
     "connector_type": "CCS (Type 2)",
     "operator": "Statiq (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -877,6 +1035,8 @@
     "power_kw": 120,
     "connector_type": "CCS (Type 2)",
     "operator": "Shell Recharge (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -888,6 +1048,8 @@
     "power_kw": 3.3,
     "connector_type": "IEC 60309 3-pin",
     "operator": "Shell Recharge (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -899,6 +1061,8 @@
     "power_kw": 3.3,
     "connector_type": "IEC 60309 3-pin",
     "operator": "Shell Recharge (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -910,6 +1074,8 @@
     "power_kw": 25,
     "connector_type": "CCS (Type 2)",
     "operator": "Tata Power",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -921,6 +1087,8 @@
     "power_kw": 25,
     "connector_type": "CHAdeMO",
     "operator": "Tata Power",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -932,6 +1100,8 @@
     "power_kw": 30,
     "connector_type": "CCS (Type 2)",
     "operator": "Tata Power",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -943,6 +1113,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "Chargezone (India)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -954,6 +1126,8 @@
     "power_kw": 25,
     "connector_type": "CCS (Type 2)",
     "operator": "(Unknown Operator)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -965,6 +1139,8 @@
     "power_kw": 3,
     "connector_type": "Unknown",
     "operator": "(Unknown Operator)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -976,6 +1152,8 @@
     "power_kw": 25,
     "connector_type": "CCS (Type 2)",
     "operator": "Tata Power",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -987,6 +1165,8 @@
     "power_kw": 7.2,
     "connector_type": "Type 2 (Tethered Connector) ",
     "operator": "Tata Power",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -998,6 +1178,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "JIO BP Pulse (India)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1009,6 +1191,8 @@
     "power_kw": 24,
     "connector_type": "CCS (Type 2)",
     "operator": "Tata Power",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1020,6 +1204,8 @@
     "power_kw": 50,
     "connector_type": "CCS (Type 2)",
     "operator": "(Unknown Operator)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1031,6 +1217,8 @@
     "power_kw": 150,
     "connector_type": "CCS (Type 2)",
     "operator": "Statiq (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1042,6 +1230,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "Statiq (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1053,6 +1243,8 @@
     "power_kw": 30,
     "connector_type": "CCS (Type 2)",
     "operator": "Statiq (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1064,6 +1256,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "JIO BP Pulse (India)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1075,6 +1269,8 @@
     "power_kw": 3.3,
     "connector_type": "IEC 60309 3-pin",
     "operator": "JIO BP Pulse (India)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1086,6 +1282,8 @@
     "power_kw": 30,
     "connector_type": "GB-T DC - GB/T 20234.3",
     "operator": "JIO BP Pulse (India)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1097,6 +1295,8 @@
     "power_kw": 7,
     "connector_type": "Type 2 (Tethered Connector) ",
     "operator": "JIO BP Pulse (India)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1108,6 +1308,8 @@
     "power_kw": 7.4,
     "connector_type": "Type 2 (Tethered Connector) ",
     "operator": "Statiq (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1119,6 +1321,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "Statiq (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1130,6 +1334,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "Statiq (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1141,6 +1347,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "Statiq (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1152,6 +1360,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "Statiq (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1163,6 +1373,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "Statiq (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1174,6 +1386,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "(Unknown Operator)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1185,6 +1399,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "(Unknown Operator)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1196,6 +1412,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "(Unknown Operator)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1207,6 +1425,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "(Unknown Operator)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1218,6 +1438,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "Statiq (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1229,6 +1451,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "JIO BP Pulse (India)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1240,6 +1464,8 @@
     "power_kw": 25,
     "connector_type": "CCS (Type 2)",
     "operator": "Tata Power",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1251,6 +1477,8 @@
     "power_kw": 25,
     "connector_type": "CHAdeMO",
     "operator": "Tata Power",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1262,6 +1490,8 @@
     "power_kw": 120,
     "connector_type": "CCS (Type 2)",
     "operator": "Shell Recharge (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1273,6 +1503,8 @@
     "power_kw": 3.3,
     "connector_type": "IEC 60309 3-pin",
     "operator": "Shell Recharge (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1284,6 +1516,8 @@
     "power_kw": 120,
     "connector_type": "CCS (Type 2)",
     "operator": "Shell Recharge (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1295,6 +1529,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "Statiq (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1306,6 +1542,8 @@
     "power_kw": 50,
     "connector_type": "CCS (Type 2)",
     "operator": "Statiq (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1317,6 +1555,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "JIO BP Pulse (India)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1328,6 +1568,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "Chargezone (India)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1339,6 +1581,8 @@
     "power_kw": 22,
     "connector_type": "Type 2 (Tethered Connector) ",
     "operator": "Zeon Charging",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1350,6 +1594,8 @@
     "power_kw": null,
     "connector_type": "Unknown",
     "operator": "(Unknown Operator)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1361,6 +1607,8 @@
     "power_kw": 120,
     "connector_type": "CCS (Type 2)",
     "operator": "Shell Recharge (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1372,6 +1620,8 @@
     "power_kw": 3.3,
     "connector_type": "IEC 60309 3-pin",
     "operator": "Shell Recharge (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1383,6 +1633,8 @@
     "power_kw": 90,
     "connector_type": "CCS (Type 2)",
     "operator": "Chargezone (India)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1394,6 +1646,8 @@
     "power_kw": 3.3,
     "connector_type": "Type 2 (Tethered Connector) ",
     "operator": "(Unknown Operator)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1405,6 +1659,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "(Unknown Operator)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1416,6 +1672,8 @@
     "power_kw": 30,
     "connector_type": "CCS (Type 2)",
     "operator": "Shell Recharge (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1427,6 +1685,8 @@
     "power_kw": 3.3,
     "connector_type": "IEC 60309 3-pin",
     "operator": "Shell Recharge (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1438,6 +1698,8 @@
     "power_kw": 3,
     "connector_type": "Unknown",
     "operator": "(Unknown Operator)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1449,6 +1711,8 @@
     "power_kw": 80,
     "connector_type": "CCS (Type 2)",
     "operator": "(Unknown Operator)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1460,6 +1724,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "Statiq (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1471,6 +1737,8 @@
     "power_kw": 80,
     "connector_type": "Unknown",
     "operator": "(Unknown Operator)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1482,6 +1750,8 @@
     "power_kw": 50,
     "connector_type": "CCS (Type 2)",
     "operator": "Zeon Charging",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1493,6 +1763,8 @@
     "power_kw": 50,
     "connector_type": "CCS (Type 2)",
     "operator": "Zeon Charging",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1504,6 +1776,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "Chargezone (India)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1515,6 +1789,8 @@
     "power_kw": 120,
     "connector_type": "CCS (Type 2)",
     "operator": "Shell Recharge (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1526,6 +1802,8 @@
     "power_kw": 3.3,
     "connector_type": "IEC 60309 3-pin",
     "operator": "Shell Recharge (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1537,6 +1815,8 @@
     "power_kw": 3.3,
     "connector_type": "IEC 60309 3-pin",
     "operator": "Shell Recharge (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1548,6 +1828,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "Statiq (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1559,6 +1841,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "Statiq (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1570,6 +1854,8 @@
     "power_kw": 7.4,
     "connector_type": "Type 2 (Tethered Connector) ",
     "operator": "Zeon Charging",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1581,6 +1867,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "Statiq (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1592,6 +1880,8 @@
     "power_kw": 7.4,
     "connector_type": "Type 2 (Tethered Connector) ",
     "operator": "Statiq (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1603,6 +1893,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "JIO BP Pulse (India)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1614,6 +1906,8 @@
     "power_kw": 3.3,
     "connector_type": "IEC 60309 3-pin",
     "operator": "JIO BP Pulse (India)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1625,6 +1919,8 @@
     "power_kw": 30,
     "connector_type": "GB-T DC - GB/T 20234.3",
     "operator": "JIO BP Pulse (India)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1636,6 +1932,8 @@
     "power_kw": 7,
     "connector_type": "Type 2 (Tethered Connector) ",
     "operator": "JIO BP Pulse (India)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1647,6 +1945,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "JIO BP Pulse (India)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1658,6 +1958,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "JIO BP Pulse (India)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1669,6 +1971,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "JIO BP Pulse (India)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1680,6 +1984,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "JIO BP Pulse (India)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1691,6 +1997,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "JIO BP Pulse (India)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1702,6 +2010,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "JIO BP Pulse (India)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1713,6 +2023,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "JIO BP Pulse (India)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1724,6 +2036,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "JIO BP Pulse (India)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1735,6 +2049,8 @@
     "power_kw": 3.3,
     "connector_type": "IEC 60309 3-pin",
     "operator": "JIO BP Pulse (India)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1746,6 +2062,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "JIO BP Pulse (India)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1757,6 +2075,8 @@
     "power_kw": 30,
     "connector_type": "CCS (Type 2)",
     "operator": "Shell Recharge (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1768,6 +2088,8 @@
     "power_kw": 25,
     "connector_type": "CCS (Type 2)",
     "operator": "Tata Power",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1779,6 +2101,8 @@
     "power_kw": 25,
     "connector_type": "CHAdeMO",
     "operator": "Tata Power",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1790,6 +2114,8 @@
     "power_kw": 120,
     "connector_type": "CCS (Type 2)",
     "operator": "Shell Recharge (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1801,6 +2127,8 @@
     "power_kw": 150,
     "connector_type": "CCS (Type 2)",
     "operator": "Tata Power",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1812,6 +2140,8 @@
     "power_kw": 120,
     "connector_type": "CCS (Type 2)",
     "operator": "Shell Recharge (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1823,6 +2153,8 @@
     "power_kw": 3.3,
     "connector_type": "IEC 60309 3-pin",
     "operator": "Shell Recharge (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1834,6 +2166,8 @@
     "power_kw": 3.3,
     "connector_type": "IEC 60309 3-pin",
     "operator": "Shell Recharge (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1845,6 +2179,8 @@
     "power_kw": 50,
     "connector_type": "CCS (Type 2)",
     "operator": "(Unknown Operator)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1856,6 +2192,8 @@
     "power_kw": 43,
     "connector_type": "Type 2 (Tethered Connector) ",
     "operator": "(Unknown Operator)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1867,6 +2205,8 @@
     "power_kw": 30,
     "connector_type": "CCS (Type 2)",
     "operator": "Chargezone (India)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1878,6 +2218,8 @@
     "power_kw": 150,
     "connector_type": "CCS (Type 2)",
     "operator": "Tata Power",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1889,6 +2231,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "(Unknown Operator)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1900,6 +2244,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "(Unknown Operator)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1911,6 +2257,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "Statiq (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1922,6 +2270,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "Statiq (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1933,6 +2283,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "Statiq (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1944,6 +2296,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "Statiq (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1955,6 +2309,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "Statiq (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1966,6 +2322,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "Statiq (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1977,6 +2335,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "Statiq (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1988,6 +2348,8 @@
     "power_kw": 30,
     "connector_type": "CCS (Type 2)",
     "operator": "Statiq (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -1999,6 +2361,8 @@
     "power_kw": 30,
     "connector_type": "CCS (Type 2)",
     "operator": "Statiq (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2010,6 +2374,8 @@
     "power_kw": 30,
     "connector_type": "CCS (Type 2)",
     "operator": "Statiq (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2021,6 +2387,8 @@
     "power_kw": 7.2,
     "connector_type": "Type 2 (Tethered Connector) ",
     "operator": "Zeon Charging",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2032,6 +2400,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "JIO BP Pulse (India)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2043,6 +2413,8 @@
     "power_kw": 120,
     "connector_type": "CCS (Type 2)",
     "operator": "Shell Recharge (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2054,6 +2426,8 @@
     "power_kw": 120,
     "connector_type": "CCS (Type 2)",
     "operator": "Shell Recharge (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2065,6 +2439,8 @@
     "power_kw": 3.3,
     "connector_type": "IEC 60309 3-pin",
     "operator": "Shell Recharge (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2076,6 +2452,8 @@
     "power_kw": 50,
     "connector_type": "CCS (Type 2)",
     "operator": "Statiq (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2087,6 +2465,8 @@
     "power_kw": 50,
     "connector_type": "CHAdeMO",
     "operator": "Statiq (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2098,6 +2478,8 @@
     "power_kw": 25,
     "connector_type": "CCS (Type 2)",
     "operator": "Tata Power",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2109,6 +2491,8 @@
     "power_kw": 25,
     "connector_type": "CHAdeMO",
     "operator": "Tata Power",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2120,6 +2504,8 @@
     "power_kw": 25,
     "connector_type": "CCS (Type 2)",
     "operator": "Tata Power",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2131,6 +2517,8 @@
     "power_kw": 25,
     "connector_type": "CHAdeMO",
     "operator": "Tata Power",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2142,6 +2530,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "(Unknown Operator)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2153,6 +2543,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "JIO BP Pulse (India)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2164,6 +2556,8 @@
     "power_kw": 7.4,
     "connector_type": "Type 2 (Tethered Connector) ",
     "operator": "(Unknown Operator)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2175,6 +2569,8 @@
     "power_kw": 120,
     "connector_type": "CCS (Type 2)",
     "operator": "Shell Recharge (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2186,6 +2582,8 @@
     "power_kw": 75,
     "connector_type": "CCS (Type 2)",
     "operator": "Zeon Charging",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2197,6 +2595,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "Statiq (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2208,6 +2608,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "JIO BP Pulse (India)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2219,6 +2621,8 @@
     "power_kw": 7.5,
     "connector_type": "Type 2 (Tethered Connector) ",
     "operator": "JIO BP Pulse (India)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2230,6 +2634,8 @@
     "power_kw": 3.3,
     "connector_type": "IEC 60309 3-pin",
     "operator": "JIO BP Pulse (India)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2241,6 +2647,8 @@
     "power_kw": 30,
     "connector_type": "GB-T DC - GB/T 20234.3",
     "operator": "JIO BP Pulse (India)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2252,6 +2660,8 @@
     "power_kw": 30,
     "connector_type": "CCS (Type 2)",
     "operator": "Chargezone (India)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2263,6 +2673,8 @@
     "power_kw": 120,
     "connector_type": "CCS (Type 2)",
     "operator": "Shell Recharge (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2274,6 +2686,8 @@
     "power_kw": 3.3,
     "connector_type": "IEC 60309 3-pin",
     "operator": "Shell Recharge (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2285,6 +2699,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "JIO BP Pulse (India)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2296,6 +2712,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "Statiq (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2307,6 +2725,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "Statiq (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2318,6 +2738,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "Statiq (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2329,6 +2751,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "Statiq (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2340,6 +2764,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "Statiq (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2351,6 +2777,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "Statiq (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2362,6 +2790,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "Statiq (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2373,6 +2803,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "JIO BP Pulse (India)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2384,6 +2816,8 @@
     "power_kw": 3.3,
     "connector_type": "IEC 60309 3-pin",
     "operator": "JIO BP Pulse (India)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2395,6 +2829,8 @@
     "power_kw": 30,
     "connector_type": "GB-T DC - GB/T 20234.3",
     "operator": "JIO BP Pulse (India)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2406,6 +2842,8 @@
     "power_kw": 24,
     "connector_type": "CCS (Type 2)",
     "operator": "Zeon Charging",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2417,6 +2855,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "JIO BP Pulse (India)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2428,6 +2868,8 @@
     "power_kw": 3.3,
     "connector_type": "IEC 60309 3-pin",
     "operator": "JIO BP Pulse (India)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2439,6 +2881,8 @@
     "power_kw": 30,
     "connector_type": "GB-T DC - GB/T 20234.3",
     "operator": "JIO BP Pulse (India)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2450,6 +2894,8 @@
     "power_kw": 30,
     "connector_type": "CCS (Type 2)",
     "operator": "Chargezone (India)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2461,6 +2907,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "Statiq (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2472,6 +2920,8 @@
     "power_kw": 30,
     "connector_type": "CCS (Type 2)",
     "operator": "Shell Recharge (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2483,6 +2933,8 @@
     "power_kw": 3.3,
     "connector_type": "IEC 60309 3-pin",
     "operator": "Shell Recharge (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2494,6 +2946,8 @@
     "power_kw": 3.3,
     "connector_type": "IEC 60309 3-pin",
     "operator": "Shell Recharge (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2505,6 +2959,8 @@
     "power_kw": 30,
     "connector_type": "CCS (Type 2)",
     "operator": "Statiq (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2516,6 +2972,8 @@
     "power_kw": 25,
     "connector_type": "CCS (Type 2)",
     "operator": "(Unknown Operator)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2527,6 +2985,8 @@
     "power_kw": 3,
     "connector_type": "Unknown",
     "operator": "(Unknown Operator)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2538,6 +2998,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "JIO BP Pulse (India)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2549,6 +3011,8 @@
     "power_kw": 3.3,
     "connector_type": "IEC 60309 3-pin",
     "operator": "JIO BP Pulse (India)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2560,6 +3024,8 @@
     "power_kw": 30,
     "connector_type": "GB-T DC - GB/T 20234.3",
     "operator": "JIO BP Pulse (India)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2571,6 +3037,8 @@
     "power_kw": 7.5,
     "connector_type": "Type 2 (Tethered Connector) ",
     "operator": "JIO BP Pulse (India)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2582,6 +3050,8 @@
     "power_kw": 7,
     "connector_type": "Type 2 (Tethered Connector) ",
     "operator": "JIO BP Pulse (India)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2593,6 +3063,8 @@
     "power_kw": 30,
     "connector_type": "CCS (Type 2)",
     "operator": "Tata Power",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2604,6 +3076,8 @@
     "power_kw": 7.4,
     "connector_type": "Type 2 (Tethered Connector) ",
     "operator": "Tata Power",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2615,6 +3089,8 @@
     "power_kw": 3,
     "connector_type": "Unknown",
     "operator": "(Unknown Operator)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2626,6 +3102,8 @@
     "power_kw": 30,
     "connector_type": "CCS (Type 2)",
     "operator": "Tata Power",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2637,6 +3115,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "Statiq (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2648,6 +3128,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "Statiq (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2659,6 +3141,8 @@
     "power_kw": 50,
     "connector_type": "CCS (Type 2)",
     "operator": "Tata Power",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2670,6 +3154,8 @@
     "power_kw": 50,
     "connector_type": "CHAdeMO",
     "operator": "Tata Power",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2681,6 +3167,8 @@
     "power_kw": 22,
     "connector_type": "Type 2 (Tethered Connector) ",
     "operator": "Tata Power",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2692,6 +3180,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "JIO BP Pulse (India)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2703,6 +3193,8 @@
     "power_kw": 7.4,
     "connector_type": "Type 2 (Tethered Connector) ",
     "operator": "JIO BP Pulse (India)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2714,6 +3206,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "Statiq (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2725,6 +3219,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "Statiq (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2736,6 +3232,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "Statiq (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2747,6 +3245,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "Statiq (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2758,6 +3258,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "Statiq (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2769,6 +3271,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "Statiq (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2780,6 +3284,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "Statiq (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2791,6 +3297,8 @@
     "power_kw": 3,
     "connector_type": "Unknown",
     "operator": "(Unknown Operator)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2802,6 +3310,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "JIO BP Pulse (India)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2813,6 +3323,8 @@
     "power_kw": 3.3,
     "connector_type": "IEC 60309 3-pin",
     "operator": "JIO BP Pulse (India)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2824,6 +3336,8 @@
     "power_kw": 7.5,
     "connector_type": "Type 2 (Tethered Connector) ",
     "operator": "JIO BP Pulse (India)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2835,6 +3349,8 @@
     "power_kw": 30,
     "connector_type": "GB-T DC - GB/T 20234.3",
     "operator": "JIO BP Pulse (India)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2846,6 +3362,8 @@
     "power_kw": 24,
     "connector_type": "CCS (Type 2)",
     "operator": "(Unknown Operator)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2857,6 +3375,8 @@
     "power_kw": 120,
     "connector_type": "CCS (Type 2)",
     "operator": "Shell Recharge (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2868,6 +3388,8 @@
     "power_kw": 3.3,
     "connector_type": "IEC 60309 3-pin",
     "operator": "Shell Recharge (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2879,6 +3401,8 @@
     "power_kw": 3.3,
     "connector_type": "IEC 60309 3-pin",
     "operator": "Shell Recharge (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2890,6 +3414,8 @@
     "power_kw": 150,
     "connector_type": "CCS (Type 2)",
     "operator": "Tata Power",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2901,6 +3427,8 @@
     "power_kw": 120,
     "connector_type": "CCS (Type 2)",
     "operator": "Shell Recharge (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2912,6 +3440,8 @@
     "power_kw": 3.3,
     "connector_type": "IEC 60309 3-pin",
     "operator": "Shell Recharge (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2923,6 +3453,8 @@
     "power_kw": 3.3,
     "connector_type": "IEC 60309 3-pin",
     "operator": "Shell Recharge (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2934,6 +3466,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "JIO BP Pulse (India)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2945,6 +3479,8 @@
     "power_kw": 7.4,
     "connector_type": "Type 2 (Tethered Connector) ",
     "operator": "JIO BP Pulse (India)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2956,6 +3492,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "JIO BP Pulse (India)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2967,6 +3505,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "Adani Gas-EV (TR)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2978,6 +3518,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "JIO BP Pulse (India)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -2989,6 +3531,8 @@
     "power_kw": 30,
     "connector_type": "CCS (Type 2)",
     "operator": "Shell Recharge (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -3000,6 +3544,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "JIO BP Pulse (India)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -3011,6 +3557,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "Statiq (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -3022,6 +3570,8 @@
     "power_kw": 7.4,
     "connector_type": "Type 2 (Tethered Connector) ",
     "operator": "Statiq (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -3033,6 +3583,8 @@
     "power_kw": 30,
     "connector_type": "CCS (Type 2)",
     "operator": "Tata Power",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -3044,6 +3596,8 @@
     "power_kw": 30,
     "connector_type": "CCS (Type 2)",
     "operator": "Chargezone (India)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -3055,6 +3609,8 @@
     "power_kw": 30,
     "connector_type": "CCS (Type 2)",
     "operator": "Tata Power",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -3066,6 +3622,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "Statiq (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -3077,6 +3635,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "Statiq (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -3088,6 +3648,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "Statiq (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -3099,6 +3661,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "Statiq (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -3110,6 +3674,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "Statiq (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -3121,6 +3687,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "Statiq (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -3132,6 +3700,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "Statiq (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -3143,6 +3713,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "Statiq (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -3154,6 +3726,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "Statiq (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -3165,6 +3739,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "Statiq (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -3176,6 +3752,8 @@
     "power_kw": 120,
     "connector_type": "CCS (Type 2)",
     "operator": "Shell Recharge (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -3187,6 +3765,8 @@
     "power_kw": 3.3,
     "connector_type": "IEC 60309 3-pin",
     "operator": "Shell Recharge (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -3198,6 +3778,8 @@
     "power_kw": 3.3,
     "connector_type": "IEC 60309 3-pin",
     "operator": "Shell Recharge (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -3209,6 +3791,8 @@
     "power_kw": 120,
     "connector_type": "CCS (Type 2)",
     "operator": "Shell Recharge (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -3220,6 +3804,8 @@
     "power_kw": 3.3,
     "connector_type": "IEC 60309 3-pin",
     "operator": "Shell Recharge (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -3231,6 +3817,8 @@
     "power_kw": 3.3,
     "connector_type": "IEC 60309 3-pin",
     "operator": "Shell Recharge (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -3242,6 +3830,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "JIO BP Pulse (India)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -3253,6 +3843,8 @@
     "power_kw": 30,
     "connector_type": "CCS (Type 2)",
     "operator": "Tata Power",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   },
   {
@@ -3264,6 +3856,8 @@
     "power_kw": 60,
     "connector_type": "CCS (Type 2)",
     "operator": "Statiq (IN)",
+    "availability": true,
+    "status_title": "Operational",
     "source": "OCM"
   }
 ]

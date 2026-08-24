@@ -41,6 +41,7 @@ def create_user_vehicle(db: Session, user_id: str, payload: VehicleCreate) -> Ve
         current_battery_pct=payload.current_battery_pct,
         efficiency_wh_km=payload.efficiency_wh_km,
         is_primary=payload.is_primary,
+        registration_date=payload.registration_date,
     )
     db.add(vehicle)
     db.commit()

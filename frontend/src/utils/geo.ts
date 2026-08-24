@@ -18,6 +18,18 @@ export function haversineKm(
   return 2 * EARTH_KM * Math.asin(Math.sqrt(a));
 }
 
+/** Pulled out as its own pure function (rather than left inline in
+ * DriverHomePage's filter) specifically so the boundary case -- a charger
+ * just inside vs just outside the range radius -- is unit-testable without
+ * mounting the component. See utils/geo.test.ts. */
+export function isWithinRange(
+  origin: { latitude: number; longitude: number },
+  point: { latitude: number; longitude: number },
+  rangeKm: number,
+): boolean {
+  return haversineKm(origin.latitude, origin.longitude, point.latitude, point.longitude) <= rangeKm;
+}
+
 export function centroid(
   points: Array<{ latitude: number; longitude: number }>,
 ): { latitude: number; longitude: number } {

@@ -281,26 +281,20 @@ def fetch_bbmp_boundary(*, refresh: bool) -> dict:
 # --------------------------------------------------------------------------
 
 
-def fetch_chargers(*, refresh: bool) -> list[dict]:
-    settings = get_settings()
-    api_key = settings.OCM_API_KEY.strip()
-    if not api_key or api_key == "REPLACE_WITH_YOUR_KEY":
-        raise RuntimeError(
-            "OCM_API_KEY is not set. Register a free key at openchargemap.org "
-            "-> profile -> My Apps, then put it in backend/.env as OCM_API_KEY=<key>."
-        )
+def _ocm_headers(api_key: str) -> dict[str, str]:
+    return {"User-Agent": USER_AGENT, "X-API-Key": api_key}
 
-    if not refresh and _read_cache_json("ocm_pois") is not None:
-        pois = _read_cache_json("ocm_pois")
-        print("  [cache] ocm_pois.json")
-    else:
-        headers = {"User-Agent": USER_AGENT, "X-API-Key": api_key}
-        resp = httpx.get(OCM_URL, params=OCM_BASE_PARAMS, headers=headers, timeout=60)
-        if resp.status_code != 200:
-            raise RuntimeError(f"OpenChargeMap request failed: {resp.status_code} {resp.text[:300]}")
-        pois = resp.json()
-        _write_cache_json("ocm_pois", pois)
 
+def map_ocm_pois_to_chargers(pois: list[dict]) -> list[dict]:
+    """The one place an OCM POI becomes our charger dict shape -- used by
+    both the bulk cached fetch below and charger_service.py's live refresh,
+    so a POI is never mapped two different ways.
+
+    availability comes from StatusType.IsOperational -- OCM's infrastructure
+    operational status (e.g. "Operational" / "Under Maintenance"), NOT live
+    per-plug occupancy. None means OCM has no status data for that POI,
+    which is common; that stays None, it is never defaulted to True.
+    """
     chargers: list[dict] = []
     for poi in pois:
         addr = poi.get("AddressInfo") or {}
@@ -309,6 +303,9 @@ def fetch_chargers(*, refresh: bool) -> list[dict]:
         if lat is None or lon is None:
             continue
         operator = (poi.get("OperatorInfo") or {}).get("Title") or "Unknown"
+        status_type = poi.get("StatusType")
+        availability = status_type.get("IsOperational") if status_type else None
+        status_title = status_type.get("Title") if status_type else None
         connections = poi.get("Connections") or [None]
         for idx, conn in enumerate(connections):
             conn = conn or {}
@@ -324,11 +321,59 @@ def fetch_chargers(*, refresh: bool) -> list[dict]:
                     "power_kw": power_kw,
                     "connector_type": connection_type,
                     "operator": operator,
+                    "availability": availability,
+                    "status_title": status_title,
                     "source": "OCM",
                 }
             )
+    return chargers
+
+
+def fetch_chargers(*, refresh: bool) -> list[dict]:
+    settings = get_settings()
+    api_key = settings.OCM_API_KEY.strip()
+    if not api_key or api_key == "REPLACE_WITH_YOUR_KEY":
+        raise RuntimeError(
+            "OCM_API_KEY is not set. Register a free key at openchargemap.org "
+            "-> profile -> My Apps, then put it in backend/.env as OCM_API_KEY=<key>."
+        )
+
+    if not refresh and _read_cache_json("ocm_pois") is not None:
+        pois = _read_cache_json("ocm_pois")
+        print("  [cache] ocm_pois.json")
+    else:
+        resp = httpx.get(OCM_URL, params=OCM_BASE_PARAMS, headers=_ocm_headers(api_key), timeout=60)
+        if resp.status_code != 200:
+            raise RuntimeError(f"OpenChargeMap request failed: {resp.status_code} {resp.text[:300]}")
+        pois = resp.json()
+        _write_cache_json("ocm_pois", pois)
+
+    chargers = map_ocm_pois_to_chargers(pois)
     print(f"  {len(pois)} POIs -> {len(chargers)} charger/connector rows")
     return chargers
+
+
+def fetch_chargers_near(*, latitude: float, longitude: float, radius_km: float, api_key: str) -> list[dict]:
+    """Live OCM call for a specific area -- used by POST /api/chargers/refresh
+    (charger_service.py). Deliberately NOT cached to data/raw/: this is the
+    one path in the app that's meant to hit OCM live, on an explicit user
+    action, not on every page load. Same POI mapping as the bulk fetch
+    above (map_ocm_pois_to_chargers), so a POI is scored/shown consistently
+    whichever path found it.
+    """
+    params = {
+        "output": "json",
+        "countrycode": "IN",
+        "latitude": latitude,
+        "longitude": longitude,
+        "distance": radius_km,
+        "distanceunit": "KM",
+        "maxresults": 200,
+    }
+    resp = httpx.get(OCM_URL, params=params, headers=_ocm_headers(api_key), timeout=30)
+    if resp.status_code != 200:
+        raise RuntimeError(f"OpenChargeMap request failed: {resp.status_code} {resp.text[:300]}")
+    return map_ocm_pois_to_chargers(resp.json())
 
 
 # --------------------------------------------------------------------------
