@@ -1,32 +1,122 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 
+import { GuestRoute, ProtectedRoute, RoleProtectedRoute } from "./components/auth/ProtectedRoute";
+import { AuthProvider } from "./context/AuthProvider";
 import { DriverLayout } from "./layouts/DriverLayout";
 import { PlannerLayout } from "./layouts/PlannerLayout";
+import { LandingPage } from "./pages/LandingPage";
+import { AuthCallbackPage } from "./pages/auth/AuthCallbackPage";
+import { DriverSignupPage } from "./pages/auth/DriverSignupPage";
+import { ForbiddenPage } from "./pages/auth/ForbiddenPage";
+import { ForgotPasswordPage } from "./pages/auth/ForgotPasswordPage";
 import { LoginPage } from "./pages/auth/LoginPage";
+import { PlannerSignupPage } from "./pages/auth/PlannerSignupPage";
+import { ResetPasswordPage } from "./pages/auth/ResetPasswordPage";
+import { RoleSelectPage } from "./pages/auth/RoleSelectPage";
+import { VerifyEmailPage } from "./pages/auth/VerifyEmailPage";
 import { BookingPage } from "./pages/driver/BookingPage";
+import { BookingsPage } from "./pages/driver/BookingsPage";
 import { ChargerDetailsPage } from "./pages/driver/ChargerDetailsPage";
 import { ChargingWindowPage } from "./pages/driver/ChargingWindowPage";
 import { DriverHomePage } from "./pages/driver/DriverHomePage";
+import { DriverSavingsPage } from "./pages/driver/DriverSavingsPage";
+import { PlannerBuildPlanPage } from "./pages/planner/PlannerBuildPlanPage";
 import { PlannerDashboardPage } from "./pages/planner/PlannerDashboardPage";
+import { PlannerExplorerPage } from "./pages/planner/PlannerExplorerPage";
+import { PlannerGridPage } from "./pages/planner/PlannerGridPage";
+import { PlannerReportsPage } from "./pages/planner/PlannerReportsPage";
 import { PlannerSiteDetailsPage } from "./pages/planner/PlannerSiteDetailsPage";
 
 function App() {
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<LoginPage />} />
-        <Route path="/login" element={<Navigate to="/" replace />} />
-        <Route path="/planner" element={<PlannerLayout />}>
-          <Route index element={<PlannerDashboardPage />} />
-          <Route path="site/:siteId" element={<PlannerSiteDetailsPage />} />
-        </Route>
-        <Route path="/driver" element={<DriverLayout />}>
-          <Route index element={<DriverHomePage />} />
-          <Route path="charger/:chargerId" element={<ChargerDetailsPage />} />
-          <Route path="charger/:chargerId/book" element={<ChargingWindowPage />} />
-          <Route path="booking/:bookingId" element={<BookingPage />} />
-        </Route>
-      </Routes>
+      <AuthProvider>
+        <Routes>
+          <Route path="/" element={<LandingPage />} />
+          <Route
+            path="/login"
+            element={
+              <GuestRoute>
+                <LoginPage />
+              </GuestRoute>
+            }
+          />
+          <Route
+            path="/get-started"
+            element={
+              <GuestRoute>
+                <RoleSelectPage />
+              </GuestRoute>
+            }
+          />
+          <Route path="/signup" element={<Navigate to="/get-started" replace />} />
+          <Route
+            path="/signup/planner"
+            element={
+              <GuestRoute>
+                <PlannerSignupPage />
+              </GuestRoute>
+            }
+          />
+          <Route
+            path="/signup/driver"
+            element={
+              <GuestRoute>
+                <DriverSignupPage />
+              </GuestRoute>
+            }
+          />
+          <Route path="/verify-email" element={<VerifyEmailPage />} />
+          <Route path="/auth/callback" element={<AuthCallbackPage />} />
+          <Route
+            path="/forgot-password"
+            element={
+              <GuestRoute>
+                <ForgotPasswordPage />
+              </GuestRoute>
+            }
+          />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
+          <Route
+            path="/forbidden"
+            element={
+              <ProtectedRoute>
+                <ForbiddenPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/planner"
+            element={
+              <RoleProtectedRoute role="planner">
+                <PlannerLayout />
+              </RoleProtectedRoute>
+            }
+          >
+            <Route index element={<PlannerDashboardPage />} />
+            <Route path="explorer" element={<PlannerExplorerPage />} />
+            <Route path="grid" element={<PlannerGridPage />} />
+            <Route path="plan" element={<PlannerBuildPlanPage />} />
+            <Route path="reports" element={<PlannerReportsPage />} />
+            <Route path="site/:siteId" element={<PlannerSiteDetailsPage />} />
+          </Route>
+          <Route
+            path="/driver"
+            element={
+              <RoleProtectedRoute role="driver">
+                <DriverLayout />
+              </RoleProtectedRoute>
+            }
+          >
+            <Route index element={<DriverHomePage />} />
+            <Route path="savings" element={<DriverSavingsPage />} />
+            <Route path="bookings" element={<BookingsPage />} />
+            <Route path="charger/:chargerId" element={<ChargerDetailsPage />} />
+            <Route path="charger/:chargerId/book" element={<ChargingWindowPage />} />
+            <Route path="booking/:bookingId" element={<BookingPage />} />
+          </Route>
+        </Routes>
+      </AuthProvider>
     </BrowserRouter>
   );
 }

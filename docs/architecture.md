@@ -1,33 +1,25 @@
-# VidyutOne architecture (MVP)
+# VidyutOne architecture (V1)
 
-This document describes the current foundation. Visual design is intentionally
-out of scope and will be implemented later from UI screenshots.
-
-## Apps
-
-- `frontend/` — React + TypeScript SPA (planner dashboard + driver PWA routes)
-- `backend/` — FastAPI API
-- `data/` — simulated Bengaluru demo JSON (not live infrastructure)
-
-Both UIs share one backend.
+React Planner and Driver both call **one FastAPI API**.
+Authentication is **Supabase Auth**. FastAPI persists to **PostgreSQL**
+(Supabase in hosted use, or Docker locally).
 
 ## Request flow
 
-1. Page or hook calls a function in `frontend/src/services/api.ts`
-2. Axios sends the request to `VITE_API_BASE_URL`
-3. FastAPI route in `backend/app/api/routes/` delegates to a service
-4. Services currently read mock JSON / in-memory bookings
-5. Site recommendations are computed in `backend/app/engines/recommendation.py`
+1. Page or hook calls `frontend/src/services/api.ts`
+2. Axios attaches `Authorization: Bearer <access_token>` from the Supabase session
+3. FastAPI verifies the JWT (JWKS, with optional HS256 fallback)
+4. Protected routes use `Depends(get_current_user)`, `require_planner`, or `require_driver`
+5. Services read/write SQLAlchemy models. Booking `user_id` is taken from the token, not the body.
+6. Site recommendations are computed in `backend/app/engines/recommendation.py`
+7. `data/*.json` is used only by `python -m app.scripts.seed_demo`
 
-## Replacing mock data with PostgreSQL
+## Auth flow
 
-SQLAlchemy models and session helpers already exist under
-`backend/app/models/` and `backend/app/database/`. Swap service implementations
-to use `get_db()` when ready. Latitude/longitude are floats so PostGIS geometry
-columns can be added later without changing the API contract.
+1. Signup stores `full_name` and `role` in Supabase user metadata and sends a confirmation email
+2. `/auth/callback` completes the verification or password-recovery link
+3. `public.users` holds the application profile; that stored role is authoritative
+4. Planner and Driver dashboards are wrapped in `RoleProtectedRoute`
 
-## UI replacement
-
-Pages under `frontend/src/pages/` are placeholders. Layouts, reusable
-components, Tailwind `@theme` tokens, and the API/types layer are structured so
-screenshot-based UI can replace page markup without rewriting business logic.
+See [supabase.md](supabase.md) for hosted setup. Docker Compose Postgres remains
+available for local development with the same application schema.
