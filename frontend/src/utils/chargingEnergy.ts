@@ -4,10 +4,16 @@
 export const TARGET_SOC_PCT = 80;
 export const MIN_TOPUP_FRACTION = 0.05;
 
+// Real (OpenChargeMap) chargers don't always report power -- fall back to a
+// conservative, documented assumption (a common AC Type 2 rating) rather
+// than letting `null` silently coerce to 0 kW in the no-vehicle estimate
+// below.
+const ASSUMED_POWER_KW_WHEN_UNKNOWN = 7.4;
+
 export function estimatedEnergyKwh(input: {
   batteryCapacityKwh?: number | null;
   currentBatteryPct?: number | null;
-  chargerPowerKw: number;
+  chargerPowerKw: number | null;
 }): number {
   const { batteryCapacityKwh, currentBatteryPct, chargerPowerKw } = input;
   if (batteryCapacityKwh && batteryCapacityKwh > 0 && currentBatteryPct != null) {
@@ -18,7 +24,8 @@ export function estimatedEnergyKwh(input: {
     }
     return Math.round(energy * 100) / 100;
   }
-  return Math.round(Math.min(chargerPowerKw * 0.5, 40) * 100) / 100;
+  const effectivePowerKw = chargerPowerKw ?? ASSUMED_POWER_KW_WHEN_UNKNOWN;
+  return Math.round(Math.min(effectivePowerKw * 0.5, 40) * 100) / 100;
 }
 
 export function nextUtcHour(hour: number, from: Date = new Date()): Date {

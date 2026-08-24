@@ -25,6 +25,12 @@ DEMO_USERS = [
         "role": ROLE_DRIVER,
     },
     {
+        "id": "user-driver-2-demo",
+        "name": "Driver Two",
+        "email": "driver2@vidyutone.local",
+        "role": ROLE_DRIVER,
+    },
+    {
         "id": "user-planner-demo",
         "name": "A. Rao",
         "email": "a.rao@bescom.karnataka.gov.in",

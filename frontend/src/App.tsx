@@ -16,6 +16,7 @@ import { ResetPasswordPage } from "./pages/auth/ResetPasswordPage";
 import { RoleSelectPage } from "./pages/auth/RoleSelectPage";
 import { VerifyEmailPage } from "./pages/auth/VerifyEmailPage";
 import { BookingPage } from "./pages/driver/BookingPage";
+import { BookingsPage } from "./pages/driver/BookingsPage";
 import { ChargerDetailsPage } from "./pages/driver/ChargerDetailsPage";
 import { ChargingWindowPage } from "./pages/driver/ChargingWindowPage";
 import { DriverHomePage } from "./pages/driver/DriverHomePage";
@@ -126,6 +127,7 @@ function App() {
           >
             <Route index element={<DriverHomePage />} />
             <Route path="savings" element={<DriverSavingsPage />} />
+            <Route path="bookings" element={<BookingsPage />} />
             <Route path="charger/:chargerId" element={<ChargerDetailsPage />} />
             <Route path="charger/:chargerId/book" element={<ChargingWindowPage />} />
             <Route path="booking/:bookingId" element={<BookingPage />} />

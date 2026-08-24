@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
-import { X, Zap, Trash2 } from "lucide-react";
+import { X, Zap, Trash2, Search } from "lucide-react";
 import type { Vehicle, VehicleCreate, VehicleUpdate } from "../../types";
+import { EV_CATALOG, SOURCE_LABEL, findCatalogEntry, type EvCatalogEntry, type SpecSource } from "../../data/evCatalog";
 
 interface VehicleModalProps {
   isOpen: boolean;
@@ -10,6 +11,8 @@ interface VehicleModalProps {
   onDelete?: (vehicleId: string) => Promise<void>;
 }
 
+const DEFAULT_ENTRY = findCatalogEntry("tata-nexon-ev-lr");
+
 export function VehicleModal({
   isOpen,
   vehicle,
@@ -17,15 +20,51 @@ export function VehicleModal({
   onSave,
   onDelete,
 }: VehicleModalProps) {
-  const [make, setMake] = useState(vehicle?.make ?? "Tata");
-  const [model, setModel] = useState(vehicle?.model ?? "Nexon EV");
-  const [capacity, setCapacity] = useState(vehicle?.battery_capacity_kwh ?? 40.5);
-  const [efficiency, setEfficiency] = useState(vehicle?.efficiency_wh_km ?? 145);
+  // Editing an existing vehicle: we don't know which catalog entry (if any)
+  // it came from, so start in free-text mode showing its current values --
+  // same as before this catalog existed. Adding a new one: pre-fill from a
+  // sensible catalog default, fully editable, same as picking one manually.
+  const seedEntry = vehicle ? null : DEFAULT_ENTRY;
+
+  const [make, setMake] = useState(vehicle?.make ?? seedEntry?.make ?? "");
+  const [model, setModel] = useState(vehicle?.model ?? seedEntry?.model ?? "");
+  const [capacity, setCapacity] = useState(vehicle?.battery_capacity_kwh ?? seedEntry?.battery_capacity_kwh ?? 40);
+  const [efficiency, setEfficiency] = useState(vehicle?.efficiency_wh_km ?? seedEntry?.efficiency_wh_km ?? 150);
   const [currentPct, setCurrentPct] = useState(vehicle?.current_battery_pct ?? 50);
+  // Registration/purchase date -- optional. Used only to derive vehicle age
+  // for the battery-health range factor (never re-typed as an age itself);
+  // omitting it is a documented no-op, same as any other optional range input.
+  const [registrationDate, setRegistrationDate] = useState(vehicle?.registration_date ?? "");
+  const [pickedSpec, setPickedSpec] = useState<{ source: SpecSource; note: string } | null>(
+    seedEntry ? { source: seedEntry.source, note: seedEntry.note } : null,
+  );
+  const [catalogQuery, setCatalogQuery] = useState(vehicle ? "" : `${seedEntry?.make ?? ""} ${seedEntry?.model ?? ""}`.trim());
+  const [catalogOpen, setCatalogOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   if (!isOpen) return null;
+
+  const filteredCatalog =
+    catalogQuery.trim().length === 0
+      ? EV_CATALOG
+      : EV_CATALOG.filter((entry) => `${entry.make} ${entry.model}`.toLowerCase().includes(catalogQuery.toLowerCase()));
+
+  function selectCatalogEntry(entry: EvCatalogEntry) {
+    setMake(entry.make);
+    setModel(entry.model);
+    setCapacity(entry.battery_capacity_kwh);
+    setEfficiency(entry.efficiency_wh_km);
+    setPickedSpec({ source: entry.source, note: entry.note });
+    setCatalogQuery(`${entry.make} ${entry.model}`);
+    setCatalogOpen(false);
+  }
+
+  function selectCustomVehicle() {
+    setPickedSpec(null);
+    setCatalogQuery("");
+    setCatalogOpen(false);
+  }
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -39,6 +78,7 @@ export function VehicleModal({
         efficiency_wh_km: Number(efficiency),
         current_battery_pct: Number(currentPct),
         is_primary: true,
+        registration_date: registrationDate.trim() === "" ? null : registrationDate,
       });
       onClose();
     } catch (err: unknown) {
@@ -64,7 +104,7 @@ export function VehicleModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-      <div className="w-full max-w-md rounded-2xl border border-vo-line bg-[#0d131f] p-6 shadow-2xl space-y-5 relative">
+      <div className="w-full max-w-md rounded-2xl border border-vo-line bg-[#0d131f] p-6 shadow-2xl space-y-5 relative max-h-[90vh] overflow-y-auto">
         <button
           type="button"
           onClick={onClose}
@@ -85,13 +125,85 @@ export function VehicleModal({
         {error ? <p className="text-xs text-vo-red">{error}</p> : null}
 
         <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4 text-xs">
+          <div className="relative">
+            <label className="block font-semibold text-vo-muted mb-1 uppercase tracking-wider">
+              Find your vehicle
+            </label>
+            <div className="relative">
+              <Search className="w-3.5 h-3.5 text-vo-muted absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                value={catalogQuery}
+                onChange={(e) => {
+                  setCatalogQuery(e.target.value);
+                  setCatalogOpen(true);
+                }}
+                onFocus={() => setCatalogOpen(true)}
+                placeholder="Search e.g. Nexon, Ather 450X, Treo..."
+                className="w-full rounded-xl border border-vo-line bg-vo-card pl-8 pr-3 py-2.5 text-white focus:border-emerald-400 focus:outline-none"
+              />
+            </div>
+
+            {catalogOpen ? (
+              <ul className="absolute left-0 right-0 z-10 mt-1 max-h-56 overflow-auto rounded-xl border border-vo-line bg-[#0d131f] shadow-2xl">
+                {(["2W", "3W", "4W"] as const).map((segment) => {
+                  const rows = filteredCatalog.filter((entry) => entry.segment === segment);
+                  if (rows.length === 0) return null;
+                  return (
+                    <li key={segment}>
+                      <p className="px-3 pt-2 pb-1 text-[9px] font-bold uppercase tracking-wider text-vo-muted">{segment}</p>
+                      {rows.map((entry) => (
+                        <button
+                          key={entry.id}
+                          type="button"
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            selectCatalogEntry(entry);
+                          }}
+                          className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left hover:bg-white/5"
+                        >
+                          <span className="text-white">
+                            {entry.make} {entry.model}
+                          </span>
+                          <span className="text-[10px] text-vo-muted shrink-0">{entry.battery_capacity_kwh} kWh</span>
+                        </button>
+                      ))}
+                    </li>
+                  );
+                })}
+                <li>
+                  <button
+                    type="button"
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      selectCustomVehicle();
+                    }}
+                    className="w-full px-3 py-2 text-left text-vo-accent border-t border-vo-line/60 hover:bg-white/5"
+                  >
+                    My vehicle isn't listed — enter specs manually
+                  </button>
+                </li>
+              </ul>
+            ) : null}
+          </div>
+
+          {pickedSpec ? (
+            <p className="rounded-lg bg-emerald-500/5 border border-emerald-500/20 px-3 py-2 text-[11px] text-vo-soft">
+              <span className="font-semibold text-emerald-400">{SOURCE_LABEL[pickedSpec.source]}: </span>
+              {pickedSpec.note}
+            </p>
+          ) : null}
+
           <div>
             <label className="block font-semibold text-vo-muted mb-1 uppercase tracking-wider">Manufacturer / Make</label>
             <input
               type="text"
               required
               value={make}
-              onChange={(e) => setMake(e.target.value)}
+              onChange={(e) => {
+                setMake(e.target.value);
+                setPickedSpec(null);
+              }}
               placeholder="e.g. Tata / MG / Hyundai"
               className="w-full rounded-xl border border-vo-line bg-vo-card px-3 py-2.5 text-white focus:border-emerald-400 focus:outline-none"
             />
@@ -103,7 +215,10 @@ export function VehicleModal({
               type="text"
               required
               value={model}
-              onChange={(e) => setModel(e.target.value)}
+              onChange={(e) => {
+                setModel(e.target.value);
+                setPickedSpec(null);
+              }}
               placeholder="e.g. Nexon EV / ZS EV / Ioniq 5"
               className="w-full rounded-xl border border-vo-line bg-vo-card px-3 py-2.5 text-white focus:border-emerald-400 focus:outline-none"
             />
@@ -115,7 +230,7 @@ export function VehicleModal({
               <input
                 type="number"
                 step="0.1"
-                min="5"
+                min="1"
                 max="200"
                 required
                 value={capacity}
@@ -129,7 +244,7 @@ export function VehicleModal({
               <input
                 type="number"
                 step="1"
-                min="50"
+                min="15"
                 max="400"
                 required
                 value={efficiency}
@@ -137,6 +252,22 @@ export function VehicleModal({
                 className="w-full rounded-xl border border-vo-line bg-vo-card px-3 py-2.5 text-white focus:border-emerald-400 focus:outline-none"
               />
             </div>
+          </div>
+
+          <div>
+            <label className="block font-semibold text-vo-muted mb-1 uppercase tracking-wider">
+              Registration / purchase date <span className="normal-case font-normal text-vo-muted/70">(optional)</span>
+            </label>
+            <input
+              type="date"
+              max={new Date().toISOString().slice(0, 10)}
+              value={registrationDate}
+              onChange={(e) => setRegistrationDate(e.target.value)}
+              className="w-full rounded-xl border border-vo-line bg-vo-card px-3 py-2.5 text-white focus:border-emerald-400 focus:outline-none [color-scheme:dark]"
+            />
+            <p className="mt-1 text-[10px] text-vo-muted">
+              Used to estimate battery health by age -- affects range only, never shown as a typed-in number.
+            </p>
           </div>
 
           <div>

@@ -56,6 +56,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!supabase) {
+      const stored = localStorage.getItem("vidyutone-mock-session");
+      if (stored) {
+        try {
+          const mockSession = JSON.parse(stored);
+          setSession(mockSession);
+          setUser(mockSession.user);
+          const isDriver = mockSession.access_token.includes("driver");
+          const mockProfile: Profile = isDriver
+            ? {
+                id: mockSession.user.id,
+                full_name: mockSession.user.user_metadata.full_name,
+                email: mockSession.user.email,
+                role: "driver",
+                created_at: new Date().toISOString(),
+              }
+            : {
+                id: mockSession.user.id,
+                full_name: mockSession.user.user_metadata.full_name,
+                email: mockSession.user.email,
+                role: "planner",
+                created_at: new Date().toISOString(),
+              };
+          setProfile(mockProfile);
+        } catch {
+          // ignore
+        }
+      }
       setLoading(false);
       return;
     }
@@ -107,7 +134,50 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       configured: supabaseConfigured,
       signIn: async (email: string, password: string) => {
         if (!supabase) {
-          throw new Error("Supabase configuration error. Set VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY.");
+          const isDriver = email.includes("driver") || email === "driver.demo@vidyutone.local";
+          const isDriver2 = email.includes("driver2") || email === "driver2@vidyutone.local";
+          const mockProfile: Profile = isDriver2
+            ? {
+                id: "user-driver-2-demo",
+                full_name: "Driver Two",
+                email: "driver2@vidyutone.local",
+                role: "driver",
+                created_at: new Date().toISOString(),
+              }
+            : isDriver
+              ? {
+                  id: "user-driver-demo",
+                  full_name: "Nikhil",
+                  email: "driver.demo@vidyutone.local",
+                  role: "driver",
+                  created_at: new Date().toISOString(),
+                }
+              : {
+                  id: "user-planner-demo",
+                  full_name: "A. Rao",
+                  email: "a.rao@bescom.karnataka.gov.in",
+                  role: "planner",
+                  created_at: new Date().toISOString(),
+                };
+
+          const mockSession = {
+            access_token: isDriver2 ? "mock-driver-2-token" : isDriver ? "mock-driver-token" : "mock-planner-token",
+            user: {
+              id: mockProfile.id,
+              email: mockProfile.email,
+              email_confirmed_at: new Date().toISOString(),
+              user_metadata: {
+                full_name: mockProfile.full_name,
+                role: mockProfile.role,
+              },
+            },
+          };
+
+          localStorage.setItem("vidyutone-mock-session", JSON.stringify(mockSession));
+          setSession(mockSession as any);
+          setUser(mockSession.user as any);
+          setProfile(mockProfile);
+          return mockProfile;
         }
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) {
@@ -165,6 +235,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       },
       signOut: async () => {
         clearPendingEmail();
+        localStorage.removeItem("vidyutone-mock-session");
         if (supabase) {
           try {
             const { error } = await supabase.auth.signOut();
