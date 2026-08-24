@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState } from "react";
 
-import { classifyByCoords, classifyByName, getChargers, getCharger, getRecommendedSites, getSite, getSites, getBooking } from "../services/api";
+import { classifyByCoords, classifyByName, getChargers, getCharger, getChargingSummary, getRecommendedSites, getSite, getSites, getBooking } from "../services/api";
 import type { ClassifiedSite } from "../types";
 import { getErrorMessage } from "../utils/errors";
 import { useAsync } from "./useAsync";
@@ -89,4 +89,8 @@ export function useBooking(bookingId: string | undefined) {
     }
     return getBooking(bookingId);
   }, [bookingId]);
+}
+
+export function useChargingSummary() {
+  return useAsync(() => getChargingSummary(), []);
 }

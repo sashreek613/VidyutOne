@@ -121,7 +121,7 @@ export interface Booking {
 export interface BookingCreate {
   charger_id: string;
   slot_time: string;
-  price: number;
+  price?: number;
 }
 
 export interface Vehicle {
@@ -170,5 +170,71 @@ export interface PricingTier {
   is_off_peak: boolean;
   savings_amount: number;
   description: string;
+}
+
+export interface HealthStatus {
+  status: string;
+  service: string;
+}
+
+export interface ChargingSession {
+  booking_id: string;
+  charger_id: string;
+  station_name: string;
+  slot_time: string;
+  window_label: string;
+  is_peak: boolean;
+  is_off_peak: boolean;
+  energy_kwh: number | null;
+  cost: number;
+  savings: number | null;
+  status: BookingStatus;
+}
+
+export interface MonthlyChargingSummary {
+  sessions: number;
+  cost: number | null;
+  savings: number | null;
+  energy_kwh: number | null;
+  avg_cost_per_session: number | null;
+  avg_cost_per_kwh: number | null;
+}
+
+export interface MonthlyTrendPoint {
+  month: string;
+  label: string;
+  cost: number;
+  energy_kwh: number | null;
+}
+
+export interface ChargingInsight {
+  kind: "saved" | "could_save";
+  amount: number;
+  text: string;
+}
+
+export interface ChargingSummary {
+  history: ChargingSession[];
+  month: MonthlyChargingSummary;
+  trend: MonthlyTrendPoint[];
+  last_session: ChargingSession | null;
+  insight: ChargingInsight | null;
+  total_energy_kwh: number | null;
+}
+
+export interface ChargingSlotQuote {
+  slot_time: string;
+  tariff_per_kwh: number;
+  total: number;
+  is_peak: boolean;
+  is_off_peak: boolean;
+  savings_amount: number;
+  description: string;
+  window_label: string;
+}
+
+export interface ChargingQuote {
+  energy_kwh: number;
+  quotes: ChargingSlotQuote[];
 }
 

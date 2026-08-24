@@ -15,7 +15,7 @@ class BookingStatus(str, Enum):
 class BookingCreate(BaseModel):
     charger_id: str
     slot_time: datetime
-    price: float
+    price: float | None = None
 
 
 class BookingRead(BaseModel):

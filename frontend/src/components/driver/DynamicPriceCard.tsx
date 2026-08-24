@@ -1,81 +1,75 @@
-import { useEffect, useState } from "react";
-import { Zap, Clock, ShieldCheck, ArrowDownCircle } from "lucide-react";
-import { getSlotPrice } from "../../services/api";
+import { ArrowDownCircle, Clock } from "lucide-react";
+
 import type { PricingTier } from "../../types";
+import { formatInr } from "../../utils/format";
+import { sessionTotal } from "../../utils/chargingEnergy";
 
 interface DynamicPriceCardProps {
-  slotIso: string;
-  basePrice?: number;
+  pricing: PricingTier;
+  energyKwh?: number | null;
+  total?: number | null;
+  tone?: "light" | "dark";
 }
 
-export function DynamicPriceCard({ slotIso, basePrice = 120.0 }: DynamicPriceCardProps) {
-  const [pricing, setPricing] = useState<PricingTier | null>(null);
-  const [loading, setLoading] = useState(false);
+export function DynamicPriceCard({ pricing, energyKwh, total, tone = "dark" }: DynamicPriceCardProps) {
+  const dark = tone === "dark";
+  const displayTotal = total ?? (energyKwh != null ? sessionTotal(energyKwh, pricing.price) : null);
+  const windowLabel = pricing.is_off_peak
+    ? "Off-Peak managed window"
+    : pricing.is_peak
+      ? "Peak demand window"
+      : "Standard rate window";
 
-  useEffect(() => {
-    if (!slotIso) return;
-    let cancelled = false;
-    async function fetchPricing() {
-      setLoading(true);
-      try {
-        const res = await getSlotPrice(slotIso, basePrice);
-        if (!cancelled) setPricing(res);
-      } catch {
-        if (!cancelled) setPricing(null);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-    void fetchPricing();
-    return () => {
-      cancelled = true;
-    };
-  }, [slotIso, basePrice]);
-
-  if (loading || !pricing) {
-    return (
-      <div className="rounded-xl border border-vo-line bg-vo-card/60 p-3.5 animate-pulse text-xs text-vo-muted">
-        Calculating slot dynamic grid pricing…
-      </div>
-    );
-  }
+  const shell = pricing.is_off_peak
+    ? dark
+      ? "border-emerald-500/30 bg-emerald-500/10"
+      : "border-emerald-200 bg-driver-mint"
+    : pricing.is_peak
+      ? dark
+        ? "border-amber-500/30 bg-amber-500/10"
+        : "border-amber-200 bg-[#fff6e8]"
+      : dark
+        ? "border-vo-line bg-vo-card/80"
+        : "border-driver-line bg-[#f6f7f4]";
 
   return (
-    <div
-      className={`rounded-xl border p-4 space-y-2.5 transition-all ${
-        pricing.is_off_peak
-          ? "border-emerald-500/30 bg-emerald-500/10"
-          : pricing.is_peak
-          ? "border-amber-500/30 bg-amber-500/10"
-          : "border-vo-line bg-vo-card/80"
-      }`}
-    >
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-2">
-          <Clock className={`w-4 h-4 ${pricing.is_off_peak ? "text-emerald-400" : pricing.is_peak ? "text-amber-400" : "text-vo-muted"}`} />
-          <span className="text-xs font-bold text-white uppercase tracking-wider">
-            {pricing.is_off_peak ? "Off-Peak Managed Window" : pricing.is_peak ? "Peak Demand Window" : "Standard Rate Window"}
+    <div className={`rounded-xl border p-4 space-y-2.5 ${shell}`}>
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <Clock
+            className={`h-4 w-4 ${
+              pricing.is_off_peak ? "text-emerald-500" : pricing.is_peak ? "text-amber-500" : dark ? "text-vo-muted" : "text-driver-muted"
+            }`}
+          />
+          <span
+            className={`text-[11px] font-bold uppercase tracking-wider ${dark ? "text-white" : "text-driver-ink"}`}
+          >
+            {windowLabel}
           </span>
         </div>
-
         {pricing.is_off_peak ? (
-          <span className="inline-flex items-center space-x-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-400 text-black">
-            <ArrowDownCircle className="w-3 h-3" />
-            <span>SAVE ₹{pricing.savings_amount}</span>
+          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-400 px-2 py-0.5 text-[10px] font-bold text-black">
+            <ArrowDownCircle className="h-3 w-3" />
+            Save {formatInr(pricing.savings_amount)}/kWh
           </span>
         ) : null}
       </div>
-
-      <div className="flex items-baseline justify-between pt-1">
+      <p className={`text-[12px] ${dark ? "text-vo-muted" : "text-driver-muted"}`}>{pricing.description}</p>
+      <div className="flex items-end justify-between">
         <div>
-          <p className="text-xs text-vo-muted">{pricing.description}</p>
+          <p className={`text-[11px] ${dark ? "text-vo-muted" : "text-driver-muted"}`}>Price / kWh</p>
+          <p className={`text-[20px] font-semibold font-mono ${dark ? "text-white" : "text-driver-ink"}`}>
+            {formatInr(pricing.price)}
+          </p>
         </div>
-        <div className="text-right shrink-0">
-          <div className="text-lg font-bold font-mono text-white">₹{pricing.price}</div>
-          {pricing.is_off_peak ? (
-            <div className="text-[10px] text-vo-muted line-through font-mono">₹{Math.round(pricing.price + pricing.savings_amount)}</div>
-          ) : null}
-        </div>
+        {displayTotal != null ? (
+          <div className="text-right">
+            <p className={`text-[11px] ${dark ? "text-vo-muted" : "text-driver-muted"}`}>Estimated total</p>
+            <p className={`text-[20px] font-semibold font-mono ${dark ? "text-white" : "text-driver-ink"}`}>
+              {formatInr(displayTotal)}
+            </p>
+          </div>
+        ) : null}
       </div>
     </div>
   );
