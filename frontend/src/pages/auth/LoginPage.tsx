@@ -39,7 +39,8 @@ export function LoginPage() {
     setSubmitting(true);
     try {
       const me = await signIn(email.trim(), password);
-      void navigate(homeForRole(me.role), { replace: true });
+      void navigate(homeForRole(me), { replace: true });
+
     } catch (err: unknown) {
       const mapped = mapAuthError(err);
       setError(mapped);

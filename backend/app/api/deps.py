@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.core.security import InvalidAccessToken, unauthorized_from_token_error, verify_supabase_jwt
 from app.database.session import get_db
-from app.models.user import ROLE_DRIVER, ROLE_PLANNER
+from app.models.user import ROLE_ADMIN, ROLE_DRIVER, ROLE_PLANNER
 from app.schemas.auth import AuthUser
 from app.services import user_service
 
@@ -52,12 +52,20 @@ def get_current_user(
         email=profile.email,
         full_name=profile.full_name,
         role=profile.role,
+        is_verified=profile.is_verified,
+        is_active=profile.is_active,
+        verification_status=profile.verification_status,
     )
 
 
 def require_planner(user: AuthUser = Depends(get_current_user)) -> AuthUser:
     if user.role != ROLE_PLANNER:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
+    if not (user.is_verified and user.is_active):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Planner account is pending verification by an administrator.",
+        )
     return user
 
 
@@ -65,3 +73,13 @@ def require_driver(user: AuthUser = Depends(get_current_user)) -> AuthUser:
     if user.role != ROLE_DRIVER:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
     return user
+
+
+def require_admin(user: AuthUser = Depends(get_current_user)) -> AuthUser:
+    if user.role != ROLE_ADMIN:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin access required.",
+        )
+    return user
+

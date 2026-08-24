@@ -23,7 +23,7 @@ export type BookingStatus =
   | "COMPLETED"
   | "CANCELLED";
 
-export type UserRole = "planner" | "driver";
+export type UserRole = "planner" | "driver" | "admin";
 
 export interface User {
   id: string;
@@ -36,9 +36,17 @@ export interface Profile {
   full_name: string;
   email: string;
   role: UserRole;
+  organization?: string | null;
+  phone_number?: string | null;
+  designation?: string | null;
+  is_verified?: boolean;
+  is_active?: boolean;
+  verification_status?: "pending" | "approved" | "rejected";
+  rejection_reason?: string | null;
   created_at: string;
   organization?: string;
 }
+
 
 export interface Site {
   id: string;
