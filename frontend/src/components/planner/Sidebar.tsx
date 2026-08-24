@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from "react-router-dom";
-import { Activity, ClipboardList, FileText, LayoutGrid, LogOut, MapPin, Zap } from "lucide-react";
+import { FileText, LayoutGrid, LogOut, MapPin, Zap } from "lucide-react";
 
 import { useAuth } from "../../hooks/useAuth";
 import { BrandMark } from "../common/BrandMark";
@@ -7,8 +7,12 @@ import { BrandMark } from "../common/BrandMark";
 const items = [
   { to: "/planner", label: "Overview", icon: LayoutGrid, end: true },
   { to: "/planner/explorer", label: "Site Explorer", icon: MapPin, end: false },
-  { to: "/planner/grid", label: "Grid & Demand", icon: Activity, end: false },
-  { to: "/planner/plan", label: "Build Plan", icon: ClipboardList, end: false },
+  // Grid & Demand and Build Plan are hidden from nav per a scope decision on
+  // the Overview redesign, not removed -- PlannerGridPage.tsx,
+  // PlannerBuildPlanPage.tsx, and their routes in App.tsx are untouched and
+  // still reachable directly. Uncomment to restore them to the nav.
+  // { to: "/planner/grid", label: "Grid & Demand", icon: Activity, end: false },
+  // { to: "/planner/plan", label: "Build Plan", icon: ClipboardList, end: false },
   { to: "/planner/reports", label: "Reports", icon: FileText, end: false },
 ];
 

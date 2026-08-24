@@ -1,12 +1,62 @@
 import { CheckCircle2, AlertTriangle, XCircle, Info } from "lucide-react";
-import type { Recommendation, Site } from "../../types";
+import type { Provenance, Recommendation, ScoredFactor } from "../../types";
+
+// Structural subset shared by Site and ClassifiedSite -- this card only
+// ever needs the verdict + sub-scores, never id/name/coordinates, so it
+// works unmodified for both a seeded site and an arbitrary classified point.
+export interface VerdictSource {
+  recommendation: Recommendation;
+  demand_score: number;
+  grid_capacity_score: number;
+  accessibility_score: number;
+  charger_gap_score: number;
+  factors?: ScoredFactor[];
+  explanation?: string;
+}
 
 interface ExplainableVerdictCardProps {
-  site: Site;
+  site: VerdictSource;
+}
+
+const PROVENANCE_LABEL: Record<Provenance, string> = {
+  REAL: "REAL",
+  DERIVED: "DERIVED",
+  ESTIMATED: "EST.",
+  DEMO: "DEMO",
+};
+
+const PROVENANCE_COLOR: Record<Provenance, string> = {
+  REAL: "#00e8a2",
+  DERIVED: "#38bdf8",
+  ESTIMATED: "#f0b429",
+  DEMO: "#7c8794",
+};
+
+function factorFor(factors: ScoredFactor[] | undefined, key: string): ScoredFactor | undefined {
+  return factors?.find((f) => f.key === key);
+}
+
+function ProvenanceTag({ factor }: { factor: ScoredFactor | undefined }) {
+  if (!factor) {
+    return null;
+  }
+  return (
+    <span
+      className="mt-1 inline-block text-[9px] font-mono font-bold uppercase tracking-wider"
+      style={{ color: PROVENANCE_COLOR[factor.provenance] }}
+      title={factor.detail}
+    >
+      {PROVENANCE_LABEL[factor.provenance]}
+    </span>
+  );
 }
 
 export function ExplainableVerdictCard({ site }: ExplainableVerdictCardProps) {
-  const { recommendation, demand_score, grid_capacity_score, accessibility_score, charger_gap_score } = site;
+  const { recommendation, demand_score, grid_capacity_score, accessibility_score, charger_gap_score, factors, explanation } = site;
+  const demandFactor = factorFor(factors, "demand");
+  const gridFactor = factorFor(factors, "grid");
+  const landFactor = factorFor(factors, "land");
+  const coverageFactor = factorFor(factors, "coverage_gap");
 
   const verdictMeta: Record<
     Recommendation,
@@ -61,6 +111,12 @@ export function ExplainableVerdictCard({ site }: ExplainableVerdictCardProps) {
 
   const meta = verdictMeta[recommendation] ?? verdictMeta.DONT_BUILD;
   const IconComponent = meta.icon;
+  // The real explanation always leads with the one sentence that states
+  // which condition decided the verdict (see _VERDICT_LEAD in
+  // backend/app/engines/site_scoring.py) -- prefer that over the generic
+  // static copy whenever it's available.
+  const leadSentence = explanation?.split(". ")[0]?.trim();
+  const summaryLine = leadSentence ? `${leadSentence}${leadSentence.endsWith(".") ? "" : "."}` : meta.summary;
 
   return (
     <div className={`rounded-2xl border ${meta.borderClass} ${meta.bgClass} p-5 space-y-4`}>
@@ -70,7 +126,7 @@ export function ExplainableVerdictCard({ site }: ExplainableVerdictCardProps) {
           <span className={`text-xs font-mono font-bold uppercase tracking-wider ${meta.textClass}`}>
             {meta.label}
           </span>
-          <p className="text-sm font-semibold text-white mt-0.5">{meta.summary}</p>
+          <p className="text-sm font-semibold text-white mt-0.5">{summaryLine}</p>
         </div>
       </div>
 
@@ -79,31 +135,39 @@ export function ExplainableVerdictCard({ site }: ExplainableVerdictCardProps) {
           <Info className="w-3.5 h-3.5 text-cyan-400" />
           <span>Decision Analysis Breakdown:</span>
         </div>
-        <ul className="space-y-1.5 pl-5 list-disc text-gray-300">
-          {meta.recommendations.map((item, idx) => (
-            <li key={idx} className="leading-relaxed">
-              {item}
-            </li>
-          ))}
-        </ul>
+        {explanation ? (
+          <p className="leading-relaxed text-gray-300">{explanation}</p>
+        ) : (
+          <ul className="space-y-1.5 pl-5 list-disc text-gray-300">
+            {meta.recommendations.map((item, idx) => (
+              <li key={idx} className="leading-relaxed">
+                {item}
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
 
       <div className="grid grid-cols-4 gap-2 pt-2 border-t border-vo-line/40 text-center text-xs">
         <div className="rounded-lg bg-vo-card/60 p-2">
           <div className="text-[10px] text-vo-muted uppercase">Demand</div>
           <div className="font-bold text-white font-mono">{demand_score}</div>
+          <ProvenanceTag factor={demandFactor} />
         </div>
         <div className="rounded-lg bg-vo-card/60 p-2">
           <div className="text-[10px] text-vo-muted uppercase">Grid Headroom</div>
           <div className="font-bold text-white font-mono">{grid_capacity_score}</div>
+          <ProvenanceTag factor={gridFactor} />
         </div>
         <div className="rounded-lg bg-vo-card/60 p-2">
           <div className="text-[10px] text-vo-muted uppercase">Accessibility</div>
           <div className="font-bold text-white font-mono">{accessibility_score}</div>
+          <ProvenanceTag factor={landFactor} />
         </div>
         <div className="rounded-lg bg-vo-card/60 p-2">
           <div className="text-[10px] text-vo-muted uppercase">Charger Gap</div>
           <div className="font-bold text-white font-mono">{charger_gap_score}</div>
+          <ProvenanceTag factor={coverageFactor} />
         </div>
       </div>
     </div>

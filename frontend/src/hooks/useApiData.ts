@@ -1,8 +1,63 @@
-import { getChargers, getCharger, getSite, getSites, getBooking } from "../services/api";
+import { useCallback, useRef, useState } from "react";
+
+import { classifyByCoords, classifyByName, getChargers, getCharger, getRecommendedSites, getSite, getSites, getBooking } from "../services/api";
+import type { ClassifiedSite } from "../types";
+import { getErrorMessage } from "../utils/errors";
 import { useAsync } from "./useAsync";
 
 export function useSites() {
   return useAsync(() => getSites(), []);
+}
+
+export function useRecommendedSites(limit: number = 10) {
+  return useAsync(() => getRecommendedSites(limit), [limit]);
+}
+
+export type ClassifyStatus = "empty" | "loading" | "result" | "error";
+
+/** Imperative (not auto-fetching) -- classifyPoint/classifyName are called
+ * on search submit or map click, not on mount. Guards against out-of-order
+ * responses (a slow earlier request resolving after a faster later one)
+ * with a request-id ref, the same way useAsync guards against a stale
+ * response after unmount. */
+export function useClassify() {
+  const [status, setStatus] = useState<ClassifyStatus>("empty");
+  const [result, setResult] = useState<ClassifiedSite | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const requestIdRef = useRef(0);
+
+  const run = useCallback((promise: Promise<ClassifiedSite>) => {
+    const requestId = ++requestIdRef.current;
+    setStatus("loading"); // keep the previous `result` in place -- RESULT state must not blank while a new one loads
+    setErrorMessage(null);
+    promise
+      .then((data) => {
+        if (requestIdRef.current !== requestId) {
+          return; // a newer request already superseded this one
+        }
+        setResult(data);
+        setStatus("result");
+      })
+      .catch((err: unknown) => {
+        if (requestIdRef.current !== requestId) {
+          return;
+        }
+        setResult(null);
+        setErrorMessage(getErrorMessage(err));
+        setStatus("error");
+      });
+  }, []);
+
+  const classifyPoint = useCallback((lat: number, lon: number) => run(classifyByCoords(lat, lon)), [run]);
+  const classifyName = useCallback((query: string) => run(classifyByName(query)), [run]);
+  const clear = useCallback(() => {
+    requestIdRef.current += 1; // invalidate any in-flight request so it can't land after clear()
+    setStatus("empty");
+    setResult(null);
+    setErrorMessage(null);
+  }, []);
+
+  return { status, result, errorMessage, classifyPoint, classifyName, clear };
 }
 
 export function useSite(siteId: string | undefined) {

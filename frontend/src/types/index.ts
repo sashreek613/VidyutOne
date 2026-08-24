@@ -1,5 +1,21 @@
 export type Recommendation = "BUILD" | "BUILD_IF_MANAGED" | "DONT_BUILD";
 
+// How much to trust a sub-score. REAL/DERIVED/ESTIMATED are the honesty
+// tiers the scoring engine is built on (see backend/app/engines/site_scoring.py);
+// DEMO flags a value that's placeholder data, not a real source yet (e.g.
+// coverage_gap before OpenChargeMap is wired in).
+export type Provenance = "REAL" | "DERIVED" | "ESTIMATED" | "DEMO";
+
+export interface ScoredFactor {
+  key: string;
+  label: string;
+  score: number;
+  weight: number;
+  contribution: number;
+  provenance: Provenance;
+  detail: string;
+}
+
 export type BookingStatus =
   | "AVAILABLE"
   | "BOOKED"
@@ -34,6 +50,50 @@ export interface Site {
   charger_gap_score: number;
   site_score: number;
   recommendation: Recommendation;
+  // Optional so pages/components compiled against the old API shape keep
+  // working -- present once the backend scoring engine (Phase B) is live.
+  factors?: ScoredFactor[];
+  explanation?: string;
+}
+
+export interface RecommendedSite extends Site {
+  rank: number;
+}
+
+export interface NearestCandidate {
+  id: string;
+  name: string;
+  site_score: number;
+  recommendation: Recommendation;
+  distance_km: number;
+}
+
+// GET /api/sites/classify -- an arbitrary lat/lon or name-resolved point,
+// scored by the same engine as Site/RecommendedSite. Deliberately has no
+// `id`: this point may not correspond to any seeded candidate.
+export interface ClassifiedSite {
+  name: string;
+  latitude: number;
+  longitude: number;
+  demand_score: number;
+  grid_capacity_score: number;
+  accessibility_score: number;
+  charger_gap_score: number;
+  site_score: number;
+  recommendation: Recommendation;
+  factors: ScoredFactor[];
+  explanation: string;
+  in_bbox: boolean;
+  nearest_candidate: NearestCandidate | null;
+}
+
+// GET /api/sites/suggest -- offline name-index autocomplete result.
+export interface LocationSuggestion {
+  id: string;
+  name: string;
+  latitude: number;
+  longitude: number;
+  kind: "candidate_site" | "locality";
 }
 
 export interface Charger {

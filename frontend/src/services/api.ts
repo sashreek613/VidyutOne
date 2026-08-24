@@ -1,7 +1,7 @@
 import axios from "axios";
 
 import { supabase } from "../lib/supabase";
-import type { Booking, BookingCreate, Charger, HealthStatus, PricingTier, Profile, Site, Vehicle, VehicleCreate, VehicleUpdate } from "../types";
+import type { Booking, BookingCreate, Charger, ClassifiedSite, HealthStatus, LocationSuggestion, PricingTier, Profile, RecommendedSite, Site, Vehicle, VehicleCreate, VehicleUpdate } from "../types";
 
 const baseURL = import.meta.env.VITE_API_BASE_URL;
 
@@ -45,6 +45,26 @@ export async function getSites(): Promise<Site[]> {
 
 export async function getSite(id: string): Promise<Site> {
   const { data } = await client.get<Site>(`/api/sites/${id}`);
+  return data;
+}
+
+export async function getRecommendedSites(limit: number = 10): Promise<RecommendedSite[]> {
+  const { data } = await client.get<RecommendedSite[]>("/api/sites/recommended", { params: { limit } });
+  return data;
+}
+
+export async function classifyByCoords(lat: number, lon: number): Promise<ClassifiedSite> {
+  const { data } = await client.get<ClassifiedSite>("/api/sites/classify", { params: { lat, lon } });
+  return data;
+}
+
+export async function classifyByName(q: string): Promise<ClassifiedSite> {
+  const { data } = await client.get<ClassifiedSite>("/api/sites/classify", { params: { q } });
+  return data;
+}
+
+export async function suggestLocations(q: string, limit: number = 8): Promise<LocationSuggestion[]> {
+  const { data } = await client.get<LocationSuggestion[]>("/api/sites/suggest", { params: { q, limit } });
   return data;
 }
 

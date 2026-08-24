@@ -27,6 +27,8 @@ class Settings(BaseSettings):
     SUPABASE_JWT_SECRET: str = ""
     SUPABASE_PUBLISHABLE_KEY: str = ""
 
+    OCM_API_KEY: str = ""
+
     @property
     def cors_origin_list(self) -> list[str]:
         origins = [
