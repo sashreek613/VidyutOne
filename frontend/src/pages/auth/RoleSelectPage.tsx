@@ -30,15 +30,15 @@ export function RoleSelectPage() {
                 <MapPin className="w-6 h-6" />
               </div>
               <h3 className="text-lg font-bold text-white group-hover:text-cyan-300 transition-colors">
-                Planner / Agency
+                Planner / Authority
               </h3>
               <p className="text-xs text-vo-muted mt-1 leading-relaxed">
-                Government DISCOM, city planning agency, or CPO analyst evaluating EV infrastructure candidate sites.
+                Government DISCOM, city planning agency, or CPO analyst evaluating EV infrastructure candidate sites. Requires admin verification.
               </p>
             </div>
 
             <div className="pt-2 flex items-center text-xs font-semibold text-cyan-400 group-hover:translate-x-1 transition-transform space-x-1">
-              <span>Continue as Planner</span>
+              <span>Register as Planner / Authority</span>
               <ArrowRight className="w-4 h-4" />
             </div>
           </button>
@@ -71,10 +71,11 @@ export function RoleSelectPage() {
         <p className="text-center text-xs text-vo-muted pt-4">
           Already registered?{" "}
           <Link to="/login" className="text-white hover:underline font-medium">
-            Sign in to existing account
+            Sign in
           </Link>
         </p>
       </div>
     </AuthShell>
   );
 }
+

@@ -4,12 +4,13 @@ import { GuestRoute, ProtectedRoute, RoleProtectedRoute } from "./components/aut
 import { AuthProvider } from "./context/AuthProvider";
 import { DriverLayout } from "./layouts/DriverLayout";
 import { PlannerLayout } from "./layouts/PlannerLayout";
-import { LandingPage } from "./pages/LandingPage";
+import { AdminDashboardPage } from "./pages/admin/AdminDashboardPage";
 import { AuthCallbackPage } from "./pages/auth/AuthCallbackPage";
 import { DriverSignupPage } from "./pages/auth/DriverSignupPage";
 import { ForbiddenPage } from "./pages/auth/ForbiddenPage";
 import { ForgotPasswordPage } from "./pages/auth/ForgotPasswordPage";
 import { LoginPage } from "./pages/auth/LoginPage";
+import { PlannerPendingPage } from "./pages/auth/PlannerPendingPage";
 import { PlannerSignupPage } from "./pages/auth/PlannerSignupPage";
 import { ResetPasswordPage } from "./pages/auth/ResetPasswordPage";
 import { RoleSelectPage } from "./pages/auth/RoleSelectPage";
@@ -31,7 +32,15 @@ function App() {
     <BrowserRouter>
       <AuthProvider>
         <Routes>
-          <Route path="/" element={<LandingPage />} />
+          <Route
+            path="/"
+            element={
+              <GuestRoute>
+                <RoleSelectPage />
+              </GuestRoute>
+            }
+          />
+          <Route path="/get-started" element={<Navigate to="/" replace />} />
           <Route
             path="/login"
             element={
@@ -40,15 +49,7 @@ function App() {
               </GuestRoute>
             }
           />
-          <Route
-            path="/get-started"
-            element={
-              <GuestRoute>
-                <RoleSelectPage />
-              </GuestRoute>
-            }
-          />
-          <Route path="/signup" element={<Navigate to="/get-started" replace />} />
+          <Route path="/signup" element={<Navigate to="/" replace />} />
           <Route
             path="/signup/planner"
             element={
@@ -63,6 +64,14 @@ function App() {
               <GuestRoute>
                 <DriverSignupPage />
               </GuestRoute>
+            }
+          />
+          <Route
+            path="/planner-pending"
+            element={
+              <ProtectedRoute>
+                <PlannerPendingPage />
+              </ProtectedRoute>
             }
           />
           <Route path="/verify-email" element={<VerifyEmailPage />} />
@@ -82,6 +91,14 @@ function App() {
               <ProtectedRoute>
                 <ForbiddenPage />
               </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin"
+            element={
+              <RoleProtectedRoute role="admin">
+                <AdminDashboardPage />
+              </RoleProtectedRoute>
             }
           />
           <Route
