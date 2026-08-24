@@ -7,9 +7,14 @@ import type {
   Charger,
   ChargingQuote,
   ChargingSummary,
+  ClassifiedSite,
+  DrivingProfile,
   HealthStatus,
+  LocationSuggestion,
   PricingTier,
   Profile,
+  RangeEstimate,
+  RecommendedSite,
   Site,
   Vehicle,
   VehicleCreate,
@@ -29,6 +34,18 @@ const client = axios.create({
 });
 
 client.interceptors.request.use(async (config) => {
+  const stored = localStorage.getItem("vidyutone-mock-session");
+  if (stored) {
+    try {
+      const mockSession = JSON.parse(stored);
+      if (mockSession.access_token) {
+        config.headers.Authorization = `Bearer ${mockSession.access_token}`;
+        return config;
+      }
+    } catch {
+      // ignore
+    }
+  }
   if (supabase) {
     const { data } = await supabase.auth.getSession();
     const token = data.session?.access_token;
@@ -61,6 +78,26 @@ export async function getSite(id: string): Promise<Site> {
   return data;
 }
 
+export async function getRecommendedSites(limit: number = 10): Promise<RecommendedSite[]> {
+  const { data } = await client.get<RecommendedSite[]>("/api/sites/recommended", { params: { limit } });
+  return data;
+}
+
+export async function classifyByCoords(lat: number, lon: number): Promise<ClassifiedSite> {
+  const { data } = await client.get<ClassifiedSite>("/api/sites/classify", { params: { lat, lon } });
+  return data;
+}
+
+export async function classifyByName(q: string): Promise<ClassifiedSite> {
+  const { data } = await client.get<ClassifiedSite>("/api/sites/classify", { params: { q } });
+  return data;
+}
+
+export async function suggestLocations(q: string, limit: number = 8): Promise<LocationSuggestion[]> {
+  const { data } = await client.get<LocationSuggestion[]>("/api/sites/suggest", { params: { q, limit } });
+  return data;
+}
+
 export async function getChargers(): Promise<Charger[]> {
   const { data } = await client.get<Charger[]>("/api/chargers");
   return data;
@@ -68,6 +105,16 @@ export async function getChargers(): Promise<Charger[]> {
 
 export async function getCharger(id: string): Promise<Charger> {
   const { data } = await client.get<Charger>(`/api/chargers/${id}`);
+  return data;
+}
+
+/** Explicit, user-triggered live OpenChargeMap call for the given area --
+ * never call this automatically (on page load, battery-% change, etc.).
+ * See DriverHomePage.tsx's "Refresh nearby chargers" control. */
+export async function refreshNearbyChargers(lat: number, lon: number, radiusKm: number = 10): Promise<Charger[]> {
+  const { data } = await client.post<Charger[]>("/api/chargers/refresh", null, {
+    params: { lat, lon, radius_km: radiusKm },
+  });
   return data;
 }
 
@@ -79,8 +126,18 @@ export async function createBooking(payload: BookingCreate): Promise<Booking> {
   return data;
 }
 
+export async function getBookings(): Promise<Booking[]> {
+  const { data } = await client.get<Booking[]>("/api/bookings");
+  return data;
+}
+
 export async function getBooking(id: string): Promise<Booking> {
   const { data } = await client.get<Booking>(`/api/bookings/${id}`);
+  return data;
+}
+
+export async function cancelBooking(bookingId: string): Promise<Booking> {
+  const { data } = await client.patch<Booking>(`/api/bookings/${bookingId}/cancel`);
   return data;
 }
 
@@ -101,6 +158,28 @@ export async function updateVehicle(id: string, payload: VehicleUpdate): Promise
 
 export async function deleteVehicle(id: string): Promise<void> {
   await client.delete(`/api/vehicles/${id}`);
+}
+
+export interface RangeQueryParams {
+  /** Driver's current location (not the vehicle's -- vehicles have no
+   * stored location), used server-side only to look up ambient
+   * temperature. Omit either one to skip the temperature adjustment. */
+  lat?: number;
+  lon?: number;
+  climateControl?: boolean;
+  drivingProfile?: DrivingProfile;
+}
+
+export async function getVehicleRange(id: string, params: RangeQueryParams = {}): Promise<RangeEstimate> {
+  const { data } = await client.get<RangeEstimate>(`/api/vehicles/${id}/range`, {
+    params: {
+      lat: params.lat,
+      lon: params.lon,
+      climate_control: params.climateControl,
+      driving_profile: params.drivingProfile,
+    },
+  });
+  return data;
 }
 
 export async function getSlotPrice(slotIso: string, basePrice: number = 120.0): Promise<PricingTier> {
@@ -149,5 +228,3 @@ export async function rejectPlanner(userId: string, reason?: string): Promise<Pr
   });
   return data;
 }
-
-
