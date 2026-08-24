@@ -133,6 +133,17 @@ export function DriverHomePage() {
           <p className="mt-1 text-[12px] text-vo-muted">Powered by the existing pricing engine · your bookings only</p>
         </Link>
 
+        <Link
+          to="/driver/bookings"
+          className="block rounded-2xl border border-vo-line bg-vo-card p-4 hover:border-emerald-500/40 transition-colors"
+        >
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-emerald-400">
+            Reservations
+          </p>
+          <p className="mt-1 text-[16px] font-bold text-white">My Bookings</p>
+          <p className="mt-1 text-[12px] text-vo-muted">View upcoming and past charging reservations</p>
+        </Link>
+
         <label className="flex h-12 items-center gap-3 rounded-2xl border border-vo-line bg-vo-card px-4 shadow-inner">
           <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-emerald-400 text-black shrink-0">
             <ArrowUpRight size={14} />

@@ -37,6 +37,7 @@ export interface Profile {
   email: string;
   role: UserRole;
   created_at: string;
+  organization?: string;
 }
 
 export interface Site {
@@ -116,6 +117,8 @@ export interface Booking {
   price: number;
   status: BookingStatus;
   created_at: string;
+  duration_minutes?: number;
+  charger?: Charger;
 }
 
 export interface BookingCreate {

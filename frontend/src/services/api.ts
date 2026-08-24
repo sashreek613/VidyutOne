@@ -32,6 +32,18 @@ const client = axios.create({
 });
 
 client.interceptors.request.use(async (config) => {
+  const stored = localStorage.getItem("vidyutone-mock-session");
+  if (stored) {
+    try {
+      const mockSession = JSON.parse(stored);
+      if (mockSession.access_token) {
+        config.headers.Authorization = `Bearer ${mockSession.access_token}`;
+        return config;
+      }
+    } catch {
+      // ignore
+    }
+  }
   if (supabase) {
     const { data } = await supabase.auth.getSession();
     const token = data.session?.access_token;
@@ -151,6 +163,16 @@ export async function getChargingQuote(chargerId: string, slots: string[]): Prom
     charger_id: chargerId,
     slots,
   });
+  return data;
+}
+
+export async function getBookings(): Promise<Booking[]> {
+  const { data } = await client.get<Booking[]>("/api/bookings");
+  return data;
+}
+
+export async function cancelBooking(bookingId: string): Promise<Booking> {
+  const { data } = await client.patch<Booking>(`/api/bookings/${bookingId}/cancel`);
   return data;
 }
 

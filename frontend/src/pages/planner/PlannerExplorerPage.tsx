@@ -1,11 +1,11 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, MapPin, ArrowRight, Filter } from "lucide-react";
+import { Search, MapPin, ArrowRight } from "lucide-react";
 
 import { ScreenState } from "../../components/common/ScreenState";
 import { TopBar } from "../../components/planner/TopBar";
 import { useSites } from "../../hooks/useApiData";
-import type { Recommendation, Site } from "../../types";
+import type { Site } from "../../types";
 
 export function PlannerExplorerPage() {
   const { data: sites, error, loading } = useSites();

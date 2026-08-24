@@ -8,6 +8,10 @@ from app.schemas.health import HealthResponse
 
 def create_app() -> FastAPI:
     settings = get_settings()
+    if "sqlite" in settings.DATABASE_URL:
+        from app.database.session import Base, engine
+        Base.metadata.create_all(bind=engine)
+
     app = FastAPI(
         title="VidyutOne API",
         description="EV mobility intelligence platform — MVP backend",

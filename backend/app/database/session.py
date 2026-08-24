@@ -14,7 +14,9 @@ def _engine_kwargs(database_url: str) -> dict:
     Supabase's transaction pooler (port 6543 / *.pooler.supabase.com) does not
     support prepared statements the way psycopg expects, so they are disabled.
     """
-    connect_args: dict = {"connect_timeout": 10}
+    connect_args: dict = {}
+    if "sqlite" not in database_url:
+        connect_args["connect_timeout"] = 10
     pooled = ":6543" in database_url or "pooler.supabase.com" in database_url
     if pooled:
         connect_args["prepare_threshold"] = None

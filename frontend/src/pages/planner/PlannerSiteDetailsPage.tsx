@@ -6,7 +6,6 @@ import { ScreenState } from "../../components/common/ScreenState";
 import { ChartCard } from "../../components/planner/ChartCard";
 import { ExplainableVerdictCard } from "../../components/planner/ExplainableVerdictCard";
 import { SiteMap } from "../../components/planner/SiteMap";
-import { SiteRecommendationPanel } from "../../components/planner/SiteRecommendationPanel";
 import { TopBar } from "../../components/planner/TopBar";
 import { useChargers, useSite } from "../../hooks/useApiData";
 import { formatCoord, formatKm } from "../../utils/format";

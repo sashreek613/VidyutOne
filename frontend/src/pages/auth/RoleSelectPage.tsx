@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { MapPin, BatteryCharging, ArrowRight, ShieldCheck, Zap } from "lucide-react";
+import { MapPin, BatteryCharging, ArrowRight } from "lucide-react";
 import { AuthShell } from "../../components/auth/AuthShell";
 
 export function RoleSelectPage() {
