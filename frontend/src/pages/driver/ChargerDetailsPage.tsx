@@ -1,4 +1,4 @@
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Navigation } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useMemo } from "react";
 
@@ -123,18 +123,32 @@ export function ChargerDetailsPage() {
               </ul>
             </div>
 
-            {charger.bookable === false ? (
-              <div className="fixed bottom-5 left-1/2 z-10 flex h-12 w-[min(382px,calc(100%-40px))] -translate-x-1/2 items-center justify-center rounded-2xl border border-[#c7d2fe] bg-[#eef2ff] text-[13px] font-medium text-[#4338ca]">
-                Info only -- booking not available for this station yet
-              </div>
-            ) : (
-              <Link
-                to={`/driver/charger/${charger.id}/book`}
-                className="fixed bottom-5 left-1/2 z-10 flex h-12 w-[min(382px,calc(100%-40px))] -translate-x-1/2 items-center justify-center rounded-2xl bg-vo-accent text-[14px] font-semibold text-[#06231b]"
+            {/* Bottom action bar: Navigate + Book/Info */}
+            <div className="fixed bottom-5 left-1/2 z-10 flex w-[min(382px,calc(100%-40px))] -translate-x-1/2 items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  const url = `https://www.google.com/maps/dir/?api=1&origin=${origin.latitude},${origin.longitude}&destination=${charger.latitude},${charger.longitude}`;
+                  window.open(url, "_blank", "noopener,noreferrer");
+                }}
+                className="flex h-12 items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-5 text-[14px] font-bold text-slate-950 hover:bg-emerald-400 transition-colors shadow-sm shrink-0"
               >
-                Pick charging window
-              </Link>
-            )}
+                <Navigation size={16} />
+                Navigate
+              </button>
+              {charger.bookable === false ? (
+                <div className="flex h-12 flex-1 items-center justify-center rounded-2xl border border-[#c7d2fe] bg-[#eef2ff] text-[13px] font-medium text-[#4338ca]">
+                  Info only
+                </div>
+              ) : (
+                <Link
+                  to={`/driver/charger/${charger.id}/book`}
+                  className="flex h-12 flex-1 items-center justify-center rounded-2xl bg-vo-accent text-[14px] font-semibold text-[#06231b]"
+                >
+                  Book Slot
+                </Link>
+              )}
+            </div>
           </div>
         ) : null}
       </ScreenState>

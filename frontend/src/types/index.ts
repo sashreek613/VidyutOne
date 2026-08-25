@@ -44,7 +44,6 @@ export interface Profile {
   verification_status?: "pending" | "approved" | "rejected";
   rejection_reason?: string | null;
   created_at: string;
-  organization?: string;
 }
 
 

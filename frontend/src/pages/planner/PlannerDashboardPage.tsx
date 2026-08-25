@@ -9,7 +9,7 @@ import { LocationVerdictPanel } from "../../components/planner/LocationVerdictPa
 import { SiteMap, type MapFocus, type MapPoint } from "../../components/planner/SiteMap";
 import { TopBar } from "../../components/planner/TopBar";
 import { TopRecommendedSites } from "../../components/planner/TopRecommendedSites";
-import { useClassify, useRecommendedSites, useSites } from "../../hooks/useApiData";
+import { useChargers, useClassify, useRecommendedSites, useSites } from "../../hooks/useApiData";
 import type { LocationSuggestion, Site } from "../../types";
 
 interface ActivePoint {
@@ -20,7 +20,9 @@ interface ActivePoint {
 
 export function PlannerDashboardPage() {
   const { data: sites, error, loading } = useSites();
+  const { data: existingChargers } = useChargers();
   const { data: recommendedSites } = useRecommendedSites(10);
+
   const navigate = useNavigate();
   const [showTechDetails, setShowTechDetails] = useState(false);
   const [selectedSiteId, setSelectedSiteId] = useState<string | null>(null);
@@ -144,6 +146,7 @@ export function PlannerDashboardPage() {
               <div className="relative h-[560px] overflow-hidden rounded-2xl border border-vo-line shadow-lg">
                 <SiteMap
                   legend={false}
+                  chargers={existingChargers ?? []}
                   points={sites.map((site) => ({
                     id: site.id,
                     name: site.name,
@@ -155,7 +158,10 @@ export function PlannerDashboardPage() {
                   onMapClick={handleMapClick}
                   focus={focus}
                   highlight={highlight}
+                  classifiedResult={classify.result}
+                  selectedSite={selectedSite}
                 />
+
 
                 <LocationSearchBox
                   className="absolute left-4 top-4 z-10"

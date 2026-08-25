@@ -1,3 +1,4 @@
+
 import { useMemo, useState } from "react";
 import { CheckCircle2, AlertTriangle, XCircle, ChevronDown, ChevronUp, Activity } from "lucide-react";
 
@@ -121,9 +122,8 @@ export function PlannerGridPage() {
                             <td className="py-3 font-mono">{insights.peakLoadPct}%</td>
                             <td className="py-3 font-mono text-vo-accent">{insights.headroomKva} kVA</td>
                             <td className="py-3">
-                              <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase border ${
-                                isReady ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400" : isManaged ? "bg-amber-500/10 border-amber-500/30 text-amber-400" : "bg-red-500/10 border-red-500/30 text-red-400"
-                              }`}>
+                              <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase border ${isReady ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400" : isManaged ? "bg-amber-500/10 border-amber-500/30 text-amber-400" : "bg-red-500/10 border-red-500/30 text-red-400"
+                                }`}>
                                 {isReady ? "Capacity Available" : isManaged ? "Needs Management" : "Upgrade Required"}
                               </span>
                             </td>

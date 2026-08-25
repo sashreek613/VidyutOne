@@ -39,7 +39,8 @@ class BookingRead(BaseModel):
         if isinstance(obj, Booking):
             charger_val = None
             if obj.charger:
-                charger_val = ChargerRead.model_validate(obj.charger)
+                from app.services.charger_service import _to_charger_read_from_db
+                charger_val = _to_charger_read_from_db(obj.charger)
                 
             return cls(
                 id=obj.id,
