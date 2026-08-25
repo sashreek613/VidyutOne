@@ -1,3 +1,4 @@
+import { Navigation } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import type { Charger } from "../../types";
@@ -12,11 +13,22 @@ interface ChargerCardProps {
    * sortByRecommendation in DriverHomePage.tsx) -- display only, omit for
    * the full/unranked list. */
   rank?: number;
+  /** Driver's current origin, used to build the "Navigate" Google Maps URL. */
+  origin?: { latitude: number; longitude: number };
 }
 
-export function ChargerCard({ charger, km, freeCount, totalCount, rank }: ChargerCardProps) {
+export function ChargerCard({ charger, km, freeCount, totalCount, rank, origin }: ChargerCardProps) {
   const isReal = charger.provenance === "REAL";
   const tight = freeCount <= 1;
+
+  function handleNavigate(e: React.MouseEvent) {
+    // Prevent the parent <Link> from navigating to charger details
+    e.preventDefault();
+    e.stopPropagation();
+    const from = origin ? `${origin.latitude},${origin.longitude}&` : "";
+    const url = `https://www.google.com/maps/dir/?api=1&${from ? `origin=${from}` : ""}destination=${charger.latitude},${charger.longitude}`;
+    window.open(url, "_blank", "noopener,noreferrer");
+  }
 
   return (
     <Link
@@ -49,7 +61,7 @@ export function ChargerCard({ charger, km, freeCount, totalCount, rank }: Charge
             )}
           </p>
         </div>
-        <div className="text-right">
+        <div className="flex flex-col items-end gap-1.5">
           {isReal ? (
             <span className="inline-flex rounded-full bg-[#eef2ff] px-2.5 py-1 text-[10px] font-semibold tracking-[0.08em] text-[#4338ca]">
               INFO ONLY
@@ -63,11 +75,20 @@ export function ChargerCard({ charger, km, freeCount, totalCount, rank }: Charge
               >
                 {freeCount} OF {totalCount} FREE
               </span>
-              <p className={`mt-1 text-[12px] ${charger.availability ? "text-[#0b7a52]" : "text-[#b78100]"}`}>
+              <p className={`text-[12px] ${charger.availability ? "text-[#0b7a52]" : "text-[#b78100]"}`}>
                 {charger.availability ? "No wait" : "In use"}
               </p>
             </>
           )}
+          {/* Navigate button – always visible */}
+          <button
+            type="button"
+            onClick={handleNavigate}
+            className="mt-0.5 inline-flex items-center gap-1 rounded-full bg-emerald-500 px-2.5 py-1 text-[10px] font-bold text-slate-950 hover:bg-emerald-400 transition-colors shadow-sm"
+          >
+            <Navigation size={10} />
+            Navigate
+          </button>
         </div>
       </div>
       <p className="mt-3 text-[12px] text-driver-muted">

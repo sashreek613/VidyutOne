@@ -294,10 +294,16 @@ export function DriverHomePage() {
       setRefreshedReal(fresh);
       setLastRefreshAt(Date.now());
     } catch (err: unknown) {
-      setRefreshError(err instanceof Error ? err.message : "Couldn't refresh nearby chargers.");
+      const msg = err instanceof Error ? err.message : "Couldn't refresh nearby chargers.";
+      if (msg.includes("503") || msg.includes("502")) {
+        setRefreshError("Live OpenChargeMap refresh unavailable -- using cached charger data.");
+      } else {
+        setRefreshError(msg);
+      }
     } finally {
       setRefreshing(false);
     }
+
   }
 
   return (
@@ -498,6 +504,7 @@ export function DriverHomePage() {
                     freeCount={row.freeCount}
                     totalCount={row.totalCount}
                     rank={index + 1}
+                    origin={origin}
                   />
                 ))}
               </div>
@@ -523,6 +530,7 @@ export function DriverHomePage() {
                       km={row.km}
                       freeCount={row.freeCount}
                       totalCount={row.totalCount}
+                      origin={origin}
                     />
                   ))}
                 </div>
