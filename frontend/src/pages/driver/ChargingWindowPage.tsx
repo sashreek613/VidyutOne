@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 
 import { StatusBar } from "../../components/driver/StatusBar";
 import { DynamicPriceCard } from "../../components/driver/DynamicPriceCard";
@@ -228,6 +229,14 @@ export function ChargingWindowPage() {
       <ScreenState loading={loading} error={error} tone="light">
         {charger ? (
           <div className="px-5 pt-4">
+            <button
+              type="button"
+              onClick={() => void navigate(-1)}
+              className="mb-4 flex h-9 w-9 items-center justify-center rounded-full bg-white shadow border border-driver-line"
+              aria-label="Back"
+            >
+              <ArrowLeft size={16} />
+            </button>
             <p className="text-[11px] tracking-[0.18em] text-driver-muted">
               — {charger.name.replace(" (demo)", "").toUpperCase()}
             </p>

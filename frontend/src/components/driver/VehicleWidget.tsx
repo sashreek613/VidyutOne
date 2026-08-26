@@ -322,7 +322,7 @@ export function VehicleWidget({
         >
           <span className="flex items-center space-x-1.5">
             <Wind className="w-3.5 h-3.5" />
-            <span>Climate control</span>
+            <span>AC</span>
           </span>
           <span className="font-semibold">{climateControl ? "On" : "Off"}</span>
         </button>
