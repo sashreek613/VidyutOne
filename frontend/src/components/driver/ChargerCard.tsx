@@ -1,7 +1,8 @@
-import { Navigation } from "lucide-react";
+import { Calendar, Navigation } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import type { Charger } from "../../types";
+import { isChargerBookable } from "../../utils/chargerFilters";
 import { formatInr, formatKm } from "../../utils/format";
 
 interface ChargerCardProps {
@@ -15,14 +16,34 @@ interface ChargerCardProps {
   rank?: number;
   /** Driver's current origin, used to build the "Navigate" Google Maps URL. */
   origin?: { latitude: number; longitude: number };
+  selected?: boolean;
+  onSelect?: (chargerId: string) => void;
 }
 
-export function ChargerCard({ charger, km, freeCount, totalCount, rank, origin }: ChargerCardProps) {
+function availabilityCopy(charger: Charger): string {
+  if (charger.provenance === "REAL") {
+    if (charger.availability === null) return "Status unknown";
+    return charger.availability ? "Operational" : "Reported down";
+  }
+  if (charger.availability === null) return "Status unknown";
+  return charger.availability ? "Live" : "Offline";
+}
+
+export function ChargerCard({
+  charger,
+  km,
+  freeCount,
+  totalCount,
+  rank,
+  origin,
+  selected = false,
+  onSelect,
+}: ChargerCardProps) {
   const isReal = charger.provenance === "REAL";
   const tight = freeCount <= 1;
+  const bookable = isChargerBookable(charger);
 
   function handleNavigate(e: React.MouseEvent) {
-    // Prevent the parent <Link> from navigating to charger details
     e.preventDefault();
     e.stopPropagation();
     const from = origin ? `${origin.latitude},${origin.longitude}&` : "";
@@ -31,15 +52,26 @@ export function ChargerCard({ charger, km, freeCount, totalCount, rank, origin }
   }
 
   return (
-    <Link
-      to={`/driver/charger/${charger.id}`}
-      className="block rounded-[22px] border border-driver-line bg-white px-4 py-4 shadow-[0_8px_24px_rgba(16,24,20,0.04)]"
+    <div
+      id={`charger-card-${charger.id}`}
+      role="button"
+      tabIndex={0}
+      onClick={() => onSelect?.(charger.id)}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onSelect?.(charger.id);
+        }
+      }}
+      className={`block rounded-[22px] border bg-driver-card px-4 py-4 shadow-[0_8px_24px_rgba(16,24,20,0.04)] ${
+        selected ? "border-emerald-500 ring-2 ring-emerald-400/40" : "border-driver-line"
+      }`}
     >
       <div className="flex items-start justify-between gap-3">
         <div>
           <div className="flex items-center gap-1.5">
             {rank !== undefined ? (
-              <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-driver-ink text-[9px] font-bold text-white">
+              <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-driver-ink text-[9px] font-bold text-driver-bg">
                 {rank}
               </span>
             ) : null}
@@ -52,17 +84,11 @@ export function ChargerCard({ charger, km, freeCount, totalCount, rank, origin }
           </div>
           <p className="mt-0.5 text-[12px] text-driver-muted">
             {charger.connector_type}
-            {isReal ? (
-              // OCM's status is infrastructure-operational, not live per-plug
-              // occupancy -- never phrase it like the demo "Live/Offline".
-              <> · {charger.availability === null ? "Status unknown" : charger.availability ? "Operational" : "Reported down"}</>
-            ) : (
-              <> · {charger.availability ? "Live" : "Offline"}</>
-            )}
+            <> · {availabilityCopy(charger)}</>
           </p>
         </div>
         <div className="flex flex-col items-end gap-1.5">
-          {isReal ? (
+          {!bookable ? (
             <span className="inline-flex rounded-full bg-[#eef2ff] px-2.5 py-1 text-[10px] font-semibold tracking-[0.08em] text-[#4338ca]">
               INFO ONLY
             </span>
@@ -75,20 +101,11 @@ export function ChargerCard({ charger, km, freeCount, totalCount, rank, origin }
               >
                 {freeCount} OF {totalCount} FREE
               </span>
-              <p className={`text-[12px] ${charger.availability ? "text-[#0b7a52]" : "text-[#b78100]"}`}>
-                {charger.availability ? "No wait" : "In use"}
+              <p className={`text-[12px] ${charger.availability === true ? "text-[#0b7a52]" : charger.availability === false ? "text-[#b78100]" : "text-driver-muted"}`}>
+                {charger.availability === true ? "No wait" : charger.availability === false ? "In use" : "Unknown"}
               </p>
             </>
           )}
-          {/* Navigate button – always visible */}
-          <button
-            type="button"
-            onClick={handleNavigate}
-            className="mt-0.5 inline-flex items-center gap-1 rounded-full bg-emerald-500 px-2.5 py-1 text-[10px] font-bold text-slate-950 hover:bg-emerald-400 transition-colors shadow-sm"
-          >
-            <Navigation size={10} />
-            Navigate
-          </button>
         </div>
       </div>
       <p className="mt-3 text-[12px] text-driver-muted">
@@ -98,6 +115,33 @@ export function ChargerCard({ charger, km, freeCount, totalCount, rank, origin }
         <span className="mx-2 text-driver-line">|</span>
         {charger.price_per_kwh !== null ? formatInr(charger.price_per_kwh) : "Price unknown"}
       </p>
-    </Link>
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <Link
+          to={`/driver/charger/${charger.id}`}
+          onClick={(event) => event.stopPropagation()}
+          className="inline-flex items-center rounded-full border border-driver-line bg-driver-bg px-2.5 py-1 text-[10px] font-bold text-driver-ink"
+        >
+          View Details
+        </Link>
+        {bookable ? (
+          <Link
+            to={`/driver/charger/${charger.id}/book`}
+            onClick={(event) => event.stopPropagation()}
+            className="inline-flex items-center gap-1 rounded-full bg-vo-accent px-2.5 py-1 text-[10px] font-bold text-[#06231b]"
+          >
+            <Calendar size={10} />
+            Book Now
+          </Link>
+        ) : null}
+        <button
+          type="button"
+          onClick={handleNavigate}
+          className="inline-flex items-center gap-1 rounded-full bg-emerald-500 px-2.5 py-1 text-[10px] font-bold text-slate-950 hover:bg-emerald-400 transition-colors shadow-sm"
+        >
+          <Navigation size={10} />
+          Navigate
+        </button>
+      </div>
+    </div>
   );
 }

@@ -12,10 +12,21 @@ interface LocationSearchBoxProps {
   onSubmitFreeText: (query: string) => void;
   onClear: () => void;
   className?: string;
+  placeholder?: string;
+  initialQuery?: string;
+  compact?: boolean;
 }
 
-export function LocationSearchBox({ onSelectSuggestion, onSubmitFreeText, onClear, className = "" }: LocationSearchBoxProps) {
-  const [query, setQuery] = useState("");
+export function LocationSearchBox({
+  onSelectSuggestion,
+  onSubmitFreeText,
+  onClear,
+  className = "",
+  placeholder = "Search a location or click the map...",
+  initialQuery = "",
+  compact = false,
+}: LocationSearchBoxProps) {
+  const [query, setQuery] = useState(initialQuery);
   const [suggestions, setSuggestions] = useState<LocationSuggestion[]>([]);
   const [open, setOpen] = useState(false);
   const debounceRef = useRef<number | undefined>(undefined);
@@ -86,7 +97,9 @@ export function LocationSearchBox({ onSelectSuggestion, onSubmitFreeText, onClea
     <div className={`relative ${className}`}>
       <form
         onSubmit={handleSubmit}
-        className="flex items-center gap-2 rounded-xl border border-vo-line bg-[#0d131f]/95 px-3 py-2 shadow-2xl backdrop-blur"
+        className={`flex items-center gap-2 border border-vo-line bg-vo-card px-3 shadow-sm ${
+          compact ? "h-9 rounded-full py-0" : "rounded-xl py-2"
+        }`}
       >
         <Search className="h-4 w-4 shrink-0 text-vo-muted" />
         <input
@@ -102,18 +115,18 @@ export function LocationSearchBox({ onSelectSuggestion, onSubmitFreeText, onClea
               setOpen(false);
             }
           }}
-          placeholder="Search a location or click the map..."
-          className="w-64 bg-transparent text-sm text-white placeholder:text-vo-muted focus:outline-none"
+          placeholder={placeholder}
+          className="min-w-0 w-full bg-transparent text-sm text-vo-text placeholder:text-vo-muted focus:outline-none"
         />
         {query ? (
-          <button type="button" onClick={handleClear} aria-label="Clear search" className="shrink-0 text-vo-muted hover:text-white">
+          <button type="button" onClick={handleClear} aria-label="Clear search" className="shrink-0 text-vo-muted hover:text-vo-text">
             <X className="h-3.5 w-3.5" />
           </button>
         ) : null}
       </form>
 
       {open && effectiveSuggestions.length > 0 ? (
-        <ul className="absolute left-0 right-0 z-10 mt-1 max-h-72 overflow-auto rounded-xl border border-vo-line bg-[#0d131f]/95 shadow-2xl backdrop-blur">
+        <ul className="absolute left-0 right-0 z-50 mt-1 max-h-72 overflow-auto rounded-xl border border-vo-line bg-vo-card shadow-lg">
           {effectiveSuggestions.map((suggestion) => (
             <li key={suggestion.id}>
               <button
@@ -125,7 +138,7 @@ export function LocationSearchBox({ onSelectSuggestion, onSubmitFreeText, onClea
                   event.preventDefault();
                   selectSuggestion(suggestion);
                 }}
-                className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-xs text-white hover:bg-white/5"
+                className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-xs text-vo-text hover:bg-vo-line"
               >
                 <span className="truncate">{suggestion.name}</span>
                 <span className="shrink-0 text-[10px] uppercase tracking-wide text-vo-muted">

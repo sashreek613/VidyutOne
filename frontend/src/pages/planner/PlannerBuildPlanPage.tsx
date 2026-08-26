@@ -40,7 +40,7 @@ export function PlannerBuildPlanPage() {
             {/* Header & Subtitle */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
-                <h1 className="text-xl font-bold text-white flex items-center space-x-2">
+                <h1 className="text-xl font-bold text-vo-text flex items-center space-x-2">
                   <ClipboardList className="w-5 h-5 text-vo-accent" />
                   <span>Build Plan</span>
                 </h1>
@@ -52,7 +52,7 @@ export function PlannerBuildPlanPage() {
               <button
                 type="button"
                 onClick={() => window.print()}
-                className="inline-flex items-center space-x-2 px-4 py-2 rounded-xl bg-vo-card border border-vo-line hover:border-vo-accent/40 text-xs font-semibold text-white transition-colors"
+                className="inline-flex items-center space-x-2 px-4 py-2 rounded-xl bg-vo-card border border-vo-line hover:border-vo-accent/40 text-xs font-semibold text-vo-text transition-colors"
               >
                 <Printer className="w-4 h-4 text-vo-accent" />
                 <span>Print Build Plan</span>
@@ -62,7 +62,7 @@ export function PlannerBuildPlanPage() {
             {/* Action Banner */}
             <div className="rounded-2xl border border-emerald-500/30 bg-gradient-to-r from-emerald-500/10 via-gray-900 to-cyan-500/10 p-6 flex flex-col md:flex-row items-center justify-between gap-4 shadow-lg">
               <div className="space-y-1">
-                <div className="text-xs font-bold font-mono uppercase tracking-wider text-emerald-400">Phase 1 Infrastructure Deployment</div>
+                <div className="text-xs font-bold font-mono uppercase tracking-wider text-vo-good-ink">Phase 1 Infrastructure Deployment</div>
                 <h2 className="text-lg font-bold text-white">
                   Recommended for Phase 1: {summary.totalSites} Sites / {summary.totalChargers} Chargers
                 </h2>
@@ -87,16 +87,16 @@ export function PlannerBuildPlanPage() {
                       className="rounded-2xl border border-vo-line bg-vo-card p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-vo-accent/40 transition-colors shadow-sm"
                     >
                       <div className="flex items-start space-x-4">
-                        <div className="w-10 h-10 rounded-xl bg-gray-900 border border-vo-line flex items-center justify-center font-mono font-bold text-sm text-vo-accent shrink-0">
+                        <div className="w-10 h-10 rounded-xl bg-vo-bg border border-vo-line flex items-center justify-center font-mono font-bold text-sm text-vo-accent shrink-0">
                           #{index + 1}
                         </div>
 
                         <div className="space-y-1">
                           <div className="flex items-center space-x-2">
-                            <h3 className="text-base font-bold text-white">{site.name.replace(" (demo)", "")}</h3>
+                            <h3 className="text-base font-bold text-vo-text">{site.name.replace(" (demo)", "")}</h3>
                             <span
                               className={`text-[10px] font-mono font-bold uppercase px-2.5 py-0.5 rounded border ${
-                                isBuild ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400" : "bg-amber-500/10 border-amber-500/30 text-amber-400"
+                                isBuild ? "bg-vo-good-bg border-vo-good-border text-vo-good-ink" : "bg-vo-warn-bg border-vo-warn-border text-vo-warn-ink"
                               }`}
                             >
                               {isBuild ? "BUILD" : "BUILD IF MANAGED"}
@@ -104,7 +104,7 @@ export function PlannerBuildPlanPage() {
                           </div>
 
                           <p className="text-xs text-vo-muted flex items-center space-x-2">
-                            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                            <ShieldCheck className="w-3.5 h-3.5 text-vo-good-ink shrink-0" />
                             <span>
                               {isBuild
                                 ? "Reason: High demand + grid capacity ready"
@@ -123,7 +123,7 @@ export function PlannerBuildPlanPage() {
                         <button
                           type="button"
                           onClick={() => navigate(`/planner/site/${site.id}`)}
-                          className="px-3.5 py-2 rounded-xl bg-gray-900 border border-vo-line hover:border-vo-accent/40 text-xs font-semibold text-white flex items-center space-x-1 transition-colors"
+                          className="px-3.5 py-2 rounded-xl bg-vo-bg border border-vo-line hover:border-vo-accent/40 text-xs font-semibold text-vo-text flex items-center space-x-1 transition-colors"
                         >
                           <span>Inspect</span>
                           <ArrowRight className="w-3.5 h-3.5" />

@@ -30,7 +30,7 @@ export function MetricCard({
     <article className="rounded-2xl border border-vo-border bg-vo-surface px-5 py-4">
       <p className="text-[12px] text-vo-muted">{label}</p>
       <div className="mt-2 flex items-end gap-2">
-        <p className="text-[32px] font-semibold leading-none tracking-tight text-white">{value}</p>
+        <p className="text-[32px] font-semibold leading-none tracking-tight text-vo-text">{value}</p>
         {delta ? <p className={`mb-0.5 text-[12px] ${deltaClass}`}>{delta}</p> : null}
       </div>
       <p className="mt-2 text-[12px] text-vo-muted">{hint}</p>

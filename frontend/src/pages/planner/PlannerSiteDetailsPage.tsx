@@ -43,7 +43,7 @@ function SiteIntelligence({
 
   return (
     <div className="space-y-5 px-6 py-5">
-      <Link to="/planner/explorer" className="inline-flex items-center gap-2 text-[12px] font-medium text-vo-muted hover:text-white transition-colors">
+      <Link to="/planner/explorer" className="inline-flex items-center gap-2 text-[12px] font-medium text-vo-muted hover:text-vo-text transition-colors">
         <ArrowLeft size={14} />
         Back to candidate sites
       </Link>
@@ -51,7 +51,7 @@ function SiteIntelligence({
 
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h2 className="text-[32px] font-semibold tracking-tight text-white">{site.name.replace(" (demo)", "")}</h2>
+          <h2 className="text-[32px] font-semibold tracking-tight text-vo-text">{site.name.replace(" (demo)", "")}</h2>
           <p className="mt-1 text-[13px] text-vo-muted">
             {site.id} · {formatCoord(site.latitude, "N")}, {formatCoord(site.longitude, "E")}
           </p>
@@ -138,9 +138,9 @@ function SiteIntelligence({
                 {nearby.map((charger) => (
                   <li key={charger.id} className="flex items-start justify-between gap-3 text-[12px]">
                     <div>
-                      <p className="text-[13px] text-white">{charger.name.replace(" (demo)", "")}</p>
+                      <p className="text-[13px] text-vo-text">{charger.name.replace(" (demo)", "")}</p>
                       <p className="text-vo-muted">
-                        {charger.connector_type} · {charger.power_kw} kW · {charger.availability ? "live" : "offline"}
+                        {charger.connector_type} · {charger.power_kw !== null ? `${charger.power_kw} kW` : "power unknown"} · {charger.availability === null ? "status unknown" : charger.availability ? "live" : "offline"}
                       </p>
                     </div>
                     <span className={charger.availability ? "text-vo-soft" : "text-vo-red"}>{formatKm(charger.km)}</span>
@@ -159,7 +159,7 @@ function ScoreCard({ label, value, hint }: { label: string; value: string; hint:
   return (
     <article className="rounded-2xl border border-vo-border bg-vo-surface px-4 py-3">
       <p className="text-[11px] tracking-[0.14em] text-vo-muted">{label.toUpperCase()}</p>
-      <p className="mt-1 text-[22px] font-semibold text-white">{value}</p>
+      <p className="mt-1 text-[22px] font-semibold text-vo-text">{value}</p>
       <p className="mt-1 text-[11px] text-vo-muted">{hint}</p>
     </article>
   );
@@ -169,7 +169,7 @@ function Row({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center justify-between gap-3 border-b border-vo-line py-1.5 last:border-0">
       <dt className="text-vo-muted">{label}</dt>
-      <dd className="text-white">{value}</dd>
+      <dd className="text-vo-text">{value}</dd>
     </div>
   );
 }

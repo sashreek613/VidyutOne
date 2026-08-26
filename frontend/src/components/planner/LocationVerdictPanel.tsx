@@ -11,20 +11,21 @@ interface LocationVerdictPanelProps {
   errorMessage: string | null;
   legend: { build: number; managed: number; dont: number };
   onClear: () => void;
+  siteId?: string | null;
 }
 
 /** The right-hand column on the map-first Overview. Four states -- see the
  * per-state components below; RESULT never blanks while a new search is
  * LOADING (the panel dims the previous result instead). */
-export function LocationVerdictPanel({ status, result, errorMessage, legend, onClear }: LocationVerdictPanelProps) {
+export function LocationVerdictPanel({ status, result, errorMessage, legend, onClear, siteId = null }: LocationVerdictPanelProps) {
   const showClear = status !== "empty";
 
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-vo-line bg-vo-card">
       <div className="flex shrink-0 items-center justify-between border-b border-vo-line px-4 py-3">
-        <h3 className="text-sm font-bold text-white">Location Assessment</h3>
+        <h3 className="text-sm font-bold text-vo-text">Location Assessment</h3>
         {showClear ? (
-          <button type="button" onClick={onClear} aria-label="Clear assessment" className="text-vo-muted hover:text-white">
+          <button type="button" onClick={onClear} aria-label="Clear assessment" className="text-vo-muted hover:text-vo-text">
             <X className="h-4 w-4" />
           </button>
         ) : null}
@@ -33,7 +34,7 @@ export function LocationVerdictPanel({ status, result, errorMessage, legend, onC
       <div className="flex-1 overflow-y-auto p-4">
         {status === "empty" ? <EmptyState legend={legend} /> : null}
         {status === "error" ? <ErrorState message={errorMessage} /> : null}
-        {result ? <ResultState result={result} dimmed={status === "loading"} /> : null}
+        {result ? <ResultState result={result} dimmed={status === "loading"} siteId={siteId} /> : null}
         {status === "loading" && !result ? <LoadingSkeleton /> : null}
       </div>
     </div>
@@ -48,13 +49,13 @@ function EmptyState({ legend }: { legend: LocationVerdictPanelProps["legend"] })
       </p>
       <div className="flex items-center gap-3 text-xs">
         <span className="text-vo-muted">
-          <span className="font-semibold text-emerald-400">{legend.build}</span> Build
+          <span className="font-semibold text-vo-good-ink">{legend.build}</span> Build
         </span>
         <span className="text-vo-muted">
-          <span className="font-semibold text-amber-400">{legend.managed}</span> Managed
+          <span className="font-semibold text-vo-warn-ink">{legend.managed}</span> Managed
         </span>
         <span className="text-vo-muted">
-          <span className="font-semibold text-red-400">{legend.dont}</span> Unsuitable
+          <span className="font-semibold text-vo-bad-ink">{legend.dont}</span> Unsuitable
         </span>
       </div>
     </div>
@@ -102,12 +103,12 @@ function displayTitle(result: ClassifiedSite): string {
   return "Custom location";
 }
 
-function ResultState({ result, dimmed }: { result: ClassifiedSite; dimmed: boolean }) {
+function ResultState({ result, dimmed, siteId }: { result: ClassifiedSite; dimmed: boolean; siteId: string | null }) {
   return (
     <div className={dimmed ? "opacity-60 transition-opacity" : "transition-opacity"}>
       <div className="mb-3 flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <h4 className="truncate text-base font-bold text-white">{displayTitle(result)}</h4>
+          <h4 className="truncate text-base font-bold text-vo-text">{displayTitle(result)}</h4>
           <p className="font-mono text-[11px] text-vo-muted">
             {result.latitude.toFixed(4)}° N, {result.longitude.toFixed(4)}° E
           </p>
@@ -117,14 +118,20 @@ function ResultState({ result, dimmed }: { result: ClassifiedSite; dimmed: boole
 
       <ExplainableVerdictCard site={result} />
 
-      {result.nearest_candidate ? (
+      {siteId ? (
+        <div className="mt-3 rounded-xl border border-vo-line bg-vo-bg/40 px-3 py-2.5 text-xs">
+          <Link to={`/planner/site/${siteId}`} className="inline-block font-medium text-vo-accent-ink hover:underline">
+            View site details →
+          </Link>
+        </div>
+      ) : result.nearest_candidate ? (
         <div className="mt-3 rounded-xl border border-vo-line bg-vo-bg/40 px-3 py-2.5 text-xs">
           <p className="mb-1 text-vo-muted">Nearest ranked candidate</p>
           <div className="flex items-center justify-between gap-2">
-            <span className="truncate font-medium text-white">{result.nearest_candidate.name.replace(" (demo)", "")}</span>
+            <span className="truncate font-medium text-vo-text">{result.nearest_candidate.name.replace(" (demo)", "")}</span>
             <span className="shrink-0 text-vo-muted">{result.nearest_candidate.distance_km.toFixed(1)} km</span>
           </div>
-          <Link to={`/planner/site/${result.nearest_candidate.id}`} className="mt-1 inline-block text-vo-accent hover:underline">
+          <Link to={`/planner/site/${result.nearest_candidate.id}`} className="mt-1 inline-block text-vo-accent-ink hover:underline">
             View site details →
           </Link>
         </div>
