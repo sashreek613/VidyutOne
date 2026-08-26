@@ -14,7 +14,7 @@ export function ChartCard({ title, meta, action, children, className = "", id }:
     <section id={id} className={`rounded-2xl border border-vo-border bg-vo-surface ${className}`}>
       <header className="flex items-center justify-between px-5 pt-4 pb-3">
         <div>
-          <h2 className="text-[14px] font-semibold text-white">{title}</h2>
+          <h2 className="text-[14px] font-semibold text-vo-text">{title}</h2>
           {meta ? <p className="mt-0.5 text-[11px] tracking-[0.14em] text-vo-muted">{meta}</p> : null}
         </div>
         {action}

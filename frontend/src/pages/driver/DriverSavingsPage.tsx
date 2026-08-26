@@ -141,7 +141,7 @@ export function DriverSavingsPage() {
         : "same";
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#0b0f17] pb-10 text-white">
+    <div className="flex min-h-screen flex-col bg-driver-bg pb-10 text-driver-ink">
       <StatusBar />
       <div className="px-5 pt-3">
         <Link to="/driver" className="inline-flex items-center gap-1 text-[12px] text-emerald-400">
@@ -378,7 +378,7 @@ function Row({ label, value }: { label: string; value: string }) {
 function EmptyHistory() {
   return (
     <div className="mt-3 rounded-xl border border-dashed border-emerald-500/20 bg-emerald-500/5 px-3 py-4">
-      <p className="text-[14px] font-semibold text-white">No charging history yet</p>
+      <p className="text-[14px] font-semibold text-driver-ink">No charging history yet</p>
       <p className="mt-1 text-[12px] text-vo-muted">
         Savings and trends appear after you complete charging sessions. Nothing here is invented.
       </p>

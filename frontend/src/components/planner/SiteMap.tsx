@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from "react";
-import { Map as MapLibreMap, Marker, Popup, type StyleSpecification } from "maplibre-gl";
+import { Map as MapLibreMap, Marker, Popup } from "maplibre-gl";
 
 import type { Charger, ClassifiedSite, Recommendation, Site } from "../../types";
-import { RECOMMENDATION_COLOR, RECOMMENDATION_LABEL } from "../../utils/recommendations";
+import { hasValidCoordinates } from "../../utils/chargerFilters";
+import { getLightBasemapStyle } from "../../utils/mapStyle";
+import { RECOMMENDATION_COLOR, RECOMMENDATION_INK, RECOMMENDATION_LABEL } from "../../utils/recommendations";
 
 export interface MapPoint {
   id: string;
@@ -50,33 +52,6 @@ const BBMP_MAX_LAT = 13.1426196;
 const BBMP_MIN_LON = 77.4598797;
 const BBMP_MAX_LON = 77.7840639;
 
-// Fast, reliable CARTO Voyager light map style (crisp roads, boundaries, geography)
-const CARTO_LIGHT_VOYAGER_STYLE: StyleSpecification = {
-  version: 8,
-  sources: {
-    "carto-voyager": {
-      type: "raster",
-      tiles: [
-        "https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png",
-        "https://b.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png",
-        "https://c.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png",
-        "https://d.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png",
-      ],
-      tileSize: 256,
-      attribution: "&copy; <a href=\"https://www.openstreetmap.org/copyright\" target=\"_blank\">OpenStreetMap</a> &copy; <a href=\"https://carto.com/attributions\" target=\"_blank\">CARTO</a>",
-    },
-  },
-  layers: [
-    {
-      id: "carto-voyager-tiles",
-      type: "raster",
-      source: "carto-voyager",
-      minzoom: 0,
-      maxzoom: 19,
-    },
-  ],
-};
-
 function buildRecommendationPopupHTML(data: {
   name: string;
   latitude: number;
@@ -89,14 +64,14 @@ function buildRecommendationPopupHTML(data: {
   charger_gap_score?: number;
   nearest_candidate?: { name: string; distance_km: number } | null;
 }): string {
-  const color = data.recommendation ? RECOMMENDATION_COLOR[data.recommendation] : "#10b981";
+  const ink = data.recommendation ? RECOMMENDATION_INK[data.recommendation] : "#166534";
   const label = data.recommendation ? RECOMMENDATION_LABEL[data.recommendation] : "ASSESSED LOCATION";
   const formattedTitle = data.name.replace(" (demo)", "");
   const coords = `${data.latitude.toFixed(4)}°N, ${data.longitude.toFixed(4)}°E`;
 
   let scoreBadge = "";
   if (typeof data.site_score === "number") {
-    scoreBadge = `<div style="font-family:monospace;font-weight:700;font-size:13px;color:${color}">${data.site_score.toFixed(1)}/100</div>`;
+    scoreBadge = `<div style="font-family:monospace;font-weight:700;font-size:13px;color:${ink}">${data.site_score.toFixed(1)}/100</div>`;
   }
 
   let factorsGrid = "";
@@ -123,7 +98,7 @@ function buildRecommendationPopupHTML(data: {
   return `
     <div style="min-width:220px;max-width:270px;font-family:var(--font-sans, sans-serif);padding:2px">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px">
-        <span style="display:inline-block;padding:2px 8px;border-radius:6px;font-size:10px;font-weight:700;letter-spacing:0.05em;background:${color}18;color:${color};border:1px solid ${color}44">
+        <span style="display:inline-block;padding:2px 8px;border-radius:6px;font-size:10px;font-weight:700;letter-spacing:0.05em;background:${ink}18;color:${ink};border:1px solid ${ink}44">
           ● ${label}
         </span>
         ${scoreBadge}
@@ -141,17 +116,22 @@ function buildRecommendationPopupHTML(data: {
 }
 
 function buildChargerPopupHTML(charger: Charger): string {
-  const isAvailable = charger.availability !== false;
-  const powerText = charger.power_kw ? `${charger.power_kw} kW` : "Fast Charger";
-  const priceText = charger.price_per_kwh ? `₹${charger.price_per_kwh}/kWh` : "Standard Rate";
-  const connectorText = charger.connector_type || "Type 2 / CCS2";
+  const availability =
+    charger.availability === true
+      ? { text: charger.provenance === "REAL" ? "Operational" : "Available", color: "#047857", dot: "#10b981" }
+      : charger.availability === false
+        ? { text: charger.provenance === "REAL" ? "Reported down" : "In use", color: "#b45309", dot: "#f59e0b" }
+        : { text: "Status unknown", color: "#64748b", dot: "#94a3b8" };
+  const powerText = charger.power_kw != null ? `${charger.power_kw} kW` : "Unknown";
+  const priceText = charger.price_per_kwh != null ? `₹${charger.price_per_kwh}/kWh` : "Unknown";
+  const connectorText = charger.connector_type?.trim() ? charger.connector_type : "Unknown";
 
   return `
     <div style="min-width:200px;max-width:250px;font-family:var(--font-sans, sans-serif);padding:2px">
       <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
-        <span style="height:8px;width:8px;border-radius:9999px;background:${isAvailable ? "#10b981" : "#f59e0b"}"></span>
-        <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:${isAvailable ? "#047857" : "#b45309"}">
-          ${isAvailable ? "Operating / Available" : "In Use / Busy"}
+        <span style="height:8px;width:8px;border-radius:9999px;background:${availability.dot}"></span>
+        <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:${availability.color}">
+          ${availability.text}
         </span>
       </div>
       <div style="font-weight:700;font-size:13px;color:#0f172a;line-height:1.2">
@@ -167,6 +147,7 @@ function buildChargerPopupHTML(charger: Charger): string {
 }
 
 export function SiteMap({
+  points = [],
   chargers = [],
   styleUrl,
   onPointClick,
@@ -184,17 +165,31 @@ export function SiteMap({
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const chargerMarkersRef = useRef<Marker[]>([]);
+  const siteMarkersRef = useRef<Marker[]>([]);
   const highlightMarkerRef = useRef<Marker | null>(null);
   const popupRef = useRef<Popup | null>(null);
   const [clickedCharger, setClickedCharger] = useState<Charger | null>(null);
+  const onPointClickRef = useRef(onPointClick);
+  const chargersByIdRef = useRef<Map<string, Charger>>(new Map());
 
-  const activeStyle = styleUrl ?? CARTO_LIGHT_VOYAGER_STYLE;
+  const activeStyle = styleUrl ?? getLightBasemapStyle();
   const initialViewRef = useRef({ center, zoom });
+  const chargerMarkerKey = chargers.map((charger) => charger.id).join("|");
+  const siteMarkerKey = points.map((point) => point.id).join("|");
+  const pointsRef = useRef(points);
+  const chargersListRef = useRef(chargers);
+
+  chargersByIdRef.current = new Map(chargers.map((charger) => [charger.id, charger]));
+  pointsRef.current = points;
+  chargersListRef.current = chargers;
 
   const onMapClickRef = useRef(onMapClick);
   useEffect(() => {
     onMapClickRef.current = onMapClick;
   }, [onMapClick]);
+  useEffect(() => {
+    onPointClickRef.current = onPointClick;
+  }, [onPointClick]);
 
   // --- Map lifecycle: created ONCE.
   useEffect(() => {
@@ -215,6 +210,7 @@ export function SiteMap({
       interactive,
     });
     mapRef.current = map;
+    map.getCanvas().style.cursor = "default";
 
     const isCurrent = () => mapRef.current === map;
 
@@ -231,6 +227,10 @@ export function SiteMap({
     resizeObserver.observe(containerRef.current);
 
     map.on("click", (event) => {
+      const target = event.originalEvent.target as HTMLElement | null;
+      if (target?.closest("[data-charger-id], [data-site-id], [data-highlight-marker]")) {
+        return;
+      }
       const lat = event.lngLat.lat;
       const lon = event.lngLat.lng;
       setClickedCharger(null);
@@ -244,6 +244,8 @@ export function SiteMap({
       resizeObserver.disconnect();
       chargerMarkersRef.current.forEach((marker) => marker.remove());
       chargerMarkersRef.current = [];
+      siteMarkersRef.current.forEach((marker) => marker.remove());
+      siteMarkersRef.current = [];
       highlightMarkerRef.current?.remove();
       highlightMarkerRef.current = null;
       popupRef.current?.remove();
@@ -257,7 +259,57 @@ export function SiteMap({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeStyle, interactive]);
 
-  // --- Render Clean Existing Charger Pins (No red/orange/green analytical dots)
+  // --- Candidate / recommended site markers, keyed by stable site id.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) {
+      return;
+    }
+
+    const paintSites = () => {
+      siteMarkersRef.current.forEach((marker) => marker.remove());
+      siteMarkersRef.current = [];
+
+      pointsRef.current.forEach((point) => {
+        if (!hasValidCoordinates(point)) {
+          return;
+        }
+        const isSelected = selectedSite?.id === point.id;
+        const color = point.color ?? (point.recommendation ? RECOMMENDATION_COLOR[point.recommendation] : "#64748b");
+        const el = document.createElement("button");
+        el.type = "button";
+        el.dataset.siteId = point.id;
+        el.className = isSelected
+          ? "relative flex h-5 w-5 items-center justify-center rounded-full border-2 border-white shadow-lg ring-4 ring-white/70 scale-125 z-20 cursor-pointer"
+          : "relative flex h-3.5 w-3.5 items-center justify-center rounded-full border-2 border-white shadow-md hover:scale-125 z-10 cursor-pointer";
+        el.style.background = color;
+        el.setAttribute("aria-label", point.name);
+        el.setAttribute("title", point.name);
+
+        el.addEventListener("mousedown", (event) => {
+          event.stopPropagation();
+        });
+        el.addEventListener("click", (event) => {
+          event.stopPropagation();
+          setClickedCharger(null);
+          const siteId = el.dataset.siteId;
+          if (siteId) {
+            onPointClickRef.current?.(siteId);
+          }
+        });
+
+        siteMarkersRef.current.push(new Marker({ element: el }).setLngLat([point.longitude, point.latitude]).addTo(map));
+      });
+    };
+
+    if (map.loaded()) {
+      paintSites();
+    } else {
+      map.once("load", paintSites);
+    }
+  }, [siteMarkerKey, selectedSite?.id]);
+
+  // --- Existing charger pins (info markers). Clicks must NOT select a site.
   useEffect(() => {
     const map = mapRef.current;
     if (!map) {
@@ -268,10 +320,15 @@ export function SiteMap({
       chargerMarkersRef.current.forEach((marker) => marker.remove());
       chargerMarkersRef.current = [];
 
-      chargers.forEach((charger) => {
+      chargersListRef.current.forEach((charger) => {
+        if (!hasValidCoordinates(charger)) {
+          return;
+        }
         const el = document.createElement("button");
         el.type = "button";
-        el.className = "group relative flex h-6 w-6 items-center justify-center rounded-full bg-slate-900 text-emerald-400 border-2 border-white shadow-md hover:scale-125 hover:bg-emerald-500 hover:text-slate-950 transition-all cursor-pointer z-10";
+        el.dataset.chargerId = charger.id;
+        el.className = "group relative flex h-7 w-7 items-center justify-center rounded-full bg-slate-900 text-emerald-400 border-2 border-white shadow-md hover:scale-110 hover:bg-emerald-500 hover:text-slate-950 transition-all z-10";
+        el.style.cursor = "pointer";
         el.setAttribute("aria-label", charger.name);
         el.setAttribute("title", `[Existing Station] ${charger.name}`);
         el.innerHTML = `
@@ -280,16 +337,17 @@ export function SiteMap({
           </svg>
         `;
 
+        el.addEventListener("mousedown", (event) => {
+          event.stopPropagation();
+        });
         el.addEventListener("click", (event) => {
           event.stopPropagation();
-          setClickedCharger(charger);
-          if (onPointClick) {
-            onPointClick(charger.id);
-          }
+          const id = el.dataset.chargerId;
+          const match = (id ? chargersByIdRef.current.get(id) : null) ?? null;
+          setClickedCharger(match);
         });
 
-        const marker = new Marker({ element: el }).setLngLat([charger.longitude, charger.latitude]).addTo(map);
-        chargerMarkersRef.current.push(marker);
+        chargerMarkersRef.current.push(new Marker({ element: el }).setLngLat([charger.longitude, charger.latitude]).addTo(map));
       });
     };
 
@@ -298,12 +356,12 @@ export function SiteMap({
     } else {
       map.once("load", paintChargers);
     }
-  }, [chargers, onPointClick]);
+  }, [chargerMarkerKey]);
 
   // --- Highlight marker: the searched or clicked target pin
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !highlight) {
+    if (!map || !highlight || !hasValidCoordinates(highlight)) {
       highlightMarkerRef.current?.remove();
       highlightMarkerRef.current = null;
       return;
@@ -314,6 +372,7 @@ export function SiteMap({
       const color = highlight.color ?? (highlight.recommendation ? RECOMMENDATION_COLOR[highlight.recommendation] : "#0284c7");
       const el = document.createElement("div");
       el.className = "relative flex h-8 w-8 items-center justify-center cursor-pointer z-20";
+      el.setAttribute("data-highlight-marker", "true");
       el.setAttribute("aria-label", highlight.name);
       el.innerHTML = `
         <span class="absolute h-8 w-8 animate-ping rounded-full" style="background:${color}44"></span>
@@ -338,7 +397,7 @@ export function SiteMap({
 
     const updatePopup = () => {
       // 1. Existing Charger Popup takes priority if clicked
-      if (clickedCharger) {
+      if (clickedCharger && hasValidCoordinates(clickedCharger)) {
         const html = buildChargerPopupHTML(clickedCharger);
         if (!popupRef.current) {
           popupRef.current = new Popup({ closeButton: true, closeOnClick: false, maxWidth: "260px" });
@@ -350,44 +409,44 @@ export function SiteMap({
         return;
       }
 
-      // 2. Otherwise show location assessment popup for active target/search
-      const activeTarget = classifiedResult || selectedSite || (highlight && highlight.recommendation ? highlight : null);
+      // 2. Selected candidate site (stable site id) before leftover classify results
+      if (selectedSite && hasValidCoordinates(selectedSite)) {
+        const html = buildRecommendationPopupHTML({
+          name: selectedSite.name,
+          latitude: selectedSite.latitude,
+          longitude: selectedSite.longitude,
+          recommendation: selectedSite.recommendation,
+          site_score: selectedSite.site_score,
+          demand_score: selectedSite.demand_score,
+          grid_capacity_score: selectedSite.grid_capacity_score,
+          accessibility_score: selectedSite.accessibility_score,
+          charger_gap_score: selectedSite.charger_gap_score,
+        });
+        if (!popupRef.current) {
+          popupRef.current = new Popup({ closeButton: true, closeOnClick: false, maxWidth: "280px" });
+        }
+        popupRef.current
+          .setLngLat([selectedSite.longitude, selectedSite.latitude])
+          .setHTML(html)
+          .addTo(map);
+        return;
+      }
 
-      if (activeTarget && activeTarget.latitude && activeTarget.longitude) {
-        const isClassified = classifiedResult && classifiedResult.latitude === activeTarget.latitude;
-        const isSite = selectedSite && selectedSite.latitude === activeTarget.latitude;
+      // 3. Location assessment popup for search / map-click classify
+      const activeTarget = classifiedResult || (highlight && highlight.recommendation ? highlight : null);
 
+      if (activeTarget && hasValidCoordinates(activeTarget)) {
         const html = buildRecommendationPopupHTML({
           name: activeTarget.name || `${activeTarget.latitude.toFixed(4)}, ${activeTarget.longitude.toFixed(4)}`,
           latitude: activeTarget.latitude,
           longitude: activeTarget.longitude,
           recommendation: activeTarget.recommendation,
-          site_score: isClassified
-            ? classifiedResult.site_score
-            : isSite
-              ? selectedSite.site_score
-              : undefined,
-          demand_score: isClassified
-            ? classifiedResult.demand_score
-            : isSite
-              ? selectedSite.demand_score
-              : undefined,
-          grid_capacity_score: isClassified
-            ? classifiedResult.grid_capacity_score
-            : isSite
-              ? selectedSite.grid_capacity_score
-              : undefined,
-          accessibility_score: isClassified
-            ? classifiedResult.accessibility_score
-            : isSite
-              ? selectedSite.accessibility_score
-              : undefined,
-          charger_gap_score: isClassified
-            ? classifiedResult.charger_gap_score
-            : isSite
-              ? selectedSite.charger_gap_score
-              : undefined,
-          nearest_candidate: isClassified ? classifiedResult.nearest_candidate : undefined,
+          site_score: classifiedResult?.site_score,
+          demand_score: classifiedResult?.demand_score,
+          grid_capacity_score: classifiedResult?.grid_capacity_score,
+          accessibility_score: classifiedResult?.accessibility_score,
+          charger_gap_score: classifiedResult?.charger_gap_score,
+          nearest_candidate: classifiedResult?.nearest_candidate,
         });
 
         if (!popupRef.current) {

@@ -1,15 +1,26 @@
-import { Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
+import { ThemeToggle } from "../common/ThemeToggle";
 import { useAuth } from "../../hooks/useAuth";
+import type { LocationSuggestion } from "../../types";
 import { initialsFromName } from "../../utils/format";
+import { LocationSearchBox } from "./LocationSearchBox";
 
 interface TopBarProps {
   title: string;
   contextLabel?: string;
+  onAssessLocation?: (suggestion: LocationSuggestion) => void;
+  onAssessQuery?: (query: string) => void;
+  onClearAssessment?: () => void;
 }
 
-export function TopBar({ title, contextLabel = "Bengaluru Urban" }: TopBarProps) {
+export function TopBar({
+  title,
+  contextLabel = "Bengaluru Urban",
+  onAssessLocation,
+  onAssessQuery,
+  onClearAssessment,
+}: TopBarProps) {
   const navigate = useNavigate();
   const { profile, signOut } = useAuth();
   const initials = initialsFromName(profile?.full_name ?? "Planner");
@@ -19,25 +30,47 @@ export function TopBar({ title, contextLabel = "Bengaluru Urban" }: TopBarProps)
     navigate("/", { replace: true });
   }
 
+  function handleSelect(suggestion: LocationSuggestion) {
+    if (onAssessLocation) {
+      onAssessLocation(suggestion);
+      return;
+    }
+    if (suggestion.kind === "candidate_site") {
+      navigate(`/planner/site/${suggestion.id}`);
+      return;
+    }
+    navigate("/planner", { state: { assess: suggestion } });
+  }
+
+  function handleSubmit(query: string) {
+    if (onAssessQuery) {
+      onAssessQuery(query);
+      return;
+    }
+    navigate("/planner", { state: { assessQuery: query } });
+  }
+
   return (
-    <header className="flex h-[64px] items-center justify-between border-b border-vo-line px-6">
+    <header className="relative z-40 flex h-[64px] items-center justify-between overflow-visible border-b border-vo-line px-6 no-print">
       <div className="flex items-center gap-3">
-        <h1 className="text-[18px] font-semibold tracking-tight text-white">{title}</h1>
+        <h1 className="text-[18px] font-semibold tracking-tight text-vo-text">{title}</h1>
         <span className="rounded-full border border-vo-border px-3 py-1 text-[12px] text-vo-soft">{contextLabel}</span>
       </div>
       <div className="flex items-center gap-3">
-        <label className="flex h-9 w-[260px] items-center gap-2 rounded-full border border-vo-border bg-vo-surface px-3 text-[12px] text-vo-muted">
-          <Search size={14} />
-          <input
-            className="w-full bg-transparent text-vo-text outline-none placeholder:text-vo-muted"
-            placeholder="Search site, ward or feeder"
-          />
-        </label>
+        <LocationSearchBox
+          compact
+          className="z-50 w-[min(280px,32vw)]"
+          placeholder="Search site, ward or feeder"
+          onSelectSuggestion={handleSelect}
+          onSubmitFreeText={handleSubmit}
+          onClear={onClearAssessment ?? (() => undefined)}
+        />
+        <ThemeToggle compact />
         <span className="rounded-full border border-vo-border px-3 py-1.5 text-[12px] text-vo-soft">FY 26-27</span>
         <button
           type="button"
           onClick={() => void handleSignOut()}
-          className="rounded-full border border-vo-border px-3 py-1.5 text-[12px] text-vo-soft hover:border-white/20 hover:text-white"
+          className="rounded-full border border-vo-border px-3 py-1.5 text-[12px] text-vo-soft hover:border-vo-border hover:text-vo-text"
         >
           Logout
         </button>

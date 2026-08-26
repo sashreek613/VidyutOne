@@ -8,10 +8,14 @@ interface AsyncState<T> {
   loading: boolean;
 }
 
-export function useAsync<T>(loader: () => Promise<T>, deps: ReadonlyArray<unknown>): AsyncState<T> {
+export function useAsync<T>(
+  loader: () => Promise<T>,
+  deps: ReadonlyArray<unknown>,
+): AsyncState<T> & { reload: () => void } {
   const [data, setData] = useState<T | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [reloadTick, setReloadTick] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -39,7 +43,7 @@ export function useAsync<T>(loader: () => Promise<T>, deps: ReadonlyArray<unknow
     return () => {
       cancelled = true;
     };
-  }, deps);
+  }, [...deps, reloadTick]);
 
-  return { data, error, loading };
+  return { data, error, loading, reload: () => setReloadTick((tick) => tick + 1) };
 }

@@ -8,14 +8,19 @@ import { ScreenState } from "../../components/common/ScreenState";
 import { useCharger, useChargers } from "../../hooks/useApiData";
 import { formatInr, formatKm } from "../../utils/format";
 import { centroid, haversineKm } from "../../utils/geo";
+import { loadDriverDiscoveryState } from "../../utils/driverDiscoveryState";
 
 export function ChargerDetailsPage() {
   const { chargerId } = useParams<{ chargerId: string }>();
   const navigate = useNavigate();
   const { data: charger, error, loading } = useCharger(chargerId);
   const all = useChargers();
+  const storedSearch = useMemo(() => loadDriverDiscoveryState()?.searchedLocation ?? null, []);
 
-  const origin = useMemo(() => centroid(all.data ?? []), [all.data]);
+  const origin = useMemo(
+    () => storedSearch ?? centroid(all.data ?? []),
+    [all.data, storedSearch],
+  );
   // REAL (OpenChargeMap) chargers all share site_id: null -- grouping by
   // site_id would otherwise lump every real charger in the system together
   // as if they were bays at the same physical location (same bug as
@@ -33,10 +38,23 @@ export function ChargerDetailsPage() {
   const isReal = charger?.provenance === "REAL";
 
   return (
-    <div className="flex min-h-screen flex-col bg-driver-bg pb-28">
+    <div className="flex min-h-screen flex-col bg-driver-bg pb-28 text-driver-ink">
       <div className="relative h-[210px]">
         {charger ? (
-          <DriverMap chargers={siblings.length ? siblings : [charger]} origin={origin} />
+          <DriverMap
+            chargers={siblings.length ? siblings : [charger]}
+            origin={origin}
+            selectedChargerId={charger.id}
+            onSelectCharger={(id) => {
+              if (id === null) {
+                if (window.history.length > 1) {
+                  void navigate(-1);
+                } else {
+                  void navigate("/driver");
+                }
+              }
+            }}
+          />
         ) : (
           <div className="h-full bg-[#e7ebe8]" />
         )}
@@ -44,8 +62,14 @@ export function ChargerDetailsPage() {
           <StatusBar />
           <button
             type="button"
-            onClick={() => void navigate(-1)}
-            className="ml-5 mt-2 flex h-9 w-9 items-center justify-center rounded-full bg-white shadow"
+            onClick={() => {
+              if (window.history.length > 1) {
+                void navigate(-1);
+              } else {
+                void navigate("/driver");
+              }
+            }}
+            className="ml-5 mt-2 flex h-9 w-9 items-center justify-center rounded-full bg-driver-card text-driver-ink shadow"
             aria-label="Back"
           >
             <ArrowLeft size={16} />
@@ -59,7 +83,7 @@ export function ChargerDetailsPage() {
             <div className="flex items-start justify-between gap-3">
               <div>
                 <div className="flex items-center gap-1.5">
-                  <h1 className="text-[28px] leading-tight font-semibold">{charger.name.replace(" (demo)", "")}</h1>
+                  <h1 className="text-[28px] leading-tight font-semibold text-driver-ink">{charger.name.replace(" (demo)", "")}</h1>
                   {isReal ? (
                     <span className="rounded-full bg-[#eef2ff] px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-[#4338ca]">
                       OpenChargeMap
@@ -103,7 +127,7 @@ export function ChargerDetailsPage() {
 
             <div className="mt-6">
               <div className="flex items-center gap-2">
-                <h2 className="text-[16px] font-semibold">Connectors</h2>
+                <h2 className="text-[16px] font-semibold text-driver-ink">Connectors</h2>
                 <span className="text-[10px] tracking-[0.14em] text-driver-muted">LIVE</span>
               </div>
               <ul className="mt-3 divide-y divide-driver-line">
@@ -145,7 +169,7 @@ export function ChargerDetailsPage() {
                   to={`/driver/charger/${charger.id}/book`}
                   className="flex h-12 flex-1 items-center justify-center rounded-2xl bg-vo-accent text-[14px] font-semibold text-[#06231b]"
                 >
-                  Book Slot
+                  Book Now
                 </Link>
               )}
             </div>
@@ -158,9 +182,9 @@ export function ChargerDetailsPage() {
 
 function Metric({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-[18px] bg-white px-4 py-3 shadow-[0_8px_20px_rgba(16,24,20,0.04)]">
+    <div className="rounded-[18px] border border-driver-line bg-driver-card px-4 py-3 shadow-[0_8px_20px_rgba(16,24,20,0.04)]">
       <p className="text-[10px] tracking-[0.16em] text-driver-muted">{label}</p>
-      <p className="mt-1 text-[18px] font-semibold">{value}</p>
+      <p className="mt-1 text-[18px] font-semibold text-driver-ink">{value}</p>
     </div>
   );
 }
