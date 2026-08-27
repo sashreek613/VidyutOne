@@ -56,7 +56,7 @@ export function AuthCallbackPage() {
         await refreshProfileRef.current();
         if (!cancelled) {
           setState("verified");
-          setMessage("Email verified. You can continue.");
+          setMessage("Email verified successfully. Your Planner/Authority account is now awaiting administrator approval.");
         }
       } catch (err: unknown) {
         logAuthError("callback-error", err);
@@ -79,8 +79,8 @@ export function AuthCallbackPage() {
     }
     if (session && emailVerified && profile) {
       const timer = window.setTimeout(() => {
-        void navigate(homeForRole(profile.role), { replace: true });
-      }, 800);
+        void navigate(homeForRole(profile), { replace: true });
+      }, 1200);
       return () => window.clearTimeout(timer);
     }
     return undefined;
@@ -112,13 +112,13 @@ export function AuthCallbackPage() {
             </>
           ) : (
             <Link
-              to={profile ? homeForRole(profile.role) : "/login?verified=1"}
+              to={profile ? homeForRole(profile) : "/login?verified=1"}
               className="flex h-12 items-center justify-center rounded-xl bg-vo-accent text-[14px] font-semibold text-[#06231b]"
             >
               Continue
             </Link>
-
           )}
+
         </div>
       </AuthCard>
     </AuthShell>

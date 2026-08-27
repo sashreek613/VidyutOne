@@ -126,8 +126,18 @@ export async function createBooking(payload: BookingCreate): Promise<Booking> {
   return data;
 }
 
+export async function getBookings(): Promise<Booking[]> {
+  const { data } = await client.get<Booking[]>("/api/bookings");
+  return data;
+}
+
 export async function getBooking(id: string): Promise<Booking> {
   const { data } = await client.get<Booking>(`/api/bookings/${id}`);
+  return data;
+}
+
+export async function cancelBooking(bookingId: string): Promise<Booking> {
+  const { data } = await client.patch<Booking>(`/api/bookings/${bookingId}/cancel`);
   return data;
 }
 
@@ -200,13 +210,40 @@ export async function getChargingQuote(chargerId: string, slots: string[]): Prom
   return data;
 }
 
-export async function getBookings(): Promise<Booking[]> {
-  const { data } = await client.get<Booking[]>("/api/bookings");
+export async function getAdminPlanners(statusFilter?: string): Promise<Profile[]> {
+  const { data } = await client.get<Profile[]>("/api/admin/planners", {
+    params: statusFilter ? { status: statusFilter } : undefined,
+  });
   return data;
 }
 
-export async function cancelBooking(bookingId: string): Promise<Booking> {
-  const { data } = await client.patch<Booking>(`/api/bookings/${bookingId}/cancel`);
+export async function approvePlanner(userId: string): Promise<Profile> {
+  const { data } = await client.post<Profile>(`/api/admin/planners/${userId}/approve`);
+  return data;
+}
+
+export async function rejectPlanner(userId: string, reason?: string): Promise<Profile> {
+  const { data } = await client.post<Profile>(`/api/admin/planners/${userId}/reject`, {
+    rejection_reason: reason,
+  });
+  return data;
+}
+
+export async function sendAssistantMessage(message: string, sessionId: string): Promise<{ reply: string }> {
+  const { data } = await client.post("/api/assistant/chat", { message, session_id: sessionId });
+  return data;
+}
+
+export async function sendDriverAssistantMessage(
+  message: string,
+  sessionId: string,
+  contextSummary: string,
+): Promise<{ reply: string }> {
+  const { data } = await client.post("/api/driver/voice-assistant", {
+    message,
+    session_id: sessionId,
+    context_summary: contextSummary,
+  });
   return data;
 }
 

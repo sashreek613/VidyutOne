@@ -1,16 +1,16 @@
-import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { CheckCircle2, AlertTriangle, XCircle, ChevronDown, ChevronUp, ArrowRight } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { CheckCircle2, AlertTriangle, XCircle, ChevronDown, ChevronUp } from "lucide-react";
 
 import { ScreenState } from "../../components/common/ScreenState";
 import { FeederChart } from "../../components/planner/FeederChart";
-import { LocationSearchBox } from "../../components/planner/LocationSearchBox";
 import { LocationVerdictPanel } from "../../components/planner/LocationVerdictPanel";
+import { SiteAssistantPanel } from "../../components/planner/SiteAssistantPanel";
 import { SiteMap, type MapFocus, type MapPoint } from "../../components/planner/SiteMap";
 import { TopBar } from "../../components/planner/TopBar";
 import { TopRecommendedSites } from "../../components/planner/TopRecommendedSites";
-import { useClassify, useRecommendedSites, useSites } from "../../hooks/useApiData";
-import type { LocationSuggestion, Site } from "../../types";
+import { useChargers, useClassify, useRecommendedSites, useSites } from "../../hooks/useApiData";
+import type { ClassifiedSite, LocationSuggestion, Site } from "../../types";
 
 interface ActivePoint {
   latitude: number;
@@ -20,8 +20,11 @@ interface ActivePoint {
 
 export function PlannerDashboardPage() {
   const { data: sites, error, loading } = useSites();
+  const { data: existingChargers } = useChargers();
   const { data: recommendedSites } = useRecommendedSites(10);
+
   const navigate = useNavigate();
+  const location = useLocation();
   const [showTechDetails, setShowTechDetails] = useState(false);
   const [selectedSiteId, setSelectedSiteId] = useState<string | null>(null);
   // Set synchronously the instant we know coordinates (map click,
@@ -75,31 +78,63 @@ export function PlannerDashboardPage() {
   );
 
   function handleMapClick(lat: number, lon: number) {
+    setSelectedSiteId(null);
     setPendingPoint({ latitude: lat, longitude: lon, name: "" });
     classify.classifyPoint(lat, lon);
   }
 
   function handleSelectSuggestion(suggestion: LocationSuggestion) {
+    const matchingSite = (sites ?? []).find((site) => site.id === suggestion.id);
+    if (suggestion.kind === "candidate_site" && matchingSite) {
+      setSelectedSiteId(matchingSite.id);
+      setPendingPoint({
+        latitude: matchingSite.latitude,
+        longitude: matchingSite.longitude,
+        name: matchingSite.name,
+      });
+      classify.clear();
+      return;
+    }
+    setSelectedSiteId(null);
     setPendingPoint({ latitude: suggestion.latitude, longitude: suggestion.longitude, name: suggestion.name });
     classify.classifyPoint(suggestion.latitude, suggestion.longitude);
   }
 
   function handleSubmitFreeText(query: string) {
-    // Coordinates aren't known yet -- activePoint stays whatever it was
-    // (or null) until classify.result resolves the name, then it's used
-    // automatically (see the derivation above).
+    setSelectedSiteId(null);
     setPendingPoint(null);
     classify.classifyName(query);
   }
 
   function handleClearSearch() {
+    setSelectedSiteId(null);
     setPendingPoint(null);
     classify.clear();
   }
 
+  useEffect(() => {
+    const state = location.state as { assess?: LocationSuggestion; assessQuery?: string } | null;
+    if (state?.assess) {
+      handleSelectSuggestion(state.assess);
+      navigate(".", { replace: true, state: {} });
+      return;
+    }
+    if (state?.assessQuery) {
+      handleSubmitFreeText(state.assessQuery);
+      navigate(".", { replace: true, state: {} });
+    }
+    // Intentionally once per incoming navigation state, not on every classify identity change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.state]);
+
   return (
     <div className="min-h-screen pb-12 bg-vo-bg text-vo-text">
-      <TopBar title="Overview" />
+      <TopBar
+        title="Overview"
+        onAssessLocation={handleSelectSuggestion}
+        onAssessQuery={handleSubmitFreeText}
+        onClearAssessment={handleClearSearch}
+      />
       <ScreenState loading={loading} error={error} empty={!loading && !error && (sites?.length ?? 0) === 0}>
         {sites ? (
           <div className="space-y-6 px-6 py-6 max-w-7xl mx-auto">
@@ -107,43 +142,44 @@ export function PlannerDashboardPage() {
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <div className="rounded-2xl border border-vo-line bg-vo-card p-5 space-y-1 shadow-sm">
                 <p className="text-xs font-medium uppercase tracking-wider text-vo-muted">Candidate Sites</p>
-                <div className="text-2xl font-bold text-white font-mono">{kpis.total}</div>
+                <div className="text-2xl font-bold text-vo-text font-mono">{kpis.total}</div>
                 <p className="text-xs text-vo-muted">locations assessed in Bengaluru</p>
               </div>
 
-              <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-5 space-y-1 shadow-sm">
+              <div className="rounded-2xl border border-vo-good-border bg-vo-good-bg p-5 space-y-1 shadow-sm">
                 <div className="flex items-center justify-between">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-emerald-400">Recommended</p>
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                  <p className="text-xs font-semibold uppercase tracking-wider text-vo-good-ink">Recommended</p>
+                  <CheckCircle2 className="w-4 h-4 text-vo-good-ink" />
                 </div>
-                <div className="text-2xl font-bold text-emerald-400 font-mono">{kpis.build}</div>
-                <p className="text-xs text-emerald-300/80">locations recommended to build</p>
+                <div className="text-2xl font-bold text-vo-good-ink font-mono">{kpis.build}</div>
+                <p className="text-xs text-vo-good-ink/80">locations recommended to build</p>
               </div>
 
-              <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-5 space-y-1 shadow-sm">
+              <div className="rounded-2xl border border-vo-warn-border bg-vo-warn-bg p-5 space-y-1 shadow-sm">
                 <div className="flex items-center justify-between">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-amber-400">Needs Attention</p>
-                  <AlertTriangle className="w-4 h-4 text-amber-400" />
+                  <p className="text-xs font-semibold uppercase tracking-wider text-vo-warn-ink">Needs Attention</p>
+                  <AlertTriangle className="w-4 h-4 text-vo-warn-ink" />
                 </div>
-                <div className="text-2xl font-bold text-amber-400 font-mono">{kpis.managed}</div>
-                <p className="text-xs text-amber-300/80">locations need grid/load management</p>
+                <div className="text-2xl font-bold text-vo-warn-ink font-mono">{kpis.managed}</div>
+                <p className="text-xs text-vo-warn-ink/80">locations need grid/load management</p>
               </div>
 
-              <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-5 space-y-1 shadow-sm">
+              <div className="rounded-2xl border border-vo-bad-border bg-vo-bad-bg p-5 space-y-1 shadow-sm">
                 <div className="flex items-center justify-between">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-red-400">Not Recommended</p>
-                  <XCircle className="w-4 h-4 text-red-400" />
+                  <p className="text-xs font-semibold uppercase tracking-wider text-vo-bad-ink">Not Recommended</p>
+                  <XCircle className="w-4 h-4 text-vo-bad-ink" />
                 </div>
-                <div className="text-2xl font-bold text-red-400 font-mono">{kpis.dont}</div>
-                <p className="text-xs text-red-300/80">locations currently unsuitable</p>
+                <div className="text-2xl font-bold text-vo-bad-ink font-mono">{kpis.dont}</div>
+                <p className="text-xs text-vo-bad-ink/80">locations currently unsuitable</p>
               </div>
             </div>
 
-            {/* Map hero: search-and-click site assessment, verdict panel alongside */}
+            {/* Map hero: search lives in TopBar; map click/site click populate the panel. */}
             <div className="grid gap-4 lg:grid-cols-[1.6fr_0.9fr] lg:items-stretch">
-              <div className="relative h-[560px] overflow-hidden rounded-2xl border border-vo-line shadow-lg">
+              <div className="h-[520px] min-h-[360px] overflow-hidden rounded-2xl border border-vo-line shadow-lg">
                 <SiteMap
                   legend={false}
+                  chargers={existingChargers ?? []}
                   points={sites.map((site) => ({
                     id: site.id,
                     name: site.name,
@@ -151,84 +187,27 @@ export function PlannerDashboardPage() {
                     longitude: site.longitude,
                     recommendation: site.recommendation,
                   }))}
-                  onPointClick={(id) => setSelectedSiteId(id)}
+                  onPointClick={(id) => {
+                    setSelectedSiteId(id);
+                    classify.clear();
+                    const site = sites.find((item) => item.id === id);
+                    if (site) {
+                      setPendingPoint({ latitude: site.latitude, longitude: site.longitude, name: site.name });
+                    }
+                  }}
                   onMapClick={handleMapClick}
                   focus={focus}
                   highlight={highlight}
+                  classifiedResult={classify.result}
+                  selectedSite={selectedSite}
                 />
-
-                <LocationSearchBox
-                  className="absolute left-4 top-4 z-10"
-                  onSelectSuggestion={handleSelectSuggestion}
-                  onSubmitFreeText={handleSubmitFreeText}
-                  onClear={handleClearSearch}
-                />
-
-                {/* Decision overlay card when an existing candidate marker is
-                    selected -- unchanged behaviour from before the map-first
-                    redesign, coexists with the new search/click assessment. */}
-                {selectedSite ? (
-                  <div className="absolute bottom-4 left-4 right-4 sm:left-auto sm:right-4 sm:w-80 rounded-2xl border border-vo-line bg-[#0d131f]/95 backdrop-blur p-4 space-y-3 shadow-2xl z-20">
-                    <div className="flex items-center justify-between">
-                      <h4 className="text-sm font-bold text-white">{selectedSite.name.replace(" (demo)", "")}</h4>
-                      <button
-                        type="button"
-                        onClick={() => setSelectedSiteId(null)}
-                        className="text-xs text-vo-muted hover:text-white"
-                      >
-                        ✕
-                      </button>
-                    </div>
-
-                    <div className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full text-xs font-bold font-mono uppercase border"
-                      style={{
-                        backgroundColor: selectedSite.recommendation === "BUILD" ? "#00e8a215" : selectedSite.recommendation === "BUILD_IF_MANAGED" ? "#f0b42915" : "#ef5b5b15",
-                        borderColor: selectedSite.recommendation === "BUILD" ? "#00e8a240" : selectedSite.recommendation === "BUILD_IF_MANAGED" ? "#f0b42940" : "#ef5b5b40",
-                        color: selectedSite.recommendation === "BUILD" ? "#00e8a2" : selectedSite.recommendation === "BUILD_IF_MANAGED" ? "#f0b429" : "#ef5b5b",
-                      }}
-                    >
-                      <span>{selectedSite.recommendation.replace(/_/g, " ")}</span>
-                    </div>
-
-                    <div className="text-xs space-y-1 text-vo-muted">
-                      <p className="font-semibold text-gray-300">Why?</p>
-                      {selectedSite.explanation ? (
-                        <p className="text-gray-300 leading-relaxed">{selectedSite.explanation}</p>
-                      ) : (
-                        <>
-                          <p className="flex items-center space-x-1 text-gray-300">
-                            <span>✓</span>
-                            <span>Expected EV Demand: {selectedSite.demand_score >= 70 ? "Strong" : "Moderate"} ({Math.round(selectedSite.demand_score)}/100)</span>
-                          </p>
-                          <p className="flex items-center space-x-1 text-gray-300">
-                            <span>✓</span>
-                            <span>Grid Capacity: {selectedSite.grid_capacity_score >= 70 ? "Sufficient" : selectedSite.grid_capacity_score >= 40 ? "Requires load management" : "Constrained"}</span>
-                          </p>
-                        </>
-                      )}
-                    </div>
-
-                    <div className="pt-2 flex items-center justify-between border-t border-vo-line/60">
-                      <span className="text-xs font-medium text-vo-accent">
-                        Recommended Chargers: {getRecommendedChargerCount(selectedSite)}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => navigate(`/planner/site/${selectedSite.id}`)}
-                        className="px-3 py-1.5 rounded-lg bg-vo-accent text-black font-semibold text-xs flex items-center space-x-1 hover:bg-emerald-300 transition-colors"
-                      >
-                        <span>View site details</span>
-                        <ArrowRight className="w-3 h-3" />
-                      </button>
-                    </div>
-                  </div>
-                ) : null}
               </div>
 
-              <div className="h-[560px]">
+              <div className="min-h-[360px] lg:h-[520px]">
                 <LocationVerdictPanel
-                  status={classify.status}
-                  result={classify.result}
+                  status={selectedSite ? "result" : classify.status}
+                  result={selectedSite ? siteToAssessment(selectedSite) : classify.result}
+                  siteId={selectedSite?.id ?? null}
                   errorMessage={classify.errorMessage}
                   legend={{ build: kpis.build, managed: kpis.managed, dont: kpis.dont }}
                   onClear={handleClearSearch}
@@ -242,13 +221,13 @@ export function PlannerDashboardPage() {
             <div className="rounded-2xl border border-vo-line bg-vo-card p-6 space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-base font-bold text-white">Grid Capacity</h3>
+                  <h3 className="text-base font-bold text-vo-text">Grid Capacity</h3>
                   <p className="text-xs text-vo-muted">Feeder capacity status and headroom summary</p>
                 </div>
                 <button
                   type="button"
                   onClick={() => setShowTechDetails(!showTechDetails)}
-                  className="flex items-center space-x-1 px-3 py-1.5 rounded-lg border border-vo-line text-xs text-vo-muted hover:text-white transition-colors"
+                  className="flex items-center space-x-1 px-3 py-1.5 rounded-lg border border-vo-line text-xs text-vo-muted hover:text-vo-text transition-colors"
                 >
                   <span>Technical details</span>
                   {showTechDetails ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
@@ -257,23 +236,23 @@ export function PlannerDashboardPage() {
 
               {/* Simplified Grid Readiness Badges */}
               <div className="grid grid-cols-3 gap-4 pt-1">
-                <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-3 text-center">
-                  <div className="text-xs font-semibold text-emerald-400 uppercase">Capacity Available</div>
-                  <div className="text-lg font-bold text-white font-mono mt-1">
+                <div className="rounded-xl border border-vo-good-border bg-vo-good-bg p-3 text-center">
+                  <div className="text-xs font-semibold text-vo-good-ink uppercase">Capacity Available</div>
+                  <div className="text-lg font-bold text-vo-text font-mono mt-1">
                     {sites.filter((s) => s.grid_capacity_score >= 70).length} Sites
                   </div>
                 </div>
 
-                <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-3 text-center">
-                  <div className="text-xs font-semibold text-amber-400 uppercase">At Risk / Needs Management</div>
-                  <div className="text-lg font-bold text-white font-mono mt-1">
+                <div className="rounded-xl border border-vo-warn-border bg-vo-warn-bg p-3 text-center">
+                  <div className="text-xs font-semibold text-vo-warn-ink uppercase">At Risk / Needs Management</div>
+                  <div className="text-lg font-bold text-vo-text font-mono mt-1">
                     {sites.filter((s) => s.grid_capacity_score >= 40 && s.grid_capacity_score < 70).length} Sites
                   </div>
                 </div>
 
-                <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-3 text-center">
-                  <div className="text-xs font-semibold text-red-400 uppercase">Needs Upgrade</div>
-                  <div className="text-lg font-bold text-white font-mono mt-1">
+                <div className="rounded-xl border border-vo-bad-border bg-vo-bad-bg p-3 text-center">
+                  <div className="text-xs font-semibold text-vo-bad-ink uppercase">Needs Upgrade</div>
+                  <div className="text-lg font-bold text-vo-text font-mono mt-1">
                     {sites.filter((s) => s.grid_capacity_score < 40).length} Sites
                   </div>
                 </div>
@@ -292,16 +271,25 @@ export function PlannerDashboardPage() {
           </div>
         ) : null}
       </ScreenState>
+      <SiteAssistantPanel />
     </div>
   );
 }
 
-function getRecommendedChargerCount(site: Site): number {
-  if (site.recommendation === "BUILD") {
-    return Math.max(4, Math.round(site.demand_score / 12));
-  }
-  if (site.recommendation === "BUILD_IF_MANAGED") {
-    return Math.max(2, Math.round(site.demand_score / 18));
-  }
-  return 0;
+function siteToAssessment(site: Site): ClassifiedSite {
+  return {
+    name: site.name,
+    latitude: site.latitude,
+    longitude: site.longitude,
+    demand_score: site.demand_score,
+    grid_capacity_score: site.grid_capacity_score,
+    accessibility_score: site.accessibility_score,
+    charger_gap_score: site.charger_gap_score,
+    site_score: site.site_score,
+    recommendation: site.recommendation,
+    factors: site.factors ?? [],
+    explanation: site.explanation ?? "",
+    in_bbox: true,
+    nearest_candidate: null,
+  };
 }

@@ -7,17 +7,26 @@ import { VehicleModal } from "../../components/driver/VehicleModal";
 import { ChargerCard } from "../../components/driver/ChargerCard";
 import { DriverMap } from "../../components/driver/DriverMap";
 import { StatusBar } from "../../components/driver/StatusBar";
+import { VoiceAssistantButton } from "../../components/driver/VoiceAssistantButton";
 import { ScreenState } from "../../components/common/ScreenState";
+import { ThemeToggle } from "../../components/common/ThemeToggle";
 // Reused as-is from the planner side -- generic offline place search
 // (GET /api/sites/suggest), nothing planner-specific about it.
 import { LocationSearchBox } from "../../components/planner/LocationSearchBox";
 import { useChargers, useVehicleRange } from "../../hooks/useApiData";
 import { useAuth } from "../../hooks/useAuth";
-import { createVehicle, deleteVehicle, getVehicles, refreshNearbyChargers, suggestLocations, updateVehicle } from "../../services/api";
+import { createVehicle, deleteVehicle, getChargers, getVehicles, suggestLocations, updateVehicle } from "../../services/api";
 import type { Charger, DrivingProfile, LocationSuggestion, Vehicle, VehicleCreate, VehicleUpdate } from "../../types";
+import {
+  applyChargerFilters,
+  DEFAULT_CHARGER_FILTERS,
+  uniqueConnectors,
+  type ChargerFilterState,
+} from "../../utils/chargerFilters";
 import { sortByRecommendation } from "../../utils/chargerRanking";
 import { firstNameFromFullName, greetingForHour, initialsFromName } from "../../utils/format";
 import { centroid, haversineKm, isWithinRange } from "../../utils/geo";
+import { loadDriverDiscoveryState, saveDriverDiscoveryState } from "../../utils/driverDiscoveryState";
 
 interface DriverLocation {
   latitude: number;
@@ -45,14 +54,15 @@ const GEO_STATUS_COPY: Record<Exclude<GeoStatus, "granted">, string> = {
   insecure_context: "Location requires HTTPS (or localhost) -- this page isn't served securely",
 };
 
-const REFRESH_RADIUS_KM = 10;
-const REFRESH_COOLDOWN_MS = 60_000; // OCM expects considerate use -- one manual refresh per minute, client-enforced
+const REFRESH_COOLDOWN_MS = 60_000;
 
 export function DriverHomePage() {
   const navigate = useNavigate();
   const { profile, signOut } = useAuth();
   const { data: chargers, error, loading } = useChargers();
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(() => loadDriverDiscoveryState()?.query ?? "");
+  const [filters, setFilters] = useState<ChargerFilterState>(() => loadDriverDiscoveryState()?.filters ?? DEFAULT_CHARGER_FILTERS);
+  const [selectedChargerId, setSelectedChargerId] = useState<string | null>(null);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
@@ -72,9 +82,10 @@ export function DriverHomePage() {
   // filter) uses the exact same adjusted range VehicleWidget displays.
   const [climateControl, setClimateControl] = useState(false);
   const [drivingProfile, setDrivingProfile] = useState<DrivingProfile>("mixed");
-  const [showAllReachable, setShowAllReachable] = useState(false);
-  const [searchedLocation, setSearchedLocation] = useState<SearchedLocation | null>(null);
+  const [showAllReachable, setShowAllReachable] = useState(() => loadDriverDiscoveryState()?.showAllReachable ?? false);
+  const [searchedLocation, setSearchedLocation] = useState<SearchedLocation | null>(() => loadDriverDiscoveryState()?.searchedLocation ?? null);
   const [searchError, setSearchError] = useState<string | null>(null);
+  const [searchBoxKey, setSearchBoxKey] = useState(0);
   const hour = new Date().getHours();
 
   useEffect(() => {
@@ -108,6 +119,7 @@ export function DriverHomePage() {
 
   async function handleSelectSearchSuggestion(suggestion: LocationSuggestion) {
     setSearchError(null);
+    setSelectedChargerId(null);
     setSearchedLocation({ latitude: suggestion.latitude, longitude: suggestion.longitude, name: suggestion.name });
   }
 
@@ -120,6 +132,7 @@ export function DriverHomePage() {
         setSearchError(`No known location matches "${query}".`);
         return;
       }
+      setSelectedChargerId(null);
       setSearchedLocation({ latitude: best.latitude, longitude: best.longitude, name: best.name });
     } catch (err: unknown) {
       setSearchError(err instanceof Error ? err.message : "Couldn't search for that location.");
@@ -127,8 +140,21 @@ export function DriverHomePage() {
   }
 
   function handleClearSearch() {
+    setSelectedChargerId(null);
     setSearchedLocation(null);
     setSearchError(null);
+    setSearchBoxKey((key) => key + 1);
+  }
+
+  function handleMapPickLocation(lat: number, lon: number) {
+    setSearchError(null);
+    setSelectedChargerId(null);
+    setSearchedLocation({
+      latitude: lat,
+      longitude: lon,
+      name: "Selected map location",
+    });
+    setSearchBoxKey((key) => key + 1);
   }
 
   // The one authoritative range source (backend/app/services/range_service.py
@@ -201,20 +227,16 @@ export function DriverHomePage() {
   // before the first range fetch resolves.
   const isRangeLimited = primaryVehicle !== null && bufferedRangeKm !== null;
 
-  // Merges in whatever POST /api/chargers/refresh last returned, by id --
-  // reflects a manual refresh immediately without needing to touch the
-  // shared useChargers() hook (out of scope for this task).
+  // Manual refresh replaces the cached GET /api/chargers payload in-place
+  // (safe data source). It does not call live OpenChargeMap.
   const effectiveChargers = useMemo(() => {
-    const base = chargers ?? [];
-    if (refreshedReal.length === 0) {
-      return base;
+    if (refreshedReal.length > 0) {
+      return refreshedReal;
     }
-    const byId = new Map(base.map((c) => [c.id, c] as const));
-    for (const charger of refreshedReal) {
-      byId.set(charger.id, charger);
-    }
-    return Array.from(byId.values());
+    return chargers ?? [];
   }, [chargers, refreshedReal]);
+
+  const connectorOptions = useMemo(() => uniqueConnectors(effectiveChargers), [effectiveChargers]);
 
   const allRanked = useMemo(() => {
     const list = effectiveChargers;
@@ -241,12 +263,32 @@ export function DriverHomePage() {
   // what's actually reachable. Recomputes automatically whenever
   // bufferedRangeKm changes (battery %, vehicle swap, spec edit) or the
   // driver's location changes -- no page refresh needed.
-  const ranked = useMemo(() => {
+  const reachable = useMemo(() => {
     if (!isRangeLimited) {
       return allRanked;
     }
     return allRanked.filter((row) => isWithinRange(origin, row.charger, bufferedRangeKm!));
   }, [allRanked, isRangeLimited, bufferedRangeKm, origin]);
+
+  const ranked = useMemo(() => applyChargerFilters(reachable, filters), [reachable, filters]);
+
+  useEffect(() => {
+    if (selectedChargerId && !ranked.some((row) => row.charger.id === selectedChargerId)) {
+      setSelectedChargerId(null);
+    }
+  }, [ranked, selectedChargerId]);
+
+  useEffect(() => {
+    if (!selectedChargerId) {
+      return;
+    }
+    const el = document.getElementById(`charger-card-${selectedChargerId}`);
+    if (!el) {
+      setShowAllReachable(true);
+      return;
+    }
+    el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }, [selectedChargerId, showAllReachable]);
 
   // When range-limited, anchor the distance score to the driver's actual
   // range (a charger at the edge of range scores ~0 on distance, one right
@@ -259,6 +301,25 @@ export function DriverHomePage() {
     () => sortByRecommendation(ranked, maxRelevantKm).slice(0, 5),
     [ranked, maxRelevantKm],
   );
+
+  const visibleRecommended = useMemo(() => {
+    if (!selectedChargerId || recommended.some((row) => row.charger.id === selectedChargerId)) {
+      return recommended;
+    }
+    const extra = ranked.find((row) => row.charger.id === selectedChargerId);
+    return extra ? [...recommended, extra] : recommended;
+  }, [recommended, ranked, selectedChargerId]);
+
+  const mapChargers = useMemo(() => ranked.map((row) => row.charger), [ranked]);
+
+  useEffect(() => {
+    saveDriverDiscoveryState({
+      query,
+      filters,
+      searchedLocation,
+      showAllReachable,
+    });
+  }, [query, filters, searchedLocation, showAllReachable]);
 
   async function handleSaveVehicle(payload: VehicleCreate | VehicleUpdate) {
     if (editingVehicle) {
@@ -290,29 +351,32 @@ export function DriverHomePage() {
     setRefreshing(true);
     setRefreshError(null);
     try {
-      const fresh = await refreshNearbyChargers(origin.latitude, origin.longitude, REFRESH_RADIUS_KM);
+      const fresh = await getChargers();
       setRefreshedReal(fresh);
       setLastRefreshAt(Date.now());
     } catch (err: unknown) {
-      setRefreshError(err instanceof Error ? err.message : "Couldn't refresh nearby chargers.");
+      const msg = err instanceof Error ? err.message : "Couldn't refresh nearby chargers.";
+      setRefreshError(msg);
     } finally {
       setRefreshing(false);
     }
+
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#0b0f17] text-white pb-8">
+    <div className="flex min-h-screen flex-col bg-driver-bg text-driver-ink pb-8">
       <StatusBar />
       <div className="px-5 pt-4 space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-emerald-400">EV Driver Portal</p>
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-vo-accent-ink">EV Driver Portal</p>
             <h1 className="text-[26px] font-bold tracking-tight">
               {greetingForHour(hour)}, {firstNameFromFullName(profile?.full_name ?? "there")}
             </h1>
           </div>
           <div className="flex items-center space-x-3">
-            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[13px] font-bold text-emerald-400">
+            <ThemeToggle compact />
+            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-vo-good-bg border border-vo-good-border text-[13px] font-bold text-vo-accent-ink">
               {initialsFromName(profile?.full_name ?? "Driver")}
             </span>
             <button
@@ -320,13 +384,21 @@ export function DriverHomePage() {
               onClick={() => {
                 void signOut().then(() => navigate("/", { replace: true }));
               }}
-              className="p-2 rounded-xl bg-gray-800/80 hover:bg-gray-700 text-gray-400 hover:text-white transition-colors"
+              className="p-2 rounded-xl bg-driver-card hover:bg-driver-line text-driver-muted hover:text-driver-ink transition-colors"
               title="Logout"
             >
               <LogOut size={16} />
             </button>
           </div>
         </div>
+
+        <VoiceAssistantButton
+          onSearchLocation={(q) => void handleSubmitSearchFreeText(q)}
+          onClearSearch={handleClearSearch}
+          onSetSort={(sort) => setFilters((current) => ({ ...current, sort }))}
+          bufferedRangeKm={bufferedRangeKm}
+          recommended={recommended}
+        />
 
         {/* Vehicle Widget */}
         <VehicleWidget
@@ -351,10 +423,10 @@ export function DriverHomePage() {
           to="/driver/savings"
           className="block rounded-2xl border border-emerald-500/20 bg-gradient-to-r from-emerald-500/10 to-transparent p-4"
         >
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-emerald-400">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-vo-accent-ink">
             Charging cost & savings
           </p>
-          <p className="mt-1 text-[16px] font-bold text-white">See live tariffs, history, and off-peak savings</p>
+          <p className="mt-1 text-[16px] font-bold text-driver-ink">See live tariffs, history, and off-peak savings</p>
           <p className="mt-1 text-[12px] text-vo-muted">Powered by the existing pricing engine · your bookings only</p>
         </Link>
 
@@ -362,13 +434,15 @@ export function DriverHomePage() {
           to="/driver/bookings"
           className="block rounded-2xl border border-vo-line bg-vo-card p-4 hover:border-emerald-500/40 transition-colors"
         >
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-emerald-400">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-vo-accent-ink">
             Reservations
           </p>
-          <p className="mt-1 text-[16px] font-bold text-white">My Bookings</p>
+          <p className="mt-1 text-[16px] font-bold text-driver-ink">My Bookings</p>
           <p className="mt-1 text-[12px] text-vo-muted">View upcoming and past charging reservations</p>
         </Link>
 
+        {/* Name filter only -- location search sits on the map so choosing a
+            place updates origin, distances, and markers rather than this list. */}
         <label className="flex h-12 items-center gap-3 rounded-2xl border border-vo-line bg-vo-card px-4 shadow-inner">
           <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-emerald-400 text-black shrink-0">
             <ArrowUpRight size={14} />
@@ -377,28 +451,16 @@ export function DriverHomePage() {
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Filter this list by charger name..."
-            className="w-full bg-transparent text-[14px] text-white outline-none placeholder:text-vo-muted"
+            className="w-full bg-transparent text-[14px] text-driver-ink outline-none placeholder:text-vo-muted"
           />
         </label>
-
-        {/* Search a DIFFERENT place -- unlike the filter above, this moves
-            `origin` itself, so the map, range circle, and recommendations
-            all shift to the searched location instead of your real GPS. */}
-        <div>
-          <LocationSearchBox
-            onSelectSuggestion={(s) => void handleSelectSearchSuggestion(s)}
-            onSubmitFreeText={(q) => void handleSubmitSearchFreeText(q)}
-            onClear={handleClearSearch}
-          />
-          {searchError ? <p className="mt-1.5 text-[11px] text-red-400">{searchError}</p> : null}
-        </div>
 
         <div className="flex items-center justify-between gap-2">
           <button
             type="button"
             onClick={() => void handleRefreshNearby()}
             disabled={refreshing || refreshCooldownRemainingMs > 0}
-            className="flex items-center gap-1.5 rounded-xl border border-vo-line bg-vo-card px-3 py-1.5 text-[11px] font-medium text-emerald-400 disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex items-center gap-1.5 rounded-xl border border-vo-line bg-vo-card px-3 py-1.5 text-[11px] font-medium text-vo-accent-ink disabled:cursor-not-allowed disabled:opacity-50"
           >
             <RefreshCw size={12} className={refreshing ? "animate-spin" : ""} />
             {refreshing
@@ -407,45 +469,137 @@ export function DriverHomePage() {
                 ? `Refresh available in ${Math.ceil(refreshCooldownRemainingMs / 1000)}s`
                 : "Refresh nearby chargers"}
           </button>
-          {refreshError ? <p className="text-[11px] text-red-400">{refreshError}</p> : null}
+          {refreshError ? <p className="text-[11px] text-vo-bad-ink">{refreshError}</p> : null}
+        </div>
+
+        <div className="grid grid-cols-2 gap-2">
+          <label className="space-y-1">
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-vo-muted">Sort</span>
+            <select
+              value={filters.sort}
+              onChange={(event) => setFilters((current) => ({ ...current, sort: event.target.value as ChargerFilterState["sort"] }))}
+              className="w-full rounded-xl border border-vo-line bg-vo-card px-2.5 py-2 text-[11px] text-driver-ink"
+            >
+              <option value="nearest">Nearest first</option>
+              <option value="cheapest">Cheapest first</option>
+              <option value="fastest">Fastest charging</option>
+            </select>
+          </label>
+          <label className="space-y-1">
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-vo-muted">Booking</span>
+            <select
+              value={filters.bookable}
+              onChange={(event) => setFilters((current) => ({ ...current, bookable: event.target.value as ChargerFilterState["bookable"] }))}
+              className="w-full rounded-xl border border-vo-line bg-vo-card px-2.5 py-2 text-[11px] text-driver-ink"
+            >
+              <option value="all">All chargers</option>
+              <option value="bookable">Bookable</option>
+              <option value="info">Info only</option>
+            </select>
+          </label>
+          <label className="space-y-1">
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-vo-muted">Status</span>
+            <select
+              value={filters.availability}
+              onChange={(event) => setFilters((current) => ({ ...current, availability: event.target.value as ChargerFilterState["availability"] }))}
+              className="w-full rounded-xl border border-vo-line bg-vo-card px-2.5 py-2 text-[11px] text-driver-ink"
+            >
+              <option value="all">All statuses</option>
+              <option value="available">Available</option>
+              <option value="unavailable">Unavailable</option>
+              <option value="unknown">Unknown</option>
+            </select>
+          </label>
+          <label className="space-y-1">
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-vo-muted">Connector</span>
+            <select
+              value={filters.connector}
+              onChange={(event) => setFilters((current) => ({ ...current, connector: event.target.value }))}
+              className="w-full rounded-xl border border-vo-line bg-vo-card px-2.5 py-2 text-[11px] text-driver-ink"
+            >
+              <option value="all">All connectors</option>
+              {connectorOptions.map((connector) => (
+                <option key={connector} value={connector}>
+                  {connector}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="col-span-2 space-y-1">
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-vo-muted">Max price (₹/kWh)</span>
+            <input
+              type="number"
+              min={0}
+              step={1}
+              value={filters.maxPrice ?? ""}
+              onChange={(event) => {
+                const raw = event.target.value;
+                setFilters((current) => ({
+                  ...current,
+                  maxPrice: raw === "" || !Number.isFinite(Number(raw)) ? null : Number(raw),
+                }));
+              }}
+              placeholder="Known prices only — unknown prices stay hidden"
+              className="w-full rounded-xl border border-vo-line bg-vo-card px-2.5 py-2 text-[11px] text-driver-ink placeholder:text-vo-muted"
+            />
+          </label>
         </div>
       </div>
 
       <ScreenState loading={loading} error={error} empty={!loading && !error && allRanked.length === 0}>
         <div className="mt-4 px-5 space-y-4">
-          <div className="h-[210px] overflow-hidden rounded-2xl border border-vo-line">
+          <div className="relative z-20 space-y-2">
+            <LocationSearchBox
+              key={searchBoxKey}
+              initialQuery={searchedLocation?.name ?? ""}
+              placeholder="Search a location or click the map..."
+              onSelectSuggestion={(s) => void handleSelectSearchSuggestion(s)}
+              onSubmitFreeText={(q) => void handleSubmitSearchFreeText(q)}
+              onClear={handleClearSearch}
+            />
+            {searchError ? (
+              <p className="rounded-lg border border-vo-bad-border bg-vo-bad-bg px-2 py-1 text-[11px] text-vo-bad-ink">
+                {searchError}
+              </p>
+            ) : null}
+          </div>
+
+          <div className="h-[280px] overflow-hidden rounded-2xl border border-vo-line">
             <DriverMap
-              chargers={effectiveChargers}
+              chargers={mapChargers}
               origin={origin}
               rangeKm={isRangeLimited ? bufferedRangeKm : null}
               isLiveLocation={geoStatus === "granted" && !searchedLocation}
+              selectedChargerId={selectedChargerId}
+              onSelectCharger={setSelectedChargerId}
+              onMapClick={handleMapPickLocation}
             />
           </div>
 
           {searchedLocation ? (
             <div className="flex items-center justify-between gap-2 rounded-xl border border-cyan-500/20 bg-cyan-500/5 px-3 py-2">
-              <div className="flex items-center gap-1.5 text-[11px] text-cyan-300">
+              <div className="flex items-center gap-1.5 text-[11px] text-vo-info-ink">
                 <MapPin size={12} />
                 <span>Showing chargers near "{searchedLocation.name}"</span>
               </div>
               <button
                 type="button"
                 onClick={handleClearSearch}
-                className="flex shrink-0 items-center gap-1 text-[11px] font-medium text-cyan-300 hover:text-cyan-200"
+                className="flex shrink-0 items-center gap-1 text-[11px] font-medium text-vo-info-ink hover:opacity-80"
               >
                 <X size={12} />
                 Back to my location
               </button>
             </div>
           ) : geoStatus === "granted" ? (
-            <div className="flex items-center gap-1.5 text-[11px] text-emerald-400">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+            <div className="flex items-center gap-1.5 text-[11px] text-vo-accent-ink">
+              <span className="h-1.5 w-1.5 rounded-full bg-vo-accent-ink" />
               <span>Using your live location</span>
             </div>
           ) : (
             <div className="flex items-center justify-between gap-2 rounded-xl border border-amber-500/20 bg-amber-500/5 px-3 py-2">
-              <div className="flex items-center gap-1.5 text-[11px] text-amber-400" title={GEO_STATUS_COPY[geoStatus]}>
-                <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
+              <div className="flex items-center gap-1.5 text-[11px] text-vo-warn-ink" title={GEO_STATUS_COPY[geoStatus]}>
+                <span className="h-1.5 w-1.5 rounded-full bg-vo-warn-ink" />
                 <span>
                   {geoStatus === "pending"
                     ? GEO_STATUS_COPY.pending
@@ -456,7 +610,7 @@ export function DriverHomePage() {
                 <button
                   type="button"
                   onClick={requestLocation}
-                  className="flex shrink-0 items-center gap-1 text-[11px] font-medium text-amber-300 hover:text-amber-200"
+                  className="flex shrink-0 items-center gap-1 text-[11px] font-medium text-vo-warn-ink hover:opacity-80"
                 >
                   <LocateFixed size={12} />
                   Try again
@@ -466,31 +620,36 @@ export function DriverHomePage() {
           )}
 
           <div className="flex items-center justify-between">
-            <h2 className="text-[16px] font-bold text-white">
+            <h2 className="text-[16px] font-bold text-driver-ink">
               {isRangeLimited ? "Reachable Chargers" : "Nearby Chargers"}
             </h2>
-            <span className="text-[12px] text-emerald-400 font-mono">
+            <span className="text-[12px] text-vo-accent-ink font-mono">
               {isRangeLimited
                 ? `${ranked.length} within your ${Math.round(bufferedRangeKm!)} km range`
                 : `${ranked.length} Available`}
             </span>
           </div>
 
-          {isRangeLimited && ranked.length === 0 ? (
+          {isRangeLimited && ranked.length === 0 && reachable.length === 0 ? (
             <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-6 text-center space-y-1.5">
-              <p className="text-sm font-semibold text-amber-400">No chargers within your current range</p>
+              <p className="text-sm font-semibold text-vo-warn-ink">No chargers within your current range</p>
               <p className="text-xs text-vo-muted">Consider charging soon, or widen your search once your battery's topped up.</p>
+            </div>
+          ) : ranked.length === 0 ? (
+            <div className="rounded-2xl border border-vo-line bg-vo-card p-6 text-center space-y-1.5">
+              <p className="text-sm font-semibold text-driver-ink">No chargers match these filters</p>
+              <p className="text-xs text-vo-muted">Try clearing a filter or searching a different location.</p>
             </div>
           ) : (
             <>
               <div className="flex items-center justify-between pt-1">
-                <h3 className="text-[13px] font-bold text-white">Recommended for you</h3>
+                <h3 className="text-[13px] font-bold text-driver-ink">Recommended for you</h3>
                 <span className="text-[10px] uppercase tracking-wider text-vo-muted">Closer · known status · faster charging</span>
               </div>
               {/* No placeholder rows when fewer than 5 are in range --
                   .slice(0, 5) already just returns what exists. */}
               <div className="flex flex-col gap-3">
-                {recommended.map((row, index) => (
+                {visibleRecommended.map((row, index) => (
                   <ChargerCard
                     key={row.charger.id}
                     charger={row.charger}
@@ -498,6 +657,9 @@ export function DriverHomePage() {
                     freeCount={row.freeCount}
                     totalCount={row.totalCount}
                     rank={index + 1}
+                    origin={origin}
+                    selected={selectedChargerId === row.charger.id}
+                    onSelect={setSelectedChargerId}
                   />
                 ))}
               </div>
@@ -506,7 +668,7 @@ export function DriverHomePage() {
                 <button
                   type="button"
                   onClick={() => setShowAllReachable((v) => !v)}
-                  className="text-[12px] font-medium text-emerald-400 hover:text-emerald-300"
+                  className="text-[12px] font-medium text-vo-accent-ink hover:opacity-80"
                 >
                   {showAllReachable ? "Hide full list" : `Show all ${ranked.length} reachable`}
                 </button>
@@ -523,6 +685,9 @@ export function DriverHomePage() {
                       km={row.km}
                       freeCount={row.freeCount}
                       totalCount={row.totalCount}
+                      origin={origin}
+                      selected={selectedChargerId === row.charger.id}
+                      onSelect={setSelectedChargerId}
                     />
                   ))}
                 </div>

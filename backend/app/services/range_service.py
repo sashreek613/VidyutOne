@@ -164,14 +164,14 @@ def calculate_range(
         factors.append(
             RangeFactor(
                 key="climate_control",
-                label="Climate control",
+                label="AC",
                 multiplier=CLIMATE_CONTROL_MULTIPLIER,
-                detail="Climate control on -- HVAC load reduces range",
+                detail="AC on -- HVAC load reduces range",
             )
         )
     else:
         factors.append(
-            RangeFactor(key="climate_control", label="Climate control", multiplier=1.0, detail="Climate control off -- no adjustment")
+            RangeFactor(key="climate_control", label="AC", multiplier=1.0, detail="AC off -- no adjustment")
         )
 
     profile_multiplier = DRIVING_PROFILE_MULTIPLIERS.get(driving_profile, 1.0)

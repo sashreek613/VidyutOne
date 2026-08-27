@@ -1,3 +1,4 @@
+
 import { useMemo, useState } from "react";
 import { CheckCircle2, AlertTriangle, XCircle, ChevronDown, ChevronUp, Activity } from "lucide-react";
 
@@ -26,7 +27,7 @@ export function PlannerGridPage() {
         {sites ? (
           <div className="space-y-6 px-6 py-6 max-w-7xl mx-auto">
             <div>
-              <h1 className="text-xl font-bold text-white flex items-center space-x-2">
+              <h1 className="text-xl font-bold text-vo-text flex items-center space-x-2">
                 <Activity className="w-5 h-5 text-vo-accent" />
                 <span>Electrical Grid Readiness & Headroom</span>
               </h1>
@@ -40,38 +41,38 @@ export function PlannerGridPage() {
               <h2 className="text-xs font-semibold uppercase tracking-wider text-vo-muted">Grid Readiness Summary</h2>
 
               <div className="grid gap-4 md:grid-cols-3">
-                <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-5 space-y-2">
+                <div className="rounded-2xl border border-vo-good-border bg-vo-good-bg p-5 space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold uppercase text-emerald-400">🟢 Ready</span>
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                    <span className="text-xs font-bold uppercase text-vo-good-ink">🟢 Ready</span>
+                    <CheckCircle2 className="w-4 h-4 text-vo-good-ink" />
                   </div>
-                  <div className="text-2xl font-bold text-white font-mono">{gridReadiness.ready.length} Locations</div>
-                  <p className="text-xs text-emerald-300/80">Sufficient transformer headroom available for immediate fast charging.</p>
+                  <div className="text-2xl font-bold text-vo-text font-mono">{gridReadiness.ready.length} Locations</div>
+                  <p className="text-xs text-vo-good-ink/80">Sufficient transformer headroom available for immediate fast charging.</p>
                 </div>
 
-                <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-5 space-y-2">
+                <div className="rounded-2xl border border-vo-warn-border bg-vo-warn-bg p-5 space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold uppercase text-amber-400">🟡 Needs Intervention</span>
-                    <AlertTriangle className="w-4 h-4 text-amber-400" />
+                    <span className="text-xs font-bold uppercase text-vo-warn-ink">🟡 Needs Intervention</span>
+                    <AlertTriangle className="w-4 h-4 text-vo-warn-ink" />
                   </div>
-                  <div className="text-2xl font-bold text-white font-mono">{gridReadiness.managed.length} Locations</div>
-                  <p className="text-xs text-amber-300/80">Requires smart load controllers or off-peak managed charging schedules.</p>
+                  <div className="text-2xl font-bold text-vo-text font-mono">{gridReadiness.managed.length} Locations</div>
+                  <p className="text-xs text-vo-warn-ink/80">Requires smart load controllers or off-peak managed charging schedules.</p>
                 </div>
 
-                <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-5 space-y-2">
+                <div className="rounded-2xl border border-vo-bad-border bg-vo-bad-bg p-5 space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold uppercase text-red-400">🔴 Upgrade Required</span>
-                    <XCircle className="w-4 h-4 text-red-400" />
+                    <span className="text-xs font-bold uppercase text-vo-bad-ink">🔴 Upgrade Required</span>
+                    <XCircle className="w-4 h-4 text-vo-bad-ink" />
                   </div>
-                  <div className="text-2xl font-bold text-white font-mono">{gridReadiness.upgrade.length} Locations</div>
-                  <p className="text-xs text-red-300/80">High feeder load; requires physical transformer or line capacity upgrade.</p>
+                  <div className="text-2xl font-bold text-vo-text font-mono">{gridReadiness.upgrade.length} Locations</div>
+                  <p className="text-xs text-vo-bad-ink/80">High feeder load; requires physical transformer or line capacity upgrade.</p>
                 </div>
               </div>
             </div>
 
             {/* Feeder Headroom Visual Chart */}
             <div className="rounded-2xl border border-vo-line bg-vo-card p-6 space-y-4">
-              <h3 className="text-base font-bold text-white">Feeder Headroom vs Peak EV Demand</h3>
+              <h3 className="text-base font-bold text-vo-text">Feeder Headroom vs Peak EV Demand</h3>
               <div className="h-[260px]">
                 <FeederChart sites={sites} />
               </div>
@@ -81,7 +82,7 @@ export function PlannerGridPage() {
             <div className="rounded-2xl border border-vo-line bg-vo-card p-6 space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-base font-bold text-white">Technical Grid Details</h3>
+                  <h3 className="text-base font-bold text-vo-text">Technical Grid Details</h3>
                   <p className="text-xs text-vo-muted">Detailed electrical engineering specifications per feeder</p>
                 </div>
                 <button
@@ -107,23 +108,22 @@ export function PlannerGridPage() {
                         <th className="pb-3 font-semibold">Grid Status</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-vo-line/40 text-gray-300">
+                    <tbody className="divide-y divide-vo-line/40 text-vo-soft">
                       {sites.map((site) => {
                         const insights = insightsForSite(site);
                         const isReady = site.grid_capacity_score >= 70;
                         const isManaged = site.grid_capacity_score >= 40 && site.grid_capacity_score < 70;
 
                         return (
-                          <tr key={site.id} className="hover:bg-white/5 transition-colors">
-                            <td className="py-3 font-bold text-white">{site.name.replace(" (demo)", "")}</td>
+                          <tr key={site.id} className="hover:bg-vo-line/40 transition-colors">
+                            <td className="py-3 font-bold text-vo-text">{site.name.replace(" (demo)", "")}</td>
                             <td className="py-3 font-mono">{insights.feederName}</td>
                             <td className="py-3 font-mono">{insights.transformerKva} kVA</td>
                             <td className="py-3 font-mono">{insights.peakLoadPct}%</td>
                             <td className="py-3 font-mono text-vo-accent">{insights.headroomKva} kVA</td>
                             <td className="py-3">
-                              <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase border ${
-                                isReady ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400" : isManaged ? "bg-amber-500/10 border-amber-500/30 text-amber-400" : "bg-red-500/10 border-red-500/30 text-red-400"
-                              }`}>
+                              <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase border ${isReady ? "bg-vo-good-bg border-vo-good-border text-vo-good-ink" : isManaged ? "bg-vo-warn-bg border-vo-warn-border text-vo-warn-ink" : "bg-vo-bad-bg border-vo-bad-border text-vo-bad-ink"
+                                }`}>
                                 {isReady ? "Capacity Available" : isManaged ? "Needs Management" : "Upgrade Required"}
                               </span>
                             </td>

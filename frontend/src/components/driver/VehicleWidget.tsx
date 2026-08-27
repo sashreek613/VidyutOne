@@ -165,7 +165,7 @@ export function VehicleWidget({
           <Zap className="w-5 h-5" />
         </div>
         <div>
-          <h3 className="text-sm font-bold text-white">Add your EV for smarter recommendations</h3>
+          <h3 className="text-sm font-bold text-driver-ink">Add your EV for smarter recommendations</h3>
           <p className="text-xs text-vo-muted mt-1">
             Calculate your estimated range and filter chargers you can reach.
           </p>
@@ -217,15 +217,15 @@ export function VehicleWidget({
   }
 
   return (
-    <div className="rounded-2xl border border-emerald-500/20 bg-gradient-to-b from-[#111827] to-[#0d131f] p-5 space-y-4 shadow-xl">
+    <div className="rounded-2xl border border-driver-line bg-driver-card p-5 space-y-4 shadow-sm">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2.5">
-          <div className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+          <div className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-500">
             <Zap className="w-5 h-5" />
           </div>
           <div>
-            <div className="text-[10px] font-semibold uppercase tracking-wider text-emerald-400">Your Vehicle</div>
-            <h3 className="text-base font-bold text-white">
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-vo-accent-ink">Your Vehicle</span>
+            <h3 className="text-base font-bold text-driver-ink">
               {vehicle.make} {vehicle.model}
             </h3>
           </div>
@@ -234,7 +234,7 @@ export function VehicleWidget({
         <button
           type="button"
           onClick={() => onEditVehicle(vehicle)}
-          className="p-2 rounded-lg bg-gray-800/80 hover:bg-gray-700 text-gray-300 transition-colors"
+          className="p-2 rounded-lg bg-driver-bg hover:bg-driver-line text-driver-muted transition-colors"
           title="Edit Vehicle"
         >
           <Edit2 className="w-4 h-4" />
@@ -248,9 +248,9 @@ export function VehicleWidget({
             <Battery className="w-3.5 h-3.5 text-emerald-400" />
             <span>Battery Level</span>
           </div>
-          <div className="text-xl font-bold text-white flex items-baseline space-x-1">
+          <div className="text-xl font-bold text-driver-ink flex items-baseline space-x-1">
             <span>{Math.round(currentPct)}</span>
-            <span className="text-xs font-normal text-emerald-400">%</span>
+            <span className="text-xs font-normal text-emerald-500">%</span>
           </div>
         </div>
 
@@ -260,9 +260,9 @@ export function VehicleWidget({
             <Gauge className="w-3.5 h-3.5 text-cyan-400" />
             <span>Est. Range</span>
           </div>
-          <div className="text-xl font-bold text-white flex items-baseline space-x-1">
+          <div className="text-xl font-bold text-driver-ink flex items-baseline space-x-1">
             <span>{rawRangeKm}</span>
-            <span className="text-xs font-normal text-cyan-400">km</span>
+            <span className="text-xs font-normal text-emerald-500">km</span>
           </div>
           <p className="text-[10px] text-vo-muted mt-0.5">{bufferedRangeKm} km with reserve</p>
         </div>
@@ -275,7 +275,7 @@ export function VehicleWidget({
             <span>Update Charge</span>
             {updating ? <RefreshCw className="w-3 h-3 animate-spin text-emerald-400" /> : null}
           </span>
-          <span className="font-mono text-emerald-400">{Math.round(currentPct)}%</span>
+          <span className="font-mono text-vo-accent-ink">{Math.round(currentPct)}%</span>
         </div>
         <input
           type="range"
@@ -285,7 +285,7 @@ export function VehicleWidget({
           onChange={(e) => setTempPct(Number(e.target.value))}
           onMouseUp={(e) => void handleSliderCommit(Number((e.target as HTMLInputElement).value))}
           onTouchEnd={(e) => void handleSliderCommit(Number((e.target as HTMLInputElement).value))}
-          className="w-full h-2 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-emerald-400"
+          className="w-full h-2 bg-driver-line rounded-lg appearance-none cursor-pointer accent-emerald-400"
         />
       </div>
 
@@ -296,7 +296,7 @@ export function VehicleWidget({
             <Thermometer className="w-3.5 h-3.5 text-cyan-400" />
             <span>Outside temperature</span>
           </span>
-          <span className="font-mono text-white">{outdoorTempC !== null ? `${outdoorTempC.toFixed(1)}°C` : "—"}</span>
+          <span className="font-mono text-driver-ink">{outdoorTempC !== null ? `${outdoorTempC.toFixed(1)}°C` : "—"}</span>
         </div>
 
         <div className="flex items-center justify-between text-xs">
@@ -304,7 +304,7 @@ export function VehicleWidget({
             <BatteryMedium className="w-3.5 h-3.5 text-emerald-400" />
             <span>Battery health</span>
           </span>
-          <span className="font-mono text-white text-right max-w-[60%]" title={batteryHealthLabel}>
+          <span className="font-mono text-driver-ink text-right max-w-[60%]" title={batteryHealthLabel}>
             {vehicle.registration_date
               ? `~${Math.round((batteryHealthFactor?.multiplier ?? previewBatteryHealthMultiplier(vehicle.registration_date)) * 100)}%`
               : "Unknown"}
@@ -316,13 +316,13 @@ export function VehicleWidget({
           onClick={() => onClimateControlChange(!climateControl)}
           className={`flex w-full items-center justify-between rounded-xl border px-3 py-2 text-xs transition-colors ${
             climateControl
-              ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-300"
+              ? "border-emerald-500/40 bg-emerald-500/10 text-vo-accent-ink"
               : "border-vo-line bg-vo-card/80 text-vo-muted"
           }`}
         >
           <span className="flex items-center space-x-1.5">
             <Wind className="w-3.5 h-3.5" />
-            <span>Climate control</span>
+            <span>AC</span>
           </span>
           <span className="font-semibold">{climateControl ? "On" : "Off"}</span>
         </button>
@@ -335,7 +335,7 @@ export function VehicleWidget({
               onClick={() => onDrivingProfileChange(value)}
               className={`flex flex-col items-center gap-1 rounded-xl border px-2 py-2 text-[11px] transition-colors ${
                 drivingProfile === value
-                  ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-300"
+                  ? "border-emerald-500/40 bg-emerald-500/10 text-vo-accent-ink"
                   : "border-vo-line bg-vo-card/80 text-vo-muted"
               }`}
             >

@@ -47,7 +47,7 @@ export function PlannerExplorerPage() {
             {/* Header & Filter Controls */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
-                <h1 className="text-xl font-bold text-white">Candidate Site Explorer</h1>
+                <h1 className="text-xl font-bold text-vo-text">Candidate Site Explorer</h1>
                 <p className="text-xs text-vo-muted mt-0.5">
                   Investigate individual candidate locations, demand projections, and grid suitability.
                 </p>
@@ -62,14 +62,14 @@ export function PlannerExplorerPage() {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search site name or ward..."
-                    className="rounded-xl border border-vo-line bg-vo-card pl-9 pr-3 py-2 text-xs text-white placeholder:text-vo-muted focus:border-vo-accent focus:outline-none w-56"
+                    className="rounded-xl border border-vo-line bg-vo-card pl-9 pr-3 py-2 text-xs text-vo-text placeholder:text-vo-muted focus:border-vo-accent focus:outline-none w-56"
                   />
                 </div>
 
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className="rounded-xl border border-vo-line bg-vo-card px-3 py-2 text-xs text-white focus:border-vo-accent focus:outline-none"
+                  className="rounded-xl border border-vo-line bg-vo-card px-3 py-2 text-xs text-vo-text focus:border-vo-accent focus:outline-none"
                 >
                   <option value="ALL">All Statuses</option>
                   <option value="BUILD">🟢 BUILD</option>
@@ -80,7 +80,7 @@ export function PlannerExplorerPage() {
                 <select
                   value={demandFilter}
                   onChange={(e) => setDemandFilter(e.target.value)}
-                  className="rounded-xl border border-vo-line bg-vo-card px-3 py-2 text-xs text-white focus:border-vo-accent focus:outline-none"
+                  className="rounded-xl border border-vo-line bg-vo-card px-3 py-2 text-xs text-vo-text focus:border-vo-accent focus:outline-none"
                 >
                   <option value="ALL">All Demand Levels</option>
                   <option value="HIGH">High Demand (≥70)</option>
@@ -99,7 +99,7 @@ export function PlannerExplorerPage() {
 
             {filteredSites.length === 0 ? (
               <div className="rounded-2xl border border-vo-line bg-vo-card p-12 text-center text-xs text-vo-muted space-y-2">
-                <p className="text-sm font-semibold text-white">No candidate sites match your filter criteria.</p>
+                <p className="text-sm font-semibold text-vo-text">No candidate sites match your filter criteria.</p>
                 <p>Try clearing your search query or status filter.</p>
               </div>
             ) : null}
@@ -141,7 +141,7 @@ function ExplorerSiteCard({ site, onInspect }: { site: Site; onInspect: () => vo
         </div>
 
         <div>
-          <h3 className="text-base font-bold text-white">{site.name.replace(" (demo)", "")}</h3>
+          <h3 className="text-base font-bold text-vo-text">{site.name.replace(" (demo)", "")}</h3>
           <p className="text-xs text-vo-muted flex items-center space-x-1 mt-0.5">
             <MapPin className="w-3 h-3 text-vo-accent" />
             <span>Bengaluru Urban Division</span>
@@ -153,7 +153,7 @@ function ExplorerSiteCard({ site, onInspect }: { site: Site; onInspect: () => vo
           <div>
             <div className="flex justify-between text-vo-muted mb-1">
               <span>EV Demand Projection</span>
-              <span className="font-bold text-white font-mono">{Math.round(site.demand_score)}/100</span>
+              <span className="font-bold text-vo-text font-mono">{Math.round(site.demand_score)}/100</span>
             </div>
             <div className="h-1.5 w-full bg-gray-800 rounded-full overflow-hidden">
               <div
@@ -165,7 +165,7 @@ function ExplorerSiteCard({ site, onInspect }: { site: Site; onInspect: () => vo
 
           <div className="flex items-center justify-between text-vo-muted border-t border-vo-line/40 pt-2">
             <span>Grid Readiness:</span>
-            <span className="font-semibold text-white">
+            <span className="font-semibold text-vo-text">
               {site.grid_capacity_score >= 70 ? "Ready" : site.grid_capacity_score >= 40 ? "Needs Management" : "Upgrade Required"}
             </span>
           </div>
@@ -180,7 +180,7 @@ function ExplorerSiteCard({ site, onInspect }: { site: Site; onInspect: () => vo
       <button
         type="button"
         onClick={onInspect}
-        className="w-full py-2.5 rounded-xl bg-gray-900 border border-vo-line hover:border-vo-accent/40 text-xs font-semibold text-white transition-colors flex items-center justify-center space-x-1"
+        className="w-full py-2.5 rounded-xl bg-vo-elevated border border-vo-line hover:border-vo-accent/40 text-xs font-semibold text-vo-text transition-colors flex items-center justify-center space-x-1"
       >
         <span>Inspect site details</span>
         <ArrowRight className="w-3.5 h-3.5" />

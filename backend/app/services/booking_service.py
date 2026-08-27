@@ -45,13 +45,9 @@ def create_booking(db: Session, payload: BookingCreate, user_id: str) -> Booking
         duration_minutes=duration_minutes,
         created_at=utcnow(),
     )
+    booking.charger = charger
     db.add(booking)
     db.commit()
-    db.refresh(booking)
-    
-    # Reload with charger loaded
-    from sqlalchemy.orm import joinedload
-    booking = db.query(Booking).options(joinedload(Booking.charger)).filter(Booking.id == booking.id).first()
     return BookingRead.model_validate(booking)
 
 

@@ -9,8 +9,9 @@ import { getMe } from "../services/api";
 import type { Profile, UserRole } from "../types";
 
 function isAppRole(value: string | undefined): value is UserRole {
-  return value === "planner" || value === "driver";
+  return value === "planner" || value === "driver" || value === "admin";
 }
+
 
 function isEmailVerified(user: User | null): boolean {
   if (!user) {
@@ -198,7 +199,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return me;
       },
 
-      signUp: async ({ fullName, email, password, role, organization, phoneNumber }) => {
+      signUp: async ({ fullName, email, password, role, organization, phoneNumber, designation }) => {
         if (!supabase) {
           throw new Error("Supabase configuration error. Set VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY.");
         }
@@ -209,10 +210,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           email,
           password,
           options: {
-            data: { full_name: fullName, role, organization, phone_number: phoneNumber },
+            data: { full_name: fullName, role, organization, phone_number: phoneNumber, designation },
             emailRedirectTo: getAuthCallbackUrl(),
           },
         });
+
 
         if (error) {
           logAuthError("signup-error", error);

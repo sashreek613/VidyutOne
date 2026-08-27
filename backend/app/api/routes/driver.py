@@ -11,7 +11,8 @@ from app.schemas.charging import (
     ChargingSessionRead,
     ChargingSummaryRead,
 )
-from app.services import charging_service
+from app.schemas.driver_assistant import DriverAssistantChatRequest, DriverAssistantChatResponse
+from app.services import charging_service, lyzr_driver_service
 
 router = APIRouter()
 
@@ -42,3 +43,12 @@ def post_charging_quote(
     if charger is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Charger not found")
     return charging_service.quote_charging_slots(db, current.id, charger, payload.slots)
+
+
+@router.post("/driver/voice-assistant", response_model=DriverAssistantChatResponse)
+def post_voice_assistant(
+    payload: DriverAssistantChatRequest,
+    current: AuthUser = Depends(require_driver),
+) -> DriverAssistantChatResponse:
+    reply = lyzr_driver_service.ask_driver_assistant(payload.message, payload.session_id, payload.context_summary)
+    return DriverAssistantChatResponse(reply=reply)

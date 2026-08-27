@@ -60,11 +60,11 @@ export function PlannerReportsPage() {
       <TopBar title="Reports" />
       <ScreenState loading={loading} error={error} empty={!loading && !error && (sites?.length ?? 0) === 0}>
         {sites ? (
-          <div className="space-y-6 px-6 py-6 max-w-7xl mx-auto">
+          <div className="print-report space-y-6 px-6 py-6 max-w-7xl mx-auto">
             {/* Header & Export Actions */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
-                <h1 className="text-xl font-bold text-white flex items-center space-x-2">
+                <h1 className="text-xl font-bold text-vo-text flex items-center space-x-2">
                   <FileText className="w-5 h-5 text-vo-accent" />
                   <span>Infrastructure Planning Executive Report</span>
                 </h1>
@@ -73,11 +73,11 @@ export function PlannerReportsPage() {
                 </p>
               </div>
 
-              <div className="flex items-center space-x-3">
+              <div className="no-print flex items-center space-x-3">
                 <button
                   type="button"
                   onClick={exportCSV}
-                  className="inline-flex items-center space-x-1.5 px-4 py-2 rounded-xl bg-vo-card border border-vo-line hover:border-vo-accent/40 text-xs font-semibold text-white transition-colors"
+                  className="inline-flex items-center space-x-1.5 px-4 py-2 rounded-xl bg-vo-card border border-vo-line hover:border-vo-accent/40 text-xs font-semibold text-vo-text transition-colors"
                 >
                   <Download className="w-4 h-4 text-vo-accent" />
                   <span>Export CSV</span>
@@ -97,7 +97,7 @@ export function PlannerReportsPage() {
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <div className="rounded-2xl border border-vo-line bg-vo-card p-5 space-y-1">
                 <p className="text-xs font-medium uppercase text-vo-muted">Assessed Locations</p>
-                <div className="text-2xl font-bold text-white font-mono">{summary.totalSites}</div>
+                <div className="text-2xl font-bold text-vo-text font-mono">{summary.totalSites}</div>
                 <p className="text-xs text-vo-muted">Bengaluru Division</p>
               </div>
 
@@ -109,7 +109,7 @@ export function PlannerReportsPage() {
 
               <div className="rounded-2xl border border-vo-line bg-vo-card p-5 space-y-1">
                 <p className="text-xs font-medium uppercase text-vo-muted">Direct Build Sites</p>
-                <div className="text-2xl font-bold text-white font-mono">{summary.build} Sites</div>
+                <div className="text-2xl font-bold text-vo-text font-mono">{summary.build} Sites</div>
                 <p className="text-xs text-vo-muted">Grid capacity available</p>
               </div>
 
@@ -123,14 +123,14 @@ export function PlannerReportsPage() {
             {/* Detailed Table */}
             <div className="rounded-2xl border border-vo-line bg-vo-card p-6 space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <h2 className="text-base font-bold text-white">Full Site Assessment Table</h2>
+                <h2 className="text-base font-bold text-vo-text">Full Site Assessment Table</h2>
 
-                <div className="flex items-center space-x-2">
+                <div className="no-print flex items-center space-x-2">
                   <Filter className="w-3.5 h-3.5 text-vo-muted" />
                   <select
                     value={filter}
                     onChange={(e) => setFilter(e.target.value)}
-                    className="rounded-xl border border-vo-line bg-gray-900 px-3 py-1.5 text-xs text-white focus:border-vo-accent focus:outline-none"
+                    className="rounded-xl border border-vo-line bg-vo-elevated px-3 py-1.5 text-xs text-vo-text focus:border-vo-accent focus:outline-none"
                   >
                     <option value="ALL">All Decisions</option>
                     <option value="BUILD">🟢 BUILD Only</option>
@@ -152,7 +152,7 @@ export function PlannerReportsPage() {
                       <th className="pb-3 font-semibold">Action Item</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-vo-line/40 text-gray-300">
+                  <tbody className="divide-y divide-vo-line/40 text-vo-soft">
                     {filteredSites.map((site) => {
                       const isBuild = site.recommendation === "BUILD";
                       const isManaged = site.recommendation === "BUILD_IF_MANAGED";
@@ -164,7 +164,7 @@ export function PlannerReportsPage() {
 
                       return (
                         <tr key={site.id} className="hover:bg-white/5 transition-colors">
-                          <td className="py-3.5 font-bold text-white">{site.name.replace(" (demo)", "")}</td>
+                          <td className="py-3.5 font-bold text-vo-text">{site.name.replace(" (demo)", "")}</td>
                           <td className="py-3.5">
                             <span
                               className={`inline-flex items-center px-2.5 py-0.5 rounded text-[10px] font-mono font-bold uppercase border ${

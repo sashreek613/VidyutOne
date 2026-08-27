@@ -72,9 +72,9 @@ export function ExplainableVerdictCard({ site }: ExplainableVerdictCardProps) {
   > = {
     BUILD: {
       label: "Unconditional Recommendation: BUILD",
-      bgClass: "bg-emerald-500/10",
-      borderClass: "border-emerald-500/30",
-      textClass: "text-emerald-400",
+      bgClass: "bg-vo-good-bg",
+      borderClass: "border-vo-good-border",
+      textClass: "text-vo-good-ink",
       icon: CheckCircle2,
       summary: "Strong charging demand paired with ample local electrical grid headroom.",
       recommendations: [
@@ -84,9 +84,9 @@ export function ExplainableVerdictCard({ site }: ExplainableVerdictCardProps) {
     },
     BUILD_IF_MANAGED: {
       label: "Conditional Verdict: BUILD IF MANAGED",
-      bgClass: "bg-amber-500/10",
-      borderClass: "border-amber-500/30",
-      textClass: "text-amber-400",
+      bgClass: "bg-vo-warn-bg",
+      borderClass: "border-vo-warn-border",
+      textClass: "text-vo-warn-ink",
       icon: AlertTriangle,
       summary: "High projected EV demand, but local electrical feeder headroom is constrained.",
       recommendations: [
@@ -97,9 +97,9 @@ export function ExplainableVerdictCard({ site }: ExplainableVerdictCardProps) {
     },
     DONT_BUILD: {
       label: "Recommendation: DO NOT BUILD",
-      bgClass: "bg-red-500/10",
-      borderClass: "border-red-500/30",
-      textClass: "text-red-400",
+      bgClass: "bg-vo-bad-bg",
+      borderClass: "border-vo-bad-border",
+      textClass: "text-vo-bad-ink",
       icon: XCircle,
       summary: "Insufficient demand projection or high grid risk score makes this site non-viable.",
       recommendations: [
@@ -126,19 +126,19 @@ export function ExplainableVerdictCard({ site }: ExplainableVerdictCardProps) {
           <span className={`text-xs font-mono font-bold uppercase tracking-wider ${meta.textClass}`}>
             {meta.label}
           </span>
-          <p className="text-sm font-semibold text-white mt-0.5">{summaryLine}</p>
+          <p className="text-sm font-semibold text-vo-text mt-0.5">{summaryLine}</p>
         </div>
       </div>
 
       <div className="border-t border-vo-line/40 pt-3 space-y-2 text-xs text-vo-muted">
-        <div className="flex items-center space-x-1.5 font-semibold text-gray-300">
-          <Info className="w-3.5 h-3.5 text-cyan-400" />
+        <div className="flex items-center space-x-1.5 font-semibold text-vo-soft">
+          <Info className="w-3.5 h-3.5 text-vo-info-ink" />
           <span>Decision Analysis Breakdown:</span>
         </div>
         {explanation ? (
-          <p className="leading-relaxed text-gray-300">{explanation}</p>
+          <p className="leading-relaxed text-vo-soft">{explanation}</p>
         ) : (
-          <ul className="space-y-1.5 pl-5 list-disc text-gray-300">
+          <ul className="space-y-1.5 pl-5 list-disc text-vo-soft">
             {meta.recommendations.map((item, idx) => (
               <li key={idx} className="leading-relaxed">
                 {item}
@@ -151,22 +151,22 @@ export function ExplainableVerdictCard({ site }: ExplainableVerdictCardProps) {
       <div className="grid grid-cols-4 gap-2 pt-2 border-t border-vo-line/40 text-center text-xs">
         <div className="rounded-lg bg-vo-card/60 p-2">
           <div className="text-[10px] text-vo-muted uppercase">Demand</div>
-          <div className="font-bold text-white font-mono">{demand_score}</div>
+          <div className="font-bold text-vo-text font-mono">{demand_score}</div>
           <ProvenanceTag factor={demandFactor} />
         </div>
         <div className="rounded-lg bg-vo-card/60 p-2">
           <div className="text-[10px] text-vo-muted uppercase">Grid Headroom</div>
-          <div className="font-bold text-white font-mono">{grid_capacity_score}</div>
+          <div className="font-bold text-vo-text font-mono">{grid_capacity_score}</div>
           <ProvenanceTag factor={gridFactor} />
         </div>
         <div className="rounded-lg bg-vo-card/60 p-2">
           <div className="text-[10px] text-vo-muted uppercase">Accessibility</div>
-          <div className="font-bold text-white font-mono">{accessibility_score}</div>
+          <div className="font-bold text-vo-text font-mono">{accessibility_score}</div>
           <ProvenanceTag factor={landFactor} />
         </div>
         <div className="rounded-lg bg-vo-card/60 p-2">
           <div className="text-[10px] text-vo-muted uppercase">Charger Gap</div>
-          <div className="font-bold text-white font-mono">{charger_gap_score}</div>
+          <div className="font-bold text-vo-text font-mono">{charger_gap_score}</div>
           <ProvenanceTag factor={coverageFactor} />
         </div>
       </div>

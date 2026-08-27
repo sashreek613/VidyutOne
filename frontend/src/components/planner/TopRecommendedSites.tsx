@@ -16,7 +16,7 @@ export function TopRecommendedSites({ sites }: TopRecommendedSitesProps) {
   return (
     <section className="rounded-2xl border border-vo-line bg-vo-card p-5 space-y-4">
       <div>
-        <h3 className="text-base font-bold text-white">Top {sites.length} Recommended Sites</h3>
+        <h3 className="text-base font-bold text-vo-text">Top {sites.length} Recommended Sites</h3>
         <p className="text-xs text-vo-muted mt-0.5">Ranked by site score across demand, grid readiness, land and coverage gap.</p>
       </div>
 
@@ -33,7 +33,7 @@ export function TopRecommendedSites({ sites }: TopRecommendedSitesProps) {
                 <span className="shrink-0 w-6 text-center text-xs font-mono font-bold text-vo-muted">#{site.rank}</span>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="truncate text-sm font-semibold text-white">{site.name.replace(" (demo)", "")}</span>
+                    <span className="truncate text-sm font-semibold text-vo-text">{site.name.replace(" (demo)", "")}</span>
                     <span className="shrink-0 text-xs font-mono font-bold" style={{ color }}>
                       {site.site_score.toFixed(1)}
                     </span>

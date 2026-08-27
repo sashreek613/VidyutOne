@@ -42,7 +42,7 @@ export function RoleProtectedRoute({
   role,
   children,
 }: {
-  role: "planner" | "driver";
+  role: "planner" | "driver" | "admin";
   children: ReactNode;
 }) {
   const { loading, profile } = useAuth();
@@ -52,6 +52,11 @@ export function RoleProtectedRoute({
   }
   if (profile && profile.role !== role) {
     return <Navigate to="/forbidden" replace />;
+  }
+  if (profile && role === "planner") {
+    if (profile.is_verified === false || profile.is_active === false || profile.verification_status !== "approved") {
+      return <Navigate to="/planner-pending" replace />;
+    }
   }
   return <ProtectedRoute>{children}</ProtectedRoute>;
 }
@@ -63,7 +68,8 @@ export function GuestRoute({ children }: { children: ReactNode }) {
     return <AuthLoadingScreen />;
   }
   if (session && emailVerified && profile) {
-    return <Navigate to={homeForRole(profile.role)} replace />;
+    return <Navigate to={homeForRole(profile.role, profile)} replace />;
   }
   return <>{children}</>;
 }
+

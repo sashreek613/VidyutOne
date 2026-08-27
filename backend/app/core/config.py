@@ -29,6 +29,10 @@ class Settings(BaseSettings):
 
     OCM_API_KEY: str = ""
 
+    LYZR_API_KEY: str = ""
+    LYZR_AGENT_ID: str = ""
+    LYZR_DRIVER_AGENT_ID: str = ""
+
     @property
     def cors_origin_list(self) -> list[str]:
         origins = [

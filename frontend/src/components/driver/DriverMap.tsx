@@ -1,32 +1,27 @@
-import { useEffect, useRef, useState } from "react";
+import { Calendar, Navigation, Zap, X } from "lucide-react";
+import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Map as MapLibreMap, Marker } from "maplibre-gl";
-import type { GeoJSONSource } from "maplibre-gl";
+import { Map as MapLibreMap, Marker, type GeoJSONSource } from "maplibre-gl";
 
 import type { Charger } from "../../types";
-import { centroid } from "../../utils/geo";
+import { hasValidCoordinates, isChargerBookable } from "../../utils/chargerFilters";
+import { formatInr } from "../../utils/format";
+import { centroid, haversineKm } from "../../utils/geo";
+import { getLightBasemapStyle } from "../../utils/mapStyle";
 
 interface DriverMapProps {
   chargers: Charger[];
   origin?: { latitude: number; longitude: number };
-  /** Draws a translucent circle of this radius (km) around the driver
-   * marker -- makes the range cutoff visible rather than a hidden filter.
-   * Omit/null to draw no circle (e.g. no vehicle selected). */
   rangeKm?: number | null;
-  /** true only when `origin` is real GPS (geoStatus === "granted" in
-   * DriverHomePage.tsx) -- false for every fallback (denied, unavailable,
-   * insecure context, or still pending). Adds a pulsing ring to the driver
-   * marker so the map itself confirms live location, not just a text badge
-   * someone might miss. */
   isLiveLocation?: boolean;
+  selectedChargerId?: string | null;
+  onSelectCharger?: (chargerId: string | null) => void;
+  onMapClick?: (lat: number, lon: number) => void;
 }
 
-const DEFAULT_LIGHT = "https://tiles.openfreemap.org/styles/positron";
 const RANGE_SOURCE_ID = "driver-range-circle";
 const EARTH_KM = 6371;
 
-/** No turf dependency -- a plain-math circle polygon is ~10 lines and this
- * is the only place that needs one. */
 function circlePolygonCoordinates(centerLat: number, centerLon: number, radiusKm: number, points = 64): [number, number][] {
   const coords: [number, number][] = [];
   const latRad = (centerLat * Math.PI) / 180;
@@ -41,8 +36,6 @@ function circlePolygonCoordinates(centerLat: number, centerLon: number, radiusKm
   return coords;
 }
 
-// Minimal local shape (not the full geojson type package) -- this is the
-// only GeoJSON this file ever produces.
 interface PolygonFeature {
   type: "Feature";
   properties: Record<string, never>;
@@ -60,100 +53,225 @@ function rangeCircleGeoJSON(centerLat: number, centerLon: number, radiusKm: numb
   };
 }
 
-export function DriverMap({ chargers, origin, rangeKm, isLiveLocation = false }: DriverMapProps) {
+function availabilityLabel(charger: Charger): { text: string; className: string; dot: string } {
+  if (charger.availability === true) {
+    return { text: charger.provenance === "REAL" ? "Operational" : "Available", className: "text-emerald-700", dot: "bg-emerald-500" };
+  }
+  if (charger.availability === false) {
+    return { text: charger.provenance === "REAL" ? "Reported down" : "In use", className: "text-amber-700", dot: "bg-amber-500" };
+  }
+  return { text: "Status unknown", className: "text-gray-500", dot: "bg-gray-400" };
+}
+
+export function DriverMap({
+  chargers,
+  origin,
+  rangeKm,
+  isLiveLocation = false,
+  selectedChargerId = null,
+  onSelectCharger,
+  onMapClick,
+}: DriverMapProps) {
   const ref = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const markersRef = useRef<Marker[]>([]);
+  const chargersByIdRef = useRef<Map<string, Charger>>(new Map());
+  const onSelectRef = useRef(onSelectCharger);
+  const onMapClickRef = useRef(onMapClick);
+  const lastOriginRef = useRef<{ latitude: number; longitude: number } | null>(null);
+  const lastFocusedChargerRef = useRef<string | null>(null);
   const navigate = useNavigate();
-  const [failed, setFailed] = useState(false);
+
+  onSelectRef.current = onSelectCharger;
+  onMapClickRef.current = onMapClick;
+  chargersByIdRef.current = new Map(chargers.map((charger) => [charger.id, charger]));
+
   const here = origin ?? centroid(chargers);
-  const styleUrl = import.meta.env.VITE_MAP_STYLE_LIGHT ?? DEFAULT_LIGHT;
+  const selectedCharger = selectedChargerId ? (chargersByIdRef.current.get(selectedChargerId) ?? null) : null;
+  const plottableCount = chargers.filter(hasValidCoordinates).length;
 
   useEffect(() => {
-    if (!ref.current || failed) {
+    if (!ref.current) {
       return;
     }
+
     const map = new MapLibreMap({
       container: ref.current,
-      style: styleUrl,
+      style: getLightBasemapStyle(),
       center: [here.longitude, here.latitude],
-      zoom: 11.4,
+      zoom: 11.8,
       attributionControl: { compact: true },
     });
     mapRef.current = map;
-    map.on("error", () => setFailed(true));
-    map.on("load", () => {
+    map.getCanvas().style.cursor = "default";
+    lastOriginRef.current = { latitude: here.latitude, longitude: here.longitude };
+
+    const isCurrent = () => mapRef.current === map;
+
+    const handleResize = () => {
+      if (isCurrent()) {
+        map.resize();
+      }
+    };
+
+    map.once("load", () => {
+      handleResize();
       map.addSource(RANGE_SOURCE_ID, {
         type: "geojson",
-        data: rangeCircleGeoJSON(here.latitude, here.longitude, 0),
+        data: rangeCircleGeoJSON(here.latitude, here.longitude, rangeKm ?? 0),
       });
       map.addLayer({
         id: `${RANGE_SOURCE_ID}-fill`,
         type: "fill",
         source: RANGE_SOURCE_ID,
-        paint: { "fill-color": "#00e8a2", "fill-opacity": 0.08 },
+        paint: { "fill-color": "#10b981", "fill-opacity": 0.08 },
       });
       map.addLayer({
         id: `${RANGE_SOURCE_ID}-line`,
         type: "line",
         source: RANGE_SOURCE_ID,
-        paint: { "line-color": "#00e8a2", "line-width": 1.5, "line-opacity": 0.5 },
+        paint: { "line-color": "#10b981", "line-width": 1.5, "line-opacity": 0.5 },
       });
     });
+
+    const resizeObserver = new ResizeObserver(handleResize);
+    resizeObserver.observe(ref.current);
+
+    map.on("click", (event) => {
+      const target = event.originalEvent.target as HTMLElement | null;
+      if (target?.closest("[data-charger-id], [data-origin-marker]")) {
+        return;
+      }
+      onMapClickRef.current?.(event.lngLat.lat, event.lngLat.lng);
+    });
+
     return () => {
+      resizeObserver.disconnect();
       markersRef.current.forEach((marker) => marker.remove());
       markersRef.current = [];
-      map.remove();
-      mapRef.current = null;
+      if (isCurrent()) {
+        map.remove();
+        mapRef.current = null;
+      }
     };
-  }, [failed, here.latitude, here.longitude, styleUrl]);
+    // Map instance is created once; origin/range updates happen in later effects.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  // Markers -- driver location + candidate chargers.
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || failed) {
+    if (!map) {
       return;
     }
+    const previous = lastOriginRef.current;
+    if (previous && previous.latitude === here.latitude && previous.longitude === here.longitude) {
+      return;
+    }
+    lastOriginRef.current = { latitude: here.latitude, longitude: here.longitude };
+    lastFocusedChargerRef.current = null;
+    const fly = () => {
+      map.flyTo({ center: [here.longitude, here.latitude], zoom: 12.5, duration: 800 });
+    };
+    if (map.loaded()) {
+      fly();
+    } else {
+      map.once("load", fly);
+    }
+  }, [here.latitude, here.longitude]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!selectedChargerId) {
+      lastFocusedChargerRef.current = null;
+      return;
+    }
+    const charger = chargersByIdRef.current.get(selectedChargerId);
+    if (!map || !charger || !hasValidCoordinates(charger)) {
+      return;
+    }
+    if (lastFocusedChargerRef.current === charger.id) {
+      return;
+    }
+    lastFocusedChargerRef.current = charger.id;
+    const pan = () => {
+      map.easeTo({ center: [charger.longitude, charger.latitude], duration: 450 });
+    };
+    if (map.loaded()) {
+      pan();
+    } else {
+      map.once("load", pan);
+    }
+  }, [selectedChargerId]);
+
+  const chargersRef = useRef(chargers);
+  chargersRef.current = chargers;
+  const markerKey = chargers.map((charger) => charger.id).join("|");
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) {
+      return;
+    }
+    const plottable = chargersRef.current.filter(hasValidCoordinates);
     const paint = () => {
       markersRef.current.forEach((marker) => marker.remove());
       markersRef.current = [];
 
       const you = document.createElement("div");
-      // The pulsing ring is the map's own confirmation of live location --
-      // exists only when isLiveLocation is true, never for a centroid/
-      // fallback origin, so the map can't visually claim GPS it doesn't have.
-      you.className = "relative flex h-3.5 w-3.5 items-center justify-center";
+      you.className = "relative flex h-4 w-4 items-center justify-center z-20";
+      you.setAttribute("data-origin-marker", "true");
       you.innerHTML = isLiveLocation
-        ? '<span class="absolute h-7 w-7 rounded-full bg-emerald-400/40 animate-ping"></span><span class="relative h-3.5 w-3.5 rounded-full bg-[#111417] ring-4 ring-white"></span>'
-        : '<span class="h-3.5 w-3.5 rounded-full bg-[#111417] ring-4 ring-white"></span>';
+        ? '<span class="absolute h-8 w-8 rounded-full bg-emerald-500/35 animate-ping"></span><span class="relative h-4 w-4 rounded-full bg-slate-950 ring-4 ring-white shadow-lg"></span>'
+        : '<span class="h-4 w-4 rounded-full bg-slate-950 ring-4 ring-white shadow-md"></span>';
       markersRef.current.push(new Marker({ element: you }).setLngLat([here.longitude, here.latitude]).addTo(map));
 
-      chargers.forEach((charger) => {
+      plottable.forEach((charger) => {
+        const isSelected = selectedChargerId === charger.id;
         const el = document.createElement("button");
         el.type = "button";
-        el.className = charger.availability
-          ? "h-3 w-3 rounded-full bg-[#00e8a2] ring-2 ring-white"
-          : "h-3 w-3 rounded-full bg-[#f0b429] ring-2 ring-white";
-        el.addEventListener("click", () => {
-          void navigate(`/driver/charger/${charger.id}`);
+        el.dataset.chargerId = charger.id;
+        el.className = isSelected
+          ? "group relative flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500 text-slate-950 ring-4 ring-emerald-300 shadow-xl scale-110 z-30 transition-transform"
+          : "group relative flex h-7 w-7 items-center justify-center rounded-full bg-slate-900 text-emerald-400 border-2 border-white shadow-md hover:scale-110 hover:bg-emerald-500 hover:text-slate-950 transition-all z-10";
+        el.setAttribute("aria-label", charger.name);
+        el.setAttribute("title", charger.name);
+        el.style.cursor = "pointer";
+
+        const statusDot =
+          charger.availability === true ? "bg-emerald-500" : charger.availability === false ? "bg-amber-500" : "bg-gray-400";
+        el.innerHTML = `
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+          </svg>
+          <span class="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full border-1.5 border-white ${statusDot}"></span>
+        `;
+
+        el.addEventListener("mousedown", (event) => {
+          event.stopPropagation();
         });
-        markersRef.current.push(
-          new Marker({ element: el }).setLngLat([charger.longitude, charger.latitude]).addTo(map),
-        );
+        el.addEventListener("click", (event) => {
+          event.stopPropagation();
+          event.preventDefault();
+          const id = el.dataset.chargerId;
+          if (id) {
+            onSelectRef.current?.(id);
+          }
+        });
+
+        markersRef.current.push(new Marker({ element: el }).setLngLat([charger.longitude, charger.latitude]).addTo(map));
       });
     };
+
     if (map.loaded()) {
       paint();
     } else {
       map.once("load", paint);
     }
-  }, [chargers, failed, here.latitude, here.longitude, isLiveLocation, navigate]);
+  }, [markerKey, here.latitude, here.longitude, isLiveLocation, selectedChargerId]);
 
-  // Range circle -- redraws whenever the radius or driver location changes.
-  // No circle at all when rangeKm is null/undefined (no vehicle selected).
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || failed) {
+    if (!map) {
       return;
     }
     const update = () => {
@@ -168,24 +286,94 @@ export function DriverMap({ chargers, origin, rangeKm, isLiveLocation = false }:
     } else {
       map.once("load", update);
     }
-  }, [failed, here.latitude, here.longitude, rangeKm]);
+  }, [here.latitude, here.longitude, rangeKm]);
 
-  if (failed) {
-    return (
-      <div className="flex h-full items-end justify-center bg-[#e7ebe8] vo-radar">
-        <span className="mb-3 rounded-full bg-white px-3 py-1 text-[11px] font-medium tracking-[0.12em] text-driver-ink">
-          {chargers.length} CHARGERS NEARBY
-        </span>
-      </div>
-    );
+  function handleNavigate(charger: Charger) {
+    const url = `https://www.google.com/maps/dir/?api=1&origin=${here.latitude},${here.longitude}&destination=${charger.latitude},${charger.longitude}`;
+    window.open(url, "_blank", "noopener,noreferrer");
   }
+
+  const selectedKm = selectedCharger
+    ? haversineKm(here.latitude, here.longitude, selectedCharger.latitude, selectedCharger.longitude)
+    : 0;
+  const selectedStatus = selectedCharger ? availabilityLabel(selectedCharger) : null;
+  const bookable = selectedCharger ? isChargerBookable(selectedCharger) : false;
 
   return (
     <div className="relative h-full w-full">
       <div ref={ref} className="h-full w-full" />
-      <span className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-white px-3 py-1 text-[11px] font-medium tracking-[0.12em] text-driver-ink shadow">
-        {chargers.length} CHARGERS NEARBY
-      </span>
+
+      {selectedCharger && selectedStatus ? (
+        <div className="absolute bottom-3 left-3 right-3 z-20 rounded-2xl border border-gray-200 bg-white/95 p-4 shadow-xl backdrop-blur text-gray-900 max-w-md mx-auto font-sans">
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className={`h-2.5 w-2.5 rounded-full ${selectedStatus.dot}`} />
+                <span className={`text-[11px] font-bold uppercase tracking-wider ${selectedStatus.className}`}>
+                  {selectedStatus.text}
+                </span>
+                <span className="text-[11px] font-semibold text-emerald-600 font-mono">{selectedKm.toFixed(1)} km away</span>
+              </div>
+              <h4 className="mt-1 text-[15px] font-bold text-gray-900 leading-tight">
+                {selectedCharger.name.replace(" (demo)", "")}
+              </h4>
+            </div>
+            <button
+              type="button"
+              onClick={() => onSelectCharger?.(null)}
+              className="rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
+            >
+              <X size={16} />
+            </button>
+          </div>
+
+          <div className="mt-3 flex items-center justify-between gap-2 border-t border-gray-100 pt-2 text-[12px] text-gray-600">
+            <div className="flex items-center gap-1.5 font-medium">
+              <Zap size={14} className="text-emerald-500" />
+              <span>{selectedCharger.power_kw !== null ? `${selectedCharger.power_kw} kW` : "Power unknown"}</span>
+            </div>
+            <div className="font-semibold text-gray-900 font-mono">
+              {selectedCharger.price_per_kwh !== null ? `${formatInr(selectedCharger.price_per_kwh)}/kWh` : "Price unknown"}
+            </div>
+          </div>
+
+          <div className="mt-3 flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => handleNavigate(selectedCharger)}
+              className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-emerald-500 py-2.5 text-[12px] font-bold text-slate-950 hover:bg-emerald-400 transition-colors cursor-pointer"
+            >
+              <Navigation size={14} />
+              <span>Navigate</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate(`/driver/charger/${selectedCharger.id}`)}
+              className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-gray-300 bg-gray-50 py-2.5 text-[12px] font-bold text-gray-800 hover:bg-gray-100 transition-colors cursor-pointer"
+            >
+              View Details
+            </button>
+            {bookable ? (
+              <button
+                type="button"
+                onClick={() => navigate(`/driver/charger/${selectedCharger.id}/book`)}
+                className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-vo-accent py-2.5 text-[12px] font-bold text-[#06231b] cursor-pointer"
+              >
+                <Calendar size={14} />
+                Book Now
+              </button>
+            ) : (
+              <div className="flex flex-1 items-center justify-center rounded-xl border border-[#c7d2fe] bg-[#eef2ff] py-2.5 text-[12px] font-medium text-[#4338ca]">
+                Info only
+              </div>
+            )}
+          </div>
+        </div>
+      ) : (
+        <span className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-white/95 border border-gray-200 px-3.5 py-1 text-[11px] font-semibold tracking-[0.12em] text-gray-700 shadow backdrop-blur font-mono">
+          {plottableCount} CHARGERS
+        </span>
+      )}
     </div>
   );
 }

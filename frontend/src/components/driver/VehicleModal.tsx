@@ -104,11 +104,11 @@ export function VehicleModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-      <div className="w-full max-w-md rounded-2xl border border-vo-line bg-[#0d131f] p-6 shadow-2xl space-y-5 relative max-h-[90vh] overflow-y-auto">
+      <div className="w-full max-w-md rounded-2xl border border-vo-line bg-vo-card p-6 shadow-2xl space-y-5 relative max-h-[90vh] overflow-y-auto text-vo-text">
         <button
           type="button"
           onClick={onClose}
-          className="absolute top-4 right-4 p-1 rounded-lg text-vo-muted hover:text-white hover:bg-gray-800 transition-colors"
+          className="absolute top-4 right-4 p-1 rounded-lg text-vo-muted hover:text-vo-text hover:bg-vo-elevated transition-colors"
         >
           <X className="w-5 h-5" />
         </button>
@@ -117,7 +117,7 @@ export function VehicleModal({
           <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
             <Zap className="w-4 h-4" />
           </div>
-          <h2 className="text-lg font-bold text-white">
+          <h2 className="text-lg font-bold text-vo-text">
             {vehicle ? "Edit EV Specs" : "Add Your EV"}
           </h2>
         </div>
@@ -140,12 +140,12 @@ export function VehicleModal({
                 }}
                 onFocus={() => setCatalogOpen(true)}
                 placeholder="Search e.g. Nexon, Ather 450X, Treo..."
-                className="w-full rounded-xl border border-vo-line bg-vo-card pl-8 pr-3 py-2.5 text-white focus:border-emerald-400 focus:outline-none"
+                className="w-full rounded-xl border border-vo-line bg-vo-elevated pl-8 pr-3 py-2.5 text-vo-text focus:border-emerald-400 focus:outline-none"
               />
             </div>
 
             {catalogOpen ? (
-              <ul className="absolute left-0 right-0 z-10 mt-1 max-h-56 overflow-auto rounded-xl border border-vo-line bg-[#0d131f] shadow-2xl">
+              <ul className="absolute left-0 right-0 z-10 mt-1 max-h-56 overflow-auto rounded-xl border border-vo-line bg-vo-card shadow-2xl">
                 {(["2W", "3W", "4W"] as const).map((segment) => {
                   const rows = filteredCatalog.filter((entry) => entry.segment === segment);
                   if (rows.length === 0) return null;
@@ -162,7 +162,7 @@ export function VehicleModal({
                           }}
                           className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left hover:bg-white/5"
                         >
-                          <span className="text-white">
+                          <span className="text-vo-text">
                             {entry.make} {entry.model}
                           </span>
                           <span className="text-[10px] text-vo-muted shrink-0">{entry.battery_capacity_kwh} kWh</span>
@@ -205,7 +205,7 @@ export function VehicleModal({
                 setPickedSpec(null);
               }}
               placeholder="e.g. Tata / MG / Hyundai"
-              className="w-full rounded-xl border border-vo-line bg-vo-card px-3 py-2.5 text-white focus:border-emerald-400 focus:outline-none"
+              className="w-full rounded-xl border border-vo-line bg-vo-card px-3 py-2.5 text-vo-text focus:border-emerald-400 focus:outline-none"
             />
           </div>
 
@@ -220,7 +220,7 @@ export function VehicleModal({
                 setPickedSpec(null);
               }}
               placeholder="e.g. Nexon EV / ZS EV / Ioniq 5"
-              className="w-full rounded-xl border border-vo-line bg-vo-card px-3 py-2.5 text-white focus:border-emerald-400 focus:outline-none"
+              className="w-full rounded-xl border border-vo-line bg-vo-card px-3 py-2.5 text-vo-text focus:border-emerald-400 focus:outline-none"
             />
           </div>
 
@@ -235,7 +235,7 @@ export function VehicleModal({
                 required
                 value={capacity}
                 onChange={(e) => setCapacity(Number(e.target.value))}
-                className="w-full rounded-xl border border-vo-line bg-vo-card px-3 py-2.5 text-white focus:border-emerald-400 focus:outline-none"
+                className="w-full rounded-xl border border-vo-line bg-vo-card px-3 py-2.5 text-vo-text focus:border-emerald-400 focus:outline-none"
               />
             </div>
 
@@ -249,7 +249,7 @@ export function VehicleModal({
                 required
                 value={efficiency}
                 onChange={(e) => setEfficiency(Number(e.target.value))}
-                className="w-full rounded-xl border border-vo-line bg-vo-card px-3 py-2.5 text-white focus:border-emerald-400 focus:outline-none"
+                className="w-full rounded-xl border border-vo-line bg-vo-card px-3 py-2.5 text-vo-text focus:border-emerald-400 focus:outline-none"
               />
             </div>
           </div>
@@ -263,7 +263,7 @@ export function VehicleModal({
               max={new Date().toISOString().slice(0, 10)}
               value={registrationDate}
               onChange={(e) => setRegistrationDate(e.target.value)}
-              className="w-full rounded-xl border border-vo-line bg-vo-card px-3 py-2.5 text-white focus:border-emerald-400 focus:outline-none [color-scheme:dark]"
+              className="w-full rounded-xl border border-vo-line bg-vo-card px-3 py-2.5 text-vo-text focus:border-emerald-400 focus:outline-none"
             />
             <p className="mt-1 text-[10px] text-vo-muted">
               Used to estimate battery health by age -- affects range only, never shown as a typed-in number.
@@ -281,7 +281,7 @@ export function VehicleModal({
               max="100"
               value={currentPct}
               onChange={(e) => setCurrentPct(Number(e.target.value))}
-              className="w-full h-2 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-emerald-400"
+              className="w-full h-2 bg-driver-line rounded-lg appearance-none cursor-pointer accent-emerald-400"
             />
           </div>
 
@@ -301,7 +301,7 @@ export function VehicleModal({
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2.5 rounded-xl border border-vo-line text-vo-muted hover:text-white transition-colors"
+                className="px-4 py-2.5 rounded-xl border border-vo-line text-vo-muted hover:text-vo-text transition-colors"
               >
                 Cancel
               </button>

@@ -19,7 +19,7 @@ export function RecentRecommendations({ sites }: RecentRecommendationsProps) {
           <li key={site.id}>
             <Link to={`/planner/site/${site.id}`} className="flex items-center justify-between gap-3 py-3">
               <div className="min-w-0">
-                <p className="truncate text-[13px] font-medium text-white">{site.name.replace(" (demo)", "")}</p>
+                <p className="truncate text-[13px] font-medium text-vo-text">{site.name.replace(" (demo)", "")}</p>
                 <p className="mt-0.5 text-[11px] text-vo-muted">
                   {site.id} · demand {Math.round(site.demand_score)} · headroom {insights.headroomKva} kVA
                 </p>
