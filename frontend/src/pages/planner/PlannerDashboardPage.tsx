@@ -5,6 +5,7 @@ import { CheckCircle2, AlertTriangle, XCircle, ChevronDown, ChevronUp } from "lu
 import { ScreenState } from "../../components/common/ScreenState";
 import { FeederChart } from "../../components/planner/FeederChart";
 import { LocationVerdictPanel } from "../../components/planner/LocationVerdictPanel";
+import { SiteAssistantPanel } from "../../components/planner/SiteAssistantPanel";
 import { SiteMap, type MapFocus, type MapPoint } from "../../components/planner/SiteMap";
 import { TopBar } from "../../components/planner/TopBar";
 import { TopRecommendedSites } from "../../components/planner/TopRecommendedSites";
@@ -270,6 +271,7 @@ export function PlannerDashboardPage() {
           </div>
         ) : null}
       </ScreenState>
+      <SiteAssistantPanel />
     </div>
   );
 }

@@ -229,3 +229,21 @@ export async function rejectPlanner(userId: string, reason?: string): Promise<Pr
   return data;
 }
 
+export async function sendAssistantMessage(message: string, sessionId: string): Promise<{ reply: string }> {
+  const { data } = await client.post("/api/assistant/chat", { message, session_id: sessionId });
+  return data;
+}
+
+export async function sendDriverAssistantMessage(
+  message: string,
+  sessionId: string,
+  contextSummary: string,
+): Promise<{ reply: string }> {
+  const { data } = await client.post("/api/driver/voice-assistant", {
+    message,
+    session_id: sessionId,
+    context_summary: contextSummary,
+  });
+  return data;
+}
+

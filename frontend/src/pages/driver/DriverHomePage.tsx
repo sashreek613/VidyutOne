@@ -7,6 +7,7 @@ import { VehicleModal } from "../../components/driver/VehicleModal";
 import { ChargerCard } from "../../components/driver/ChargerCard";
 import { DriverMap } from "../../components/driver/DriverMap";
 import { StatusBar } from "../../components/driver/StatusBar";
+import { VoiceAssistantButton } from "../../components/driver/VoiceAssistantButton";
 import { ScreenState } from "../../components/common/ScreenState";
 import { ThemeToggle } from "../../components/common/ThemeToggle";
 // Reused as-is from the planner side -- generic offline place search
@@ -390,6 +391,14 @@ export function DriverHomePage() {
             </button>
           </div>
         </div>
+
+        <VoiceAssistantButton
+          onSearchLocation={(q) => void handleSubmitSearchFreeText(q)}
+          onClearSearch={handleClearSearch}
+          onSetSort={(sort) => setFilters((current) => ({ ...current, sort }))}
+          bufferedRangeKm={bufferedRangeKm}
+          recommended={recommended}
+        />
 
         {/* Vehicle Widget */}
         <VehicleWidget
