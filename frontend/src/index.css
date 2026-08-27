@@ -2,7 +2,7 @@
 @import "maplibre-gl/dist/maplibre-gl.css";
 
 @theme {
-  --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 
   --color-vo-bg: var(--vo-bg);
   --color-vo-surface: var(--vo-surface);
@@ -44,9 +44,9 @@ html[data-theme="dark"] {
   --vo-surface: #11161c;
   --vo-elevated: #171d25;
   --vo-card: #11161c;
-  --vo-border: #27303b;
-  --vo-line: #1c242e;
-  --vo-muted: #8b93a1;
+  --vo-border: #333f50;
+  --vo-line: #222c38;
+  --vo-muted: #9aa5b5;
   --vo-soft: #c5cbd3;
   --vo-text: #f4f6f8;
   --vo-accent-dim: #0b3d31;
@@ -65,8 +65,8 @@ html[data-theme="dark"] {
   --driver-bg: #0b0f17;
   --driver-card: #171d25;
   --driver-ink: #f4f6f8;
-  --driver-muted: #8b93a1;
-  --driver-line: #27303b;
+  --driver-muted: #9aa5b5;
+  --driver-line: #333f50;
   --driver-mint: #0b3d31;
 }
 
@@ -112,6 +112,8 @@ body {
   background: var(--vo-bg);
   color: var(--vo-text);
   font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.55;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -121,12 +123,18 @@ input {
 }
 
 .vo-radar {
-  background:
-    radial-gradient(circle at 38% 42%, rgba(0, 232, 162, 0.08), transparent 28%),
-    radial-gradient(circle at 38% 42%, transparent 18%, rgba(0, 232, 162, 0.04) 18.5%, transparent 19%),
-    radial-gradient(circle at 38% 42%, transparent 32%, rgba(255, 255, 255, 0.04) 32.5%, transparent 33%),
-    radial-gradient(circle at 38% 42%, transparent 46%, rgba(255, 255, 255, 0.03) 46.5%, transparent 47%),
-    repeating-conic-gradient(from 0deg at 38% 42%, transparent 0deg 14deg, rgba(255, 255, 255, 0.025) 14deg 14.4deg);
+  background-size: 40px 40px;
+  background-image: 
+    linear-gradient(to right, rgba(39, 48, 59, 0.15) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(39, 48, 59, 0.15) 1px, transparent 1px);
+}
+
+.vo-hover-interactive {
+  transition: all 200ms ease-out !important;
+}
+.vo-hover-interactive:hover:not(:disabled) {
+  transform: scale(1.025) !important;
+  box-shadow: 0 0 12px rgba(0, 232, 162, 0.15) !important;
 }
 
 .maplibregl-popup-content {

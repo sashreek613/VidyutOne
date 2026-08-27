@@ -52,7 +52,7 @@ export function PlannerBuildPlanPage() {
               <button
                 type="button"
                 onClick={() => window.print()}
-                className="inline-flex items-center space-x-2 px-4 py-2 rounded-xl bg-vo-card border border-vo-line hover:border-vo-accent/40 text-xs font-semibold text-vo-text transition-colors"
+                className="vo-hover-interactive inline-flex items-center space-x-2 px-4 py-2 rounded-[8px] bg-vo-card border border-vo-line hover:border-vo-accent/40 text-xs font-semibold text-vo-text transition-colors"
               >
                 <Printer className="w-4 h-4 text-vo-accent" />
                 <span>Print Build Plan</span>
@@ -60,7 +60,7 @@ export function PlannerBuildPlanPage() {
             </div>
 
             {/* Action Banner */}
-            <div className="rounded-2xl border border-emerald-500/30 bg-gradient-to-r from-emerald-500/10 via-gray-900 to-cyan-500/10 p-6 flex flex-col md:flex-row items-center justify-between gap-4 shadow-lg">
+            <div className="rounded-[16px] border border-vo-border bg-[#0d131f] p-6 flex flex-col md:flex-row items-center justify-between gap-4 shadow-lg">
               <div className="space-y-1">
                 <div className="text-xs font-bold font-mono uppercase tracking-wider text-vo-good-ink">Phase 1 Infrastructure Deployment</div>
                 <h2 className="text-lg font-bold text-white">
@@ -84,7 +84,7 @@ export function PlannerBuildPlanPage() {
                   return (
                     <div
                       key={site.id}
-                      className="rounded-2xl border border-vo-line bg-vo-card p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-vo-accent/40 transition-colors shadow-sm"
+                      className="rounded-[12px] border border-vo-line bg-vo-card p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-vo-accent/40 transition-colors shadow-sm"
                     >
                       <div className="flex items-start space-x-4">
                         <div className="w-10 h-10 rounded-xl bg-vo-bg border border-vo-line flex items-center justify-center font-mono font-bold text-sm text-vo-accent shrink-0">
@@ -123,7 +123,7 @@ export function PlannerBuildPlanPage() {
                         <button
                           type="button"
                           onClick={() => navigate(`/planner/site/${site.id}`)}
-                          className="px-3.5 py-2 rounded-xl bg-vo-bg border border-vo-line hover:border-vo-accent/40 text-xs font-semibold text-vo-text flex items-center space-x-1 transition-colors"
+                          className="vo-hover-interactive px-3.5 py-2 rounded-[8px] bg-vo-bg border border-vo-line hover:border-vo-accent/40 text-xs font-semibold text-vo-text flex items-center space-x-1 transition-colors"
                         >
                           <span>Inspect</span>
                           <ArrowRight className="w-3.5 h-3.5" />

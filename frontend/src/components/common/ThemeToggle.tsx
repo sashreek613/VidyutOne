@@ -12,8 +12,8 @@ export function ThemeToggle({ compact = false }: { compact?: boolean }) {
       onClick={toggleTheme}
       className={
         compact
-          ? "flex h-9 w-9 items-center justify-center rounded-xl border border-vo-line bg-vo-card text-vo-soft hover:text-vo-text"
-          : "flex items-center gap-1.5 rounded-xl border border-vo-line bg-vo-card px-2.5 py-1.5 text-[11px] font-medium text-vo-soft hover:text-vo-text"
+          ? "vo-hover-interactive flex h-9 w-9 items-center justify-center rounded-[8px] border border-vo-line bg-vo-card text-vo-soft hover:text-vo-text"
+          : "vo-hover-interactive flex items-center gap-1.5 rounded-[8px] border border-vo-line bg-vo-card px-2.5 py-1.5 text-[11px] font-medium text-vo-soft hover:text-vo-text"
       }
       title={isDark ? "Switch to light mode" : "Switch to dark mode"}
       aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}

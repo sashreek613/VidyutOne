@@ -70,7 +70,7 @@ export function TopBar({
         <button
           type="button"
           onClick={() => void handleSignOut()}
-          className="rounded-full border border-vo-border px-3 py-1.5 text-[12px] text-vo-soft hover:border-vo-border hover:text-vo-text"
+          className="vo-hover-interactive rounded-[8px] border border-vo-border px-3 py-1.5 text-[12px] text-vo-soft hover:border-vo-border hover:text-vo-text"
         >
           Logout
         </button>

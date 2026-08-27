@@ -53,7 +53,7 @@ export function AuthShell({ children }: { children: ReactNode }) {
 
 export function AuthCard({ children }: { children: ReactNode }) {
   return (
-    <div className="w-full max-w-[420px] rounded-3xl border border-vo-border bg-vo-surface/90 p-8 shadow-[0_30px_80px_rgba(0,0,0,0.35)] backdrop-blur">
+    <div className="w-full max-w-[420px] rounded-[16px] border border-vo-border bg-vo-surface p-8 shadow-[0_20px_50px_rgba(0,0,0,0.4)]">
       {children}
     </div>
   );
@@ -74,7 +74,7 @@ export function RoleCard({
     <button
       type="button"
       onClick={onSelect}
-      className={`rounded-2xl border px-3 py-3 text-left transition ${
+      className={`vo-hover-interactive rounded-[8px] border px-3 py-3 text-left transition ${
         selected ? "border-vo-accent bg-vo-accent-dim" : "border-vo-border bg-[#0e1318]"
       }`}
     >
@@ -107,7 +107,7 @@ export function AuthField({
 }
 
 export function authInputClassName(): string {
-  return "mt-2 h-11 w-full rounded-xl border border-vo-border bg-[#0e1318] px-3 text-[13px] text-white outline-none focus:border-vo-accent";
+  return "mt-2 h-11 w-full rounded-[6px] border border-vo-border bg-[#0e1318] px-3 text-[13px] text-white outline-none focus:border-vo-accent";
 }
 
 export function AuthSubmit({
@@ -121,7 +121,7 @@ export function AuthSubmit({
     <button
       type="submit"
       disabled={disabled}
-      className="mt-6 h-12 w-full rounded-xl bg-vo-accent text-[14px] font-semibold text-[#06231b] transition hover:brightness-110 disabled:opacity-60"
+      className="vo-hover-interactive mt-6 h-12 w-full rounded-[8px] bg-vo-accent text-[14px] font-semibold text-[#06231b] transition hover:brightness-110 disabled:opacity-60"
     >
       {children}
     </button>

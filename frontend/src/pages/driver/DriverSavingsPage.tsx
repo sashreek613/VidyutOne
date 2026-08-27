@@ -144,7 +144,7 @@ export function DriverSavingsPage() {
     <div className="flex min-h-screen flex-col bg-driver-bg pb-10 text-driver-ink">
       <StatusBar />
       <div className="px-5 pt-3">
-        <Link to="/driver" className="inline-flex items-center gap-1 text-[12px] text-emerald-400">
+        <Link to="/driver" className="vo-hover-interactive inline-flex items-center gap-1 rounded-[6px] px-1.5 py-0.5 text-[12px] text-emerald-400">
           <ArrowLeft size={14} />
           Home
         </Link>
@@ -156,7 +156,7 @@ export function DriverSavingsPage() {
       </div>
 
       <div className="mt-5 space-y-5 px-5">
-        <section className="space-y-3 rounded-2xl border border-vo-line bg-[#111827] p-4">
+        <section className="space-y-3 rounded-[12px] border border-vo-line bg-[#111827] p-4">
           <h2 className="text-[12px] font-semibold uppercase tracking-[0.16em] text-vo-muted">
             Next charge estimate
           </h2>
@@ -186,7 +186,7 @@ export function DriverSavingsPage() {
                 tone="dark"
               />
               {cheaper === "off-peak" && savingsTotal != null && savingsTotal > 0 ? (
-                <div className="rounded-xl bg-emerald-500/10 px-3 py-3 text-[13px] text-emerald-300">
+                <div className="rounded-[8px] bg-emerald-500/10 px-3 py-3 text-[13px] text-emerald-300">
                   <p className="font-semibold">Best time to charge · Off-Peak</p>
                   <p className="mt-0.5">Estimated saving {formatInr(savingsTotal)} vs Peak</p>
                 </div>
@@ -198,7 +198,7 @@ export function DriverSavingsPage() {
         <ScreenState loading={loading} error={error}>
           {summary ? (
             <>
-              <section className="rounded-2xl border border-vo-line bg-[#111827] p-4">
+              <section className="rounded-[12px] border border-vo-line bg-[#111827] p-4">
                 <h2 className="text-[12px] font-semibold uppercase tracking-[0.16em] text-vo-muted">
                   Monthly summary
                 </h2>
@@ -226,7 +226,7 @@ export function DriverSavingsPage() {
                       />
                     </div>
                     {summary.total_energy_kwh != null ? (
-                      <div className="mt-3 rounded-xl border border-vo-line bg-vo-card/60 px-3 py-3">
+                      <div className="mt-3 rounded-[8px] border border-vo-line bg-vo-card/60 px-3 py-3">
                         <p className="text-[11px] uppercase tracking-wider text-vo-muted">
                           Total energy charged
                         </p>
@@ -240,12 +240,12 @@ export function DriverSavingsPage() {
               </section>
 
               {summary.insight ? (
-                <section className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-[13px] text-emerald-200">
+                <section className="rounded-[12px] border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-[13px] text-emerald-200">
                   {summary.insight.text}
                 </section>
               ) : null}
 
-              <section className="rounded-2xl border border-vo-line bg-[#111827] p-4">
+              <section className="rounded-[12px] border border-vo-line bg-[#111827] p-4">
                 <h2 className="text-[12px] font-semibold uppercase tracking-[0.16em] text-vo-muted">Cost trend</h2>
                 {summary.trend.length > 0 ? (
                   <div className="mt-3 h-[180px] w-full">
@@ -275,7 +275,7 @@ export function DriverSavingsPage() {
               </section>
 
               {energyTrend.length >= 2 ? (
-                <section className="rounded-2xl border border-vo-line bg-[#111827] p-4">
+                <section className="rounded-[12px] border border-vo-line bg-[#111827] p-4">
                   <h2 className="text-[12px] font-semibold uppercase tracking-[0.16em] text-vo-muted">
                     Energy trend
                   </h2>
@@ -301,7 +301,7 @@ export function DriverSavingsPage() {
                 </section>
               ) : null}
 
-              <section className="rounded-2xl border border-vo-line bg-[#111827] p-4">
+              <section className="rounded-[12px] border border-vo-line bg-[#111827] p-4">
                 <h2 className="text-[12px] font-semibold uppercase tracking-[0.16em] text-vo-muted">
                   Charging history
                 </h2>
@@ -330,7 +330,7 @@ export function DriverSavingsPage() {
                 )}
               </section>
 
-              <section className="rounded-2xl border border-vo-line bg-[#111827] p-4">
+              <section className="rounded-[12px] border border-vo-line bg-[#111827] p-4">
                 <h2 className="text-[12px] font-semibold uppercase tracking-[0.16em] text-vo-muted">
                   Last charging session
                 </h2>
@@ -359,7 +359,7 @@ export function DriverSavingsPage() {
 
 function Metric({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl border border-vo-line bg-vo-card/60 px-3 py-3">
+    <div className="rounded-[8px] border border-vo-line bg-vo-card/60 px-3 py-3">
       <p className="text-[10px] uppercase tracking-wider text-vo-muted">{label}</p>
       <p className="mt-1 text-[16px] font-semibold">{value}</p>
     </div>
@@ -377,7 +377,7 @@ function Row({ label, value }: { label: string; value: string }) {
 
 function EmptyHistory() {
   return (
-    <div className="mt-3 rounded-xl border border-dashed border-emerald-500/20 bg-emerald-500/5 px-3 py-4">
+    <div className="mt-3 rounded-[8px] border border-dashed border-emerald-500/20 bg-emerald-500/5 px-3 py-4">
       <p className="text-[14px] font-semibold text-driver-ink">No charging history yet</p>
       <p className="mt-1 text-[12px] text-vo-muted">
         Savings and trends appear after you complete charging sessions. Nothing here is invented.
