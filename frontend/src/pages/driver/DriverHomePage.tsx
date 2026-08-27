@@ -384,7 +384,7 @@ export function DriverHomePage() {
               onClick={() => {
                 void signOut().then(() => navigate("/", { replace: true }));
               }}
-              className="p-2 rounded-xl bg-driver-card hover:bg-driver-line text-driver-muted hover:text-driver-ink transition-colors"
+              className="vo-hover-interactive p-2 rounded-[8px] bg-driver-card hover:bg-driver-line text-driver-muted hover:text-driver-ink transition-colors"
               title="Logout"
             >
               <LogOut size={16} />
@@ -421,7 +421,7 @@ export function DriverHomePage() {
 
         <Link
           to="/driver/savings"
-          className="block rounded-2xl border border-emerald-500/20 bg-gradient-to-r from-emerald-500/10 to-transparent p-4"
+          className="vo-hover-interactive block rounded-[12px] border border-vo-border bg-vo-card p-4 hover:border-vo-accent/40"
         >
           <p className="text-[10px] font-semibold uppercase tracking-wider text-vo-accent-ink">
             Charging cost & savings
@@ -432,7 +432,7 @@ export function DriverHomePage() {
 
         <Link
           to="/driver/bookings"
-          className="block rounded-2xl border border-vo-line bg-vo-card p-4 hover:border-emerald-500/40 transition-colors"
+          className="vo-hover-interactive block rounded-[12px] border border-vo-border bg-vo-card p-4 hover:border-vo-accent/40"
         >
           <p className="text-[10px] font-semibold uppercase tracking-wider text-vo-accent-ink">
             Reservations
@@ -443,8 +443,8 @@ export function DriverHomePage() {
 
         {/* Name filter only -- location search sits on the map so choosing a
             place updates origin, distances, and markers rather than this list. */}
-        <label className="flex h-12 items-center gap-3 rounded-2xl border border-vo-line bg-vo-card px-4 shadow-inner">
-          <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-emerald-400 text-black shrink-0">
+        <label className="flex h-12 items-center gap-3 rounded-[8px] border border-vo-line bg-vo-card px-4 shadow-inner">
+          <span className="flex h-7 w-7 items-center justify-center rounded-[6px] bg-emerald-400 text-black shrink-0">
             <ArrowUpRight size={14} />
           </span>
           <input
@@ -460,7 +460,7 @@ export function DriverHomePage() {
             type="button"
             onClick={() => void handleRefreshNearby()}
             disabled={refreshing || refreshCooldownRemainingMs > 0}
-            className="flex items-center gap-1.5 rounded-xl border border-vo-line bg-vo-card px-3 py-1.5 text-[11px] font-medium text-vo-accent-ink disabled:cursor-not-allowed disabled:opacity-50"
+            className="vo-hover-interactive flex items-center gap-1.5 rounded-[8px] border border-vo-line bg-vo-card px-3 py-1.5 text-[11px] font-medium text-vo-accent-ink disabled:cursor-not-allowed disabled:opacity-50"
           >
             <RefreshCw size={12} className={refreshing ? "animate-spin" : ""} />
             {refreshing
@@ -478,7 +478,7 @@ export function DriverHomePage() {
             <select
               value={filters.sort}
               onChange={(event) => setFilters((current) => ({ ...current, sort: event.target.value as ChargerFilterState["sort"] }))}
-              className="w-full rounded-xl border border-vo-line bg-vo-card px-2.5 py-2 text-[11px] text-driver-ink"
+              className="w-full rounded-[6px] border border-vo-line bg-vo-card px-2.5 py-2 text-[11px] text-driver-ink"
             >
               <option value="nearest">Nearest first</option>
               <option value="cheapest">Cheapest first</option>
@@ -490,7 +490,7 @@ export function DriverHomePage() {
             <select
               value={filters.bookable}
               onChange={(event) => setFilters((current) => ({ ...current, bookable: event.target.value as ChargerFilterState["bookable"] }))}
-              className="w-full rounded-xl border border-vo-line bg-vo-card px-2.5 py-2 text-[11px] text-driver-ink"
+              className="w-full rounded-[6px] border border-vo-line bg-vo-card px-2.5 py-2 text-[11px] text-driver-ink"
             >
               <option value="all">All chargers</option>
               <option value="bookable">Bookable</option>
@@ -502,7 +502,7 @@ export function DriverHomePage() {
             <select
               value={filters.availability}
               onChange={(event) => setFilters((current) => ({ ...current, availability: event.target.value as ChargerFilterState["availability"] }))}
-              className="w-full rounded-xl border border-vo-line bg-vo-card px-2.5 py-2 text-[11px] text-driver-ink"
+              className="w-full rounded-[6px] border border-vo-line bg-vo-card px-2.5 py-2 text-[11px] text-driver-ink"
             >
               <option value="all">All statuses</option>
               <option value="available">Available</option>
@@ -515,7 +515,7 @@ export function DriverHomePage() {
             <select
               value={filters.connector}
               onChange={(event) => setFilters((current) => ({ ...current, connector: event.target.value }))}
-              className="w-full rounded-xl border border-vo-line bg-vo-card px-2.5 py-2 text-[11px] text-driver-ink"
+              className="w-full rounded-[6px] border border-vo-line bg-vo-card px-2.5 py-2 text-[11px] text-driver-ink"
             >
               <option value="all">All connectors</option>
               {connectorOptions.map((connector) => (
@@ -540,7 +540,7 @@ export function DriverHomePage() {
                 }));
               }}
               placeholder="Known prices only — unknown prices stay hidden"
-              className="w-full rounded-xl border border-vo-line bg-vo-card px-2.5 py-2 text-[11px] text-driver-ink placeholder:text-vo-muted"
+              className="w-full rounded-[6px] border border-vo-line bg-vo-card px-2.5 py-2 text-[11px] text-driver-ink placeholder:text-vo-muted"
             />
           </label>
         </div>
@@ -564,7 +564,7 @@ export function DriverHomePage() {
             ) : null}
           </div>
 
-          <div className="h-[280px] overflow-hidden rounded-2xl border border-vo-line">
+          <div className="h-[280px] overflow-hidden rounded-[16px] border border-vo-line">
             <DriverMap
               chargers={mapChargers}
               origin={origin}
@@ -577,7 +577,7 @@ export function DriverHomePage() {
           </div>
 
           {searchedLocation ? (
-            <div className="flex items-center justify-between gap-2 rounded-xl border border-cyan-500/20 bg-cyan-500/5 px-3 py-2">
+            <div className="flex items-center justify-between gap-2 rounded-[8px] border border-cyan-500/20 bg-cyan-500/5 px-3 py-2">
               <div className="flex items-center gap-1.5 text-[11px] text-vo-info-ink">
                 <MapPin size={12} />
                 <span>Showing chargers near "{searchedLocation.name}"</span>
@@ -597,7 +597,7 @@ export function DriverHomePage() {
               <span>Using your live location</span>
             </div>
           ) : (
-            <div className="flex items-center justify-between gap-2 rounded-xl border border-amber-500/20 bg-amber-500/5 px-3 py-2">
+            <div className="flex items-center justify-between gap-2 rounded-[8px] border border-amber-500/20 bg-amber-500/5 px-3 py-2">
               <div className="flex items-center gap-1.5 text-[11px] text-vo-warn-ink" title={GEO_STATUS_COPY[geoStatus]}>
                 <span className="h-1.5 w-1.5 rounded-full bg-vo-warn-ink" />
                 <span>
@@ -631,12 +631,12 @@ export function DriverHomePage() {
           </div>
 
           {isRangeLimited && ranked.length === 0 && reachable.length === 0 ? (
-            <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-6 text-center space-y-1.5">
+            <div className="rounded-[12px] border border-amber-500/20 bg-amber-500/5 p-6 text-center space-y-1.5">
               <p className="text-sm font-semibold text-vo-warn-ink">No chargers within your current range</p>
               <p className="text-xs text-vo-muted">Consider charging soon, or widen your search once your battery's topped up.</p>
             </div>
           ) : ranked.length === 0 ? (
-            <div className="rounded-2xl border border-vo-line bg-vo-card p-6 text-center space-y-1.5">
+            <div className="rounded-[12px] border border-vo-line bg-vo-card p-6 text-center space-y-1.5">
               <p className="text-sm font-semibold text-driver-ink">No chargers match these filters</p>
               <p className="text-xs text-vo-muted">Try clearing a filter or searching a different location.</p>
             </div>

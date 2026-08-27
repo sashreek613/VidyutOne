@@ -160,7 +160,7 @@ export function VehicleWidget({
 
   if (!vehicle) {
     return (
-      <div className="rounded-2xl border border-dashed border-emerald-500/30 bg-emerald-500/5 p-5 text-center space-y-3">
+      <div className="rounded-[12px] border border-dashed border-emerald-500/30 bg-emerald-500/5 p-5 text-center space-y-3">
         <div className="w-10 h-10 rounded-full bg-emerald-500/10 text-emerald-400 flex items-center justify-center mx-auto">
           <Zap className="w-5 h-5" />
         </div>
@@ -173,7 +173,7 @@ export function VehicleWidget({
         <button
           type="button"
           onClick={onAddVehicle}
-          className="inline-flex items-center space-x-1.5 px-4 py-2 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-black font-semibold text-xs transition-all shadow-md shadow-emerald-400/10"
+          className="vo-hover-interactive inline-flex items-center space-x-1.5 px-4 py-2 rounded-[8px] bg-emerald-400 hover:bg-emerald-300 text-black font-semibold text-xs transition-all shadow-md shadow-emerald-400/10"
         >
           <Plus className="w-4 h-4" />
           <span>Add Your EV</span>
@@ -217,10 +217,10 @@ export function VehicleWidget({
   }
 
   return (
-    <div className="rounded-2xl border border-driver-line bg-driver-card p-5 space-y-4 shadow-sm">
+    <div className="rounded-[12px] border border-driver-line bg-driver-card p-5 space-y-4 shadow-sm">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2.5">
-          <div className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-500">
+          <div className="w-9 h-9 rounded-[6px] bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-500">
             <Zap className="w-5 h-5" />
           </div>
           <div>
@@ -234,7 +234,7 @@ export function VehicleWidget({
         <button
           type="button"
           onClick={() => onEditVehicle(vehicle)}
-          className="p-2 rounded-lg bg-driver-bg hover:bg-driver-line text-driver-muted transition-colors"
+          className="vo-hover-interactive p-2 rounded-[8px] bg-driver-bg hover:bg-driver-line text-driver-muted transition-colors"
           title="Edit Vehicle"
         >
           <Edit2 className="w-4 h-4" />
@@ -243,7 +243,7 @@ export function VehicleWidget({
 
       <div className="grid grid-cols-2 gap-3 pt-1">
         {/* Battery Card */}
-        <div className="rounded-xl border border-vo-line bg-vo-card/80 p-3 flex flex-col justify-between">
+        <div className="rounded-[8px] border border-vo-line bg-vo-card/80 p-3 flex flex-col justify-between">
           <div className="flex items-center space-x-1.5 text-xs text-vo-muted mb-1">
             <Battery className="w-3.5 h-3.5 text-emerald-400" />
             <span>Battery Level</span>
@@ -255,7 +255,7 @@ export function VehicleWidget({
         </div>
 
         {/* Range Card */}
-        <div className="rounded-xl border border-vo-line bg-vo-card/80 p-3 flex flex-col justify-between">
+        <div className="rounded-[8px] border border-vo-line bg-vo-card/80 p-3 flex flex-col justify-between">
           <div className="flex items-center space-x-1.5 text-xs text-vo-muted mb-1">
             <Gauge className="w-3.5 h-3.5 text-cyan-400" />
             <span>Est. Range</span>
@@ -314,7 +314,7 @@ export function VehicleWidget({
         <button
           type="button"
           onClick={() => onClimateControlChange(!climateControl)}
-          className={`flex w-full items-center justify-between rounded-xl border px-3 py-2 text-xs transition-colors ${
+          className={`vo-hover-interactive flex w-full items-center justify-between rounded-[8px] border px-3 py-2 text-xs transition-colors ${
             climateControl
               ? "border-emerald-500/40 bg-emerald-500/10 text-vo-accent-ink"
               : "border-vo-line bg-vo-card/80 text-vo-muted"
@@ -333,7 +333,7 @@ export function VehicleWidget({
               key={value}
               type="button"
               onClick={() => onDrivingProfileChange(value)}
-              className={`flex flex-col items-center gap-1 rounded-xl border px-2 py-2 text-[11px] transition-colors ${
+              className={`vo-hover-interactive flex flex-col items-center gap-1 rounded-[8px] border px-2 py-2 text-[11px] transition-colors ${
                 drivingProfile === value
                   ? "border-emerald-500/40 bg-emerald-500/10 text-vo-accent-ink"
                   : "border-vo-line bg-vo-card/80 text-vo-muted"

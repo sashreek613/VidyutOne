@@ -43,7 +43,7 @@ export function Sidebar() {
             to={item.to}
             end={item.end}
             className={({ isActive }) =>
-              `flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium transition ${
+              `vo-hover-interactive flex items-center gap-2.5 rounded-[8px] px-3 py-2 text-[13px] font-medium transition ${
                 isActive
                   ? "bg-vo-accent-dim text-vo-accent border border-vo-accent/20"
                   : "text-vo-soft hover:bg-white/5 hover:text-vo-text"
@@ -64,7 +64,7 @@ export function Sidebar() {
         <button
           type="button"
           onClick={() => void handleSignOut()}
-          className="mb-4 flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-[13px] text-vo-soft hover:bg-white/5 hover:text-vo-text"
+          className="vo-hover-interactive mb-4 flex w-full items-center gap-2 rounded-[8px] px-3 py-2 text-left text-[13px] text-vo-soft hover:bg-white/5 hover:text-vo-text"
         >
           <LogOut size={15} />
           Logout
