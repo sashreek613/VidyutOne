@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.database.session import get_db
 from app.schemas.assistant import AssistantChatRequest, AssistantChatResponse
-from app.services import lyzr_service
+from app.services import gemini_service
 
 router = APIRouter()
 
@@ -13,5 +13,5 @@ def chat_with_assistant(
     payload: AssistantChatRequest,
     db: Session = Depends(get_db),
 ) -> AssistantChatResponse:
-    reply = lyzr_service.ask_assistant(db, payload.message, payload.session_id)
+    reply = gemini_service.ask_assistant(db, payload.message, payload.session_id)
     return AssistantChatResponse(reply=reply, session_id=payload.session_id)

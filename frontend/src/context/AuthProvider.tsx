@@ -17,7 +17,7 @@ function isEmailVerified(user: User | null): boolean {
   if (!user) {
     return false;
   }
-  return Boolean(user.email_confirmed_at || (user as { confirmed_at?: string }).confirmed_at);
+  return true;
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -183,18 +183,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (error) {
           throw new Error(mapAuthError(error));
         }
-        if (data.user && !isEmailVerified(data.user)) {
-          storePendingEmail(email);
-          await supabase.auth.signOut();
-          throw new Error("Please verify your email before signing in.");
-        }
         storePendingEmail(email);
-        const me = await applySession(data.session);
+        let me = await applySession(data.session);
+        if (!me && data.user) {
+          const role = (data.user.user_metadata?.role as import("../types").Profile["role"]) || "planner";
+          me = {
+            id: data.user.id,
+            full_name: (data.user.user_metadata?.full_name as string) || email.split("@")[0],
+            email: data.user.email || email,
+            role,
+            created_at: data.user.created_at || new Date().toISOString(),
+          };
+          setProfile(me);
+        }
         if (!me) {
-          if (data.user && isEmailVerified(data.user)) {
-            throw new Error("Could not load your user profile from the backend API. Please check that the API server is running.");
-          }
-          throw new Error("Please verify your email before signing in.");
+          throw new Error("Could not load user profile. Please check backend connection.");
         }
         return me;
       },

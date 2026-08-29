@@ -66,7 +66,19 @@ def build_site_context(db: Session) -> str:
 
 def ask_assistant(db: Session, message: str, session_id: str) -> str:
     settings = get_settings()
-    if not settings.LYZR_API_KEY or not settings.LYZR_AGENT_ID:
+    api_key_ok = bool(settings.LYZR_API_KEY)
+    agent_id_ok = bool(settings.LYZR_AGENT_ID)
+    logger.info(
+        "Planner assistant request: LYZR_API_KEY configured=%s, LYZR_AGENT_ID configured=%s",
+        api_key_ok,
+        agent_id_ok,
+    )
+    if not api_key_ok or not agent_id_ok:
+        logger.warning(
+            "Planner assistant not configured: LYZR_API_KEY=%s LYZR_AGENT_ID=%s",
+            "set" if api_key_ok else "MISSING",
+            "set" if agent_id_ok else "MISSING",
+        )
         return NOT_CONFIGURED_MESSAGE
 
     try:
@@ -79,18 +91,22 @@ def ask_assistant(db: Session, message: str, session_id: str) -> str:
             "system_prompt_variables": {"site_context": context},
             "filter_variables": {},
         }
+        logger.info("Planner assistant: sending request to Lyzr (agent_id configured)")
         response = requests.post(
             LYZR_CHAT_URL,
             headers={"Content-Type": "application/json", "x-api-key": settings.LYZR_API_KEY},
             json=payload,
             timeout=LYZR_TIMEOUT_SECONDS,
         )
+        logger.info("Planner assistant: Lyzr HTTP status=%s", response.status_code)
         response.raise_for_status()
         body = response.json()
         reply = body.get("response")
         if not isinstance(reply, str) or not reply.strip():
+            logger.warning("Planner assistant: Lyzr response missing non-empty 'response' field; keys=%s", list(body.keys()))
             raise ValueError("Lyzr response missing a non-empty 'response' field")
         return reply
     except Exception:  # noqa: BLE001 -- this call must never raise out to the route
-        logger.exception("Lyzr assistant call failed")
+        logger.exception("Lyzr planner assistant call failed")
         return UNAVAILABLE_MESSAGE
+

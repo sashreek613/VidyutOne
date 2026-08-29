@@ -27,15 +27,22 @@ export function BookingPage() {
 
   const chargerQuery = useCharger(booking?.charger_id);
 
-  const slotLabel = useMemo(() => {
-    if (!booking) {
-      return "";
-    }
-    return new Date(booking.slot_time).toLocaleString("en-IN", {
-      hour: "2-digit",
-      minute: "2-digit",
+  const dateLabel = useMemo(() => {
+    if (!booking) return "";
+    return new Date(booking.slot_time).toLocaleDateString("en-IN", {
+      weekday: "short",
       day: "numeric",
       month: "short",
+      year: "numeric",
+    });
+  }, [booking]);
+
+  const timeLabel = useMemo(() => {
+    if (!booking) return "";
+    return new Date(booking.slot_time).toLocaleTimeString("en-IN", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
     });
   }, [booking]);
 
@@ -43,13 +50,15 @@ export function BookingPage() {
     if (!booking) return "";
     switch (booking.status) {
       case "BOOKED":
-        return "Confirmed";
+        return "Confirmed · Paid";
       case "ACTIVE":
-        return "Active";
+        return "Active Session";
       case "COMPLETED":
         return "Completed";
       case "CANCELLED":
         return "Cancelled";
+      case "PAYMENT_PENDING":
+        return "Payment Pending";
       default:
         return booking.status;
     }
@@ -59,15 +68,17 @@ export function BookingPage() {
     if (!booking) return "";
     switch (booking.status) {
       case "BOOKED":
-        return "Booking confirmed";
+        return "Booking Confirmed";
       case "ACTIVE":
-        return "Booking active";
+        return "Charging Session Active";
       case "COMPLETED":
-        return "Booking completed";
+        return "Session Completed";
       case "CANCELLED":
-        return "Booking cancelled";
+        return "Booking Cancelled";
+      case "PAYMENT_PENDING":
+        return "Payment Incomplete";
       default:
-        return "Booking detail";
+        return "Booking Details";
     }
   }, [booking]);
 
@@ -92,45 +103,65 @@ export function BookingPage() {
   }
 
   const stationName = chargerQuery.data?.name.replace(" (demo)", "") ?? booking?.charger_id ?? "";
+  const chargerPower = chargerQuery.data?.power_kw ? `${chargerQuery.data.power_kw} kW` : "7.4 kW standard";
+  const effectiveTariff = chargerQuery.data?.price_per_kwh ? chargerQuery.data.price_per_kwh : 18.0;
+
+  // Approximate energy kWh from price / tariff or power * duration
+  const estimatedEnergy = useMemo(() => {
+    if (!booking) return null;
+    const durationHours = (booking.duration_minutes || 30) / 60;
+    const powerKw = chargerQuery.data?.power_kw || 7.4;
+    return (powerKw * durationHours).toFixed(1);
+  }, [booking, chargerQuery.data]);
 
   return (
-    <div className="flex min-h-screen flex-col bg-white">
+    <div className="flex min-h-screen flex-col bg-driver-bg pb-20 text-driver-ink">
       <StatusBar />
       <ScreenState loading={loading} error={error} tone="light">
         {booking ? (
-          <div className="px-5 pt-8 pb-10">
-            <div className={`flex h-14 w-14 items-center justify-center rounded-full text-[22px] font-bold ${
-              booking.status === "CANCELLED"
-                ? "bg-red-50 text-red-600 border border-red-200/50"
-                : "bg-driver-mint text-[#0b7a52]"
-            }`}>
+          <div className="px-5 pt-6 pb-10">
+            {/* Status Icon */}
+            <div
+              className={`flex h-14 w-14 items-center justify-center rounded-2xl text-[20px] font-bold shadow-xs ${
+                booking.status === "CANCELLED"
+                  ? "bg-[#fdf2f2] text-[#9e3a3a] border border-[#f5c6cb]"
+                  : "bg-[#edf6f0] text-[#3d7a5a] border border-[#cbe4d3]"
+              }`}
+            >
               {booking.status === "CANCELLED" ? "✕" : "✓"}
             </div>
-            <h1 className="mt-4 text-[28px] font-semibold text-driver-ink">{titleText}</h1>
-            
+
+            <h1 className="mt-4 text-[26px] font-bold text-driver-ink">{titleText}</h1>
+
             {booking.status === "BOOKED" && (
-              <p className="mt-1 text-[13px] text-driver-muted">No payment was taken. This is an MVP reservation.</p>
+              <p className="mt-1 text-[13px] text-driver-muted">
+                Your charging slot has been reserved and payment verified via Razorpay.
+              </p>
             )}
             {booking.status === "CANCELLED" && (
-              <p className="mt-1 text-[13px] text-red-600 font-medium">This reservation was cancelled and released.</p>
+              <p className="mt-1 text-[13px] text-[#9e3a3a] font-medium">
+                This reservation was cancelled and your slot has been released.
+              </p>
             )}
 
             {successMessage && (
-              <div className="mt-4 flex items-center gap-2.5 rounded-xl bg-emerald-50 border border-emerald-200/50 p-3 text-[13px] text-[#0b7a52] font-medium shadow-sm">
+              <div className="mt-4 flex items-center gap-2.5 rounded-xl bg-[#edf6f0] border border-[#cbe4d3] p-3 text-[13px] text-[#3d7a5a] font-medium shadow-xs">
                 <Info size={16} />
                 <span>{successMessage}</span>
               </div>
             )}
 
-            <dl className="mt-8 divide-y divide-driver-line rounded-[22px] border border-driver-line bg-[#f7f8f5] px-4">
-              <Row label="Charger" value={stationName} />
-              <Row label="Selected slot" value={slotLabel} />
-              <Row label="Price" value={formatInr(booking.price)} />
+            {/* Booking Details Card */}
+            <dl className="mt-6 divide-y divide-driver-line rounded-[22px] border border-driver-line bg-driver-card px-5 shadow-[0_4px_16px_rgba(16,24,20,0.03)]">
+              <Row label="Charging Station" value={stationName} />
+              <Row label="Date" value={dateLabel} />
+              <Row label="Start Time" value={timeLabel} />
+              <Row label="Duration" value={`${booking.duration_minutes || 30} minutes`} />
+              {estimatedEnergy && <Row label="Estimated Energy" value={`${estimatedEnergy} kWh (${chargerPower})`} />}
+              <Row label="Applicable Base Tariff" value={`${formatInr(effectiveTariff)} / kWh`} />
+              <Row label="Total Paid" value={formatInr(booking.price)} highlight />
+              <Row label="Payment Status" value={statusLabel} />
               <Row label="Booking ID" value={booking.id.slice(0, 8).toUpperCase()} />
-              <Row label="Status" value={statusLabel} />
-              {booking.duration_minutes ? (
-                <Row label="Duration" value={`${booking.duration_minutes} minutes`} />
-              ) : null}
             </dl>
 
             {isCancellable && (
@@ -140,7 +171,7 @@ export function BookingPage() {
                   setActionError(null);
                   setCancelling(true);
                 }}
-                className="mt-8 flex h-12 w-full items-center justify-center rounded-2xl bg-red-50 hover:bg-red-100 text-[14px] font-bold text-red-600 border border-red-200/50 transition-colors"
+                className="mt-6 flex h-12 w-full items-center justify-center rounded-2xl bg-[#fdf2f2] hover:bg-[#fae8e8] text-[14px] font-semibold text-[#9e3a3a] border border-[#f5c6cb] transition-colors cursor-pointer"
               >
                 Cancel Booking
               </button>
@@ -148,11 +179,11 @@ export function BookingPage() {
 
             <Link
               to="/driver"
-              className={`flex h-12 items-center justify-center rounded-2xl bg-vo-accent text-[14px] font-semibold text-[#06231b] ${
-                isCancellable ? "mt-4" : "mt-8"
+              className={`flex h-12 items-center justify-center rounded-2xl bg-[#2e5b44] text-[14px] font-semibold text-white shadow-md hover:bg-[#254b38] transition-colors ${
+                isCancellable ? "mt-3" : "mt-6"
               }`}
             >
-              Back to driver home
+              Back to Driver Home
             </Link>
           </div>
         ) : null}
@@ -186,15 +217,15 @@ export function BookingPage() {
                 </p>
                 <div className="text-[13px] space-y-1">
                   <p className="font-bold">{stationName}</p>
-                  <p className="text-driver-muted">{slotLabel}</p>
-                  <p className="font-semibold text-[#0b7a52]">
+                  <p className="text-driver-muted">{dateLabel} · {timeLabel}</p>
+                  <p className="font-semibold text-[#3d7a5a]">
                     Price: {formatInr(booking.price)}
                   </p>
                 </div>
               </div>
 
               {actionError && (
-                <p className="text-[12px] font-medium text-red-600">{actionError}</p>
+                <p className="text-[12px] font-medium text-[#9e3a3a]">{actionError}</p>
               )}
 
               {/* Actions */}
@@ -210,7 +241,7 @@ export function BookingPage() {
                 <button
                   type="button"
                   onClick={() => void handleCancelConfirm()}
-                  className="flex-1 flex h-11 items-center justify-center rounded-xl bg-red-600 hover:bg-red-700 text-[13px] font-bold text-white transition-colors"
+                  className="flex-1 flex h-11 items-center justify-center rounded-xl bg-[#9e3a3a] hover:bg-[#853030] text-[13px] font-bold text-white transition-colors"
                   disabled={submittingCancel}
                 >
                   {submittingCancel ? "Cancelling…" : "Cancel Booking"}
@@ -224,11 +255,11 @@ export function BookingPage() {
   );
 }
 
-function Row({ label, value }: { label: string; value: string }) {
+function Row({ label, value, highlight = false }: { label: string; value: string; highlight?: boolean }) {
   return (
     <div className="flex items-center justify-between py-3.5 text-[13px]">
       <dt className="text-driver-muted">{label}</dt>
-      <dd className="font-semibold text-driver-ink">{value}</dd>
+      <dd className={`font-semibold ${highlight ? "text-[16px] text-[#2e5b44]" : "text-driver-ink"}`}>{value}</dd>
     </div>
   );
 }

@@ -27,4 +27,10 @@ class Charger(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=utcnow)
 
     site: Mapped["Site"] = relationship(back_populates="chargers")
-    bookings: Mapped[list["Booking"]] = relationship(back_populates="charger")
+    bookings: Mapped[list["Booking"]] = relationship(
+        "Booking",
+        primaryjoin="Charger.id == Booking.charger_id",
+        foreign_keys="[Booking.charger_id]",
+        viewonly=True,
+    )
+

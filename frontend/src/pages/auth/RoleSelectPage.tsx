@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { MapPin, BatteryCharging, ArrowRight } from "lucide-react";
+import { MapPin, BatteryCharging, ArrowRight, ShieldCheck } from "lucide-react";
 import { AuthShell } from "../../components/auth/AuthShell";
 
 export function RoleSelectPage() {
@@ -7,73 +7,92 @@ export function RoleSelectPage() {
 
   return (
     <AuthShell>
-      <div className="max-w-xl mx-auto w-full space-y-6">
-        <div className="text-center space-y-2">
-          <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-xs font-semibold uppercase tracking-wider mb-2">
-            <span>Step 1 of 2 — Role Selection</span>
-          </div>
-          <h2 className="text-3xl font-extrabold text-white">How will you use VidyutOne?</h2>
-          <p className="text-sm text-vo-muted">
-            Select your account type to continue to specialized setup.
+      <div className="w-full space-y-6">
+        {/* Section Header */}
+        <div className="space-y-1 text-left sm:text-left">
+          <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-[var(--vo-text)]">
+            Choose how you’ll use VidyutOne
+          </h2>
+          <p className="text-sm text-[var(--vo-muted)]">
+            Select your role to continue.
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-4 pt-2">
-          {/* Planner Option */}
-          <button
-            type="button"
-            onClick={() => void navigate("/signup/planner")}
-            className="group relative text-left p-6 rounded-2xl border border-vo-line bg-vo-card hover:border-cyan-500/60 hover:bg-cyan-500/5 transition-all flex flex-col justify-between space-y-4"
-          >
-            <div>
-              <div className="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 mb-4 group-hover:scale-105 transition-transform">
-                <MapPin className="w-6 h-6" />
+        {/* Dual Role Cards Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-1">
+          {/* Card 1: Planner / Authority */}
+          <div className="bg-[var(--vo-surface)] rounded-xl border border-[var(--vo-border)] p-6 shadow-xs hover:border-slate-300 dark:hover:border-slate-700 transition-all flex flex-col justify-between space-y-5">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="w-10 h-10 rounded-lg bg-[var(--vo-bg)] border border-[var(--vo-border)] flex items-center justify-center text-[var(--vo-text)]">
+                  <MapPin className="w-5 h-5 stroke-[1.75]" />
+                </div>
+                <span className="inline-flex items-center space-x-1 text-[11px] font-medium text-[#C5A66A] bg-[#FAF5EC] dark:bg-[#C5A66A]/15 border border-[#EDE2D0] dark:border-[#C5A66A]/30 px-2.5 py-0.5 rounded-md">
+                  <ShieldCheck className="w-3 h-3 text-[#C5A66A]" />
+                  <span>Verification required</span>
+                </span>
               </div>
-              <h3 className="text-lg font-bold text-white group-hover:text-cyan-300 transition-colors">
-                Planner / Authority
-              </h3>
-              <p className="text-xs text-vo-muted mt-1 leading-relaxed">
-                Government DISCOM, city planning agency, or CPO analyst evaluating EV infrastructure candidate sites. Requires admin verification.
-              </p>
+
+              <div>
+                <h3 className="text-base font-bold text-[var(--vo-text)]">
+                  Planner / Authority
+                </h3>
+                <p className="text-xs text-[var(--vo-soft)] mt-1.5 leading-relaxed">
+                  For DISCOMs, government agencies, city planners, and authorized infrastructure teams.
+                </p>
+              </div>
             </div>
 
-            <div className="pt-2 flex items-center text-xs font-semibold text-cyan-400 group-hover:translate-x-1 transition-transform space-x-1">
-              <span>Register as Planner / Authority</span>
+            <button
+              type="button"
+              onClick={() => void navigate("/signup/planner")}
+              className="w-full py-2.5 px-4 rounded-lg bg-[#4F6F9F] hover:bg-[#3F5F8F] dark:bg-[#6F8FB8] dark:hover:bg-[#5D7EA8] text-white font-semibold text-xs sm:text-sm flex items-center justify-center space-x-2 transition-colors cursor-pointer"
+            >
+              <span>Continue as Planner</span>
               <ArrowRight className="w-4 h-4" />
-            </div>
-          </button>
+            </button>
+          </div>
 
-          {/* Driver Option */}
-          <button
-            type="button"
-            onClick={() => void navigate("/signup/driver")}
-            className="group relative text-left p-6 rounded-2xl border border-vo-line bg-vo-card hover:border-emerald-500/60 hover:bg-emerald-500/5 transition-all flex flex-col justify-between space-y-4"
-          >
-            <div>
-              <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mb-4 group-hover:scale-105 transition-transform">
-                <BatteryCharging className="w-6 h-6" />
+          {/* Card 2: EV Driver */}
+          <div className="bg-[var(--vo-surface)] rounded-xl border border-[var(--vo-border)] p-6 shadow-xs hover:border-slate-300 dark:hover:border-slate-700 transition-all flex flex-col justify-between space-y-5">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="w-10 h-10 rounded-lg bg-[var(--vo-bg)] border border-[var(--vo-border)] flex items-center justify-center text-[var(--vo-text)]">
+                  <BatteryCharging className="w-5 h-5 stroke-[1.75]" />
+                </div>
               </div>
-              <h3 className="text-lg font-bold text-white group-hover:text-emerald-300 transition-colors">
-                EV Driver
-              </h3>
-              <p className="text-xs text-vo-muted mt-1 leading-relaxed">
-                EV owner or fleet driver discovering chargers, tracking range, and booking charging slots.
-              </p>
+
+              <div>
+                <h3 className="text-base font-bold text-[var(--vo-text)]">
+                  EV Driver
+                </h3>
+                <p className="text-xs text-[var(--vo-soft)] mt-1.5 leading-relaxed">
+                  Find charging stations, check availability, and plan your journey with reliable charging information.
+                </p>
+              </div>
             </div>
 
-            <div className="pt-2 flex items-center text-xs font-semibold text-emerald-400 group-hover:translate-x-1 transition-transform space-x-1">
+            <button
+              type="button"
+              onClick={() => void navigate("/signup/driver")}
+              className="w-full py-2.5 px-4 rounded-lg bg-[#4F6F9F] hover:bg-[#3F5F8F] dark:bg-[#6F8FB8] dark:hover:bg-[#5D7EA8] text-white font-semibold text-xs sm:text-sm flex items-center justify-center space-x-2 transition-colors cursor-pointer"
+            >
               <span>Continue as Driver</span>
               <ArrowRight className="w-4 h-4" />
-            </div>
-          </button>
+            </button>
+          </div>
         </div>
 
-        <p className="text-center text-xs text-vo-muted pt-4">
-          Already registered?{" "}
-          <Link to="/login" className="text-white hover:underline font-medium">
+        {/* Already Registered Section */}
+        <div className="pt-2 text-center sm:text-left text-xs text-[var(--vo-muted)] border-t border-[var(--vo-border)] mt-4">
+          <span>Already registered? </span>
+          <Link
+            to="/login"
+            className="text-[#4F6F9F] dark:text-[#6F8FB8] hover:underline font-semibold transition-colors underline-offset-4"
+          >
             Sign in
           </Link>
-        </p>
+        </div>
       </div>
     </AuthShell>
   );

@@ -56,16 +56,18 @@ export function LoginPage() {
     <AuthShell>
       <form onSubmit={(event) => void handleSubmit(event)}>
         <AuthCard>
-          <h2 className="text-[28px] font-semibold text-white">Sign in</h2>
-          <p className="mt-1 text-[13px] text-vo-muted">Use the account you registered. Your role comes from your profile, not this form.</p>
+          <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-[var(--vo-text)]">Sign in</h2>
+          <p className="mt-1 text-xs text-[var(--vo-muted)]">
+            Sign in to access your planner dashboard or driver portal.
+          </p>
 
           {!supabaseConfigured ? (
-            <p className="mt-4 text-[13px] text-vo-red">
+            <p className="mt-4 text-xs text-red-600 dark:text-red-400">
               Supabase configuration error. Set VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY in frontend/.env.
             </p>
           ) : null}
-          {notice ? <p className="mt-4 text-[13px] text-vo-accent">{notice}</p> : null}
-          {error ? <p className="mt-4 text-[13px] text-vo-red">{error}</p> : null}
+          {notice ? <p className="mt-4 text-xs text-emerald-600 dark:text-emerald-400 font-medium">{notice}</p> : null}
+          {error ? <p className="mt-4 text-xs text-red-600 dark:text-red-400 font-medium">{error}</p> : null}
 
           <AuthField label="EMAIL">
             <input
@@ -90,14 +92,13 @@ export function LoginPage() {
           <AuthSubmit disabled={submitting || !supabaseConfigured}>
             {submitting ? "Signing in…" : "Sign in"}
           </AuthSubmit>
-          <div className="mt-4 flex justify-between text-[12px] text-vo-muted">
-            <Link to="/forgot-password" className="hover:text-white">
+          <div className="mt-4 flex justify-between text-xs text-[var(--vo-muted)] border-t border-[var(--vo-border)] pt-4">
+            <Link to="/forgot-password" className="text-[#4F6F9F] dark:text-[#6F8FB8] hover:underline font-medium">
               Forgot password?
             </Link>
-            <Link to="/get-started" className="hover:text-white">
-              Create account
+            <Link to="/" className="text-[var(--vo-text)] font-semibold hover:underline">
+              Choose role
             </Link>
-
           </div>
         </AuthCard>
       </form>
