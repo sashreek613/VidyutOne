@@ -1,203 +1,311 @@
-import { useMemo, useState } from "react";
-import { FileText, Download, Printer, Filter } from "lucide-react";
+import { forwardRef, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import { FileText, ArrowLeft, Printer, Trash2, ChevronDown, ChevronUp } from "lucide-react";
 
 import { ScreenState } from "../../components/common/ScreenState";
 import { TopBar } from "../../components/planner/TopBar";
+import { deletePlannerReport, getPlannerReports } from "../../services/api";
 import { useSites } from "../../hooks/useApiData";
 import { insightsForSite } from "../../utils/siteInsights";
+import type { PlannerReport, Site } from "../../types";
 
 export function PlannerReportsPage() {
-  const { data: sites, error, loading } = useSites();
-  const [filter, setFilter] = useState<string>("ALL");
+  const [searchParams] = useSearchParams();
+  const highlightId = searchParams.get("highlight");
 
-  const filteredSites = useMemo(() => {
-    const list = sites ?? [];
-    if (filter === "ALL") return list;
-    return list.filter((s) => s.recommendation === filter);
-  }, [sites, filter]);
+  const [reports, setReports] = useState<PlannerReport[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(highlightId ?? null);
 
-  const summary = useMemo(() => {
-    const list = sites ?? [];
-    const totalSites = list.length;
-    const build = list.filter((s) => s.recommendation === "BUILD").length;
-    const managed = list.filter((s) => s.recommendation === "BUILD_IF_MANAGED").length;
-    const dont = list.filter((s) => s.recommendation === "DONT_BUILD").length;
+  const { data: allSites, loading: sitesLoading, error: sitesError } = useSites();
 
-    const totalChargers = list.reduce((acc, s) => {
-      if (s.recommendation === "BUILD") return acc + Math.max(4, Math.round(s.demand_score / 12));
-      if (s.recommendation === "BUILD_IF_MANAGED") return acc + Math.max(2, Math.round(s.demand_score / 18));
-      return acc;
-    }, 0);
+  const siteMap = useMemo(() => {
+    if (!allSites) return new Map<string, Site>();
+    return new Map(allSites.map((s) => [s.id, s]));
+  }, [allSites]);
 
-    return { totalSites, build, managed, dont, totalChargers };
-  }, [sites]);
+  const loadReports = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await getPlannerReports();
+      setReports(data);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to load reports.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-  function exportCSV() {
-    if (!sites) return;
-    const headers = ["Site ID", "Site Name", "Decision", "Demand Score", "Grid Capacity Score", "Recommended Chargers", "Feeder"];
-    const rows = sites.map((s) => [
-      s.id,
-      `"${s.name.replace(" (demo)", "")}"`,
-      s.recommendation,
-      s.demand_score,
-      s.grid_capacity_score,
-      s.recommendation === "BUILD" ? Math.max(4, Math.round(s.demand_score / 12)) : s.recommendation === "BUILD_IF_MANAGED" ? Math.max(2, Math.round(s.demand_score / 18)) : 0,
-      `"${insightsForSite(s).feederName}"`,
-    ]);
+  useEffect(() => {
+    void loadReports();
+  }, [loadReports]);
 
-    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map((e) => e.join(","))].join("\n");
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "VidyutOne_EV_Infrastructure_Report.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  // Keep expandedId in sync if query param changes
+  useEffect(() => {
+    if (highlightId) {
+      setExpandedId(highlightId);
+    }
+  }, [highlightId]);
+
+  // Scroll to highlighted report
+  const highlightRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (highlightId && highlightRef.current) {
+      highlightRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [highlightId, reports]);
+
+  async function handleDelete(reportId: string) {
+    await deletePlannerReport(reportId);
+    setReports((prev) => prev.filter((r) => r.id !== reportId));
+    if (expandedId === reportId) setExpandedId(null);
   }
+
+  const combinedLoading = loading || (sitesLoading && reports.length === 0);
+  const combinedError = error ?? sitesError;
 
   return (
     <div className="min-h-screen pb-12 bg-vo-bg text-vo-text">
       <TopBar title="Reports" />
-      <ScreenState loading={loading} error={error} empty={!loading && !error && (sites?.length ?? 0) === 0}>
-        {sites ? (
-          <div className="print-report space-y-6 px-6 py-6 max-w-7xl mx-auto">
-            {/* Header & Export Actions */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div>
-                <h1 className="text-xl font-bold text-vo-text flex items-center space-x-2">
-                  <FileText className="w-5 h-5 text-vo-accent" />
-                  <span>Infrastructure Planning Executive Report</span>
-                </h1>
-                <p className="text-xs text-vo-muted mt-0.5">
-                  Official decision summary for DISCOM and municipal infrastructure committees.
-                </p>
-              </div>
+      <ScreenState loading={combinedLoading} error={combinedError}>
+        <div className="space-y-6 px-6 py-6 max-w-4xl mx-auto">
+          {/* Header */}
+          <div>
+            <h1 className="text-xl font-bold text-vo-text flex items-center gap-2">
+              <FileText className="w-5 h-5 text-[#4F6F9F] dark:text-[#6F8FB8]" />
+              <span>Reports</span>
+            </h1>
+            <p className="text-xs text-vo-muted mt-0.5">
+              Generated site assessment reports from your selected locations.
+            </p>
+          </div>
 
-              <div className="no-print flex items-center space-x-3">
-                <button
-                  type="button"
-                  onClick={exportCSV}
-                  className="inline-flex items-center space-x-1.5 px-4 py-2 rounded-xl bg-vo-card border border-vo-line hover:border-vo-accent/40 text-xs font-semibold text-vo-text transition-colors"
-                >
-                  <Download className="w-4 h-4 text-vo-accent" />
-                  <span>Export CSV</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => window.print()}
-                  className="inline-flex items-center space-x-1.5 px-4 py-2 rounded-xl bg-vo-accent text-black font-semibold text-xs hover:bg-emerald-300 transition-colors shadow-md shadow-emerald-400/10"
-                >
-                  <Printer className="w-4 h-4" />
-                  <span>Print Report</span>
-                </button>
-              </div>
+          {/* Empty state */}
+          {reports.length === 0 ? (
+            <div className="rounded-xl border border-vo-line bg-vo-card p-12 text-center space-y-3">
+              <FileText className="w-8 h-8 text-vo-muted mx-auto" />
+              <p className="text-sm font-semibold text-vo-text">No reports generated yet.</p>
+              <p className="text-xs text-vo-muted">
+                Select locations from Consideration to create a site assessment report.
+              </p>
+              <button
+                type="button"
+                onClick={() => window.history.back()}
+                className="inline-flex items-center gap-1.5 mt-2 px-4 py-2 rounded-lg border border-[#4F6F9F]/30 bg-[#EEF2F7] dark:bg-[#4F6F9F]/10 text-xs font-semibold text-[#4F6F9F] dark:text-[#6F8FB8] hover:bg-[#4F6F9F]/15 transition-colors"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                <span>Go to Consideration</span>
+              </button>
             </div>
-
-            {/* Executive Summary Cards */}
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <div className="rounded-2xl border border-vo-line bg-vo-card p-5 space-y-1">
-                <p className="text-xs font-medium uppercase text-vo-muted">Assessed Locations</p>
-                <div className="text-2xl font-bold text-vo-text font-mono">{summary.totalSites}</div>
-                <p className="text-xs text-vo-muted">Bengaluru Division</p>
-              </div>
-
-              <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-5 space-y-1">
-                <p className="text-xs font-semibold uppercase text-emerald-400">Total Recommended Chargers</p>
-                <div className="text-2xl font-bold text-emerald-400 font-mono">{summary.totalChargers} Units</div>
-                <p className="text-xs text-emerald-300/80">Across Phase 1 locations</p>
-              </div>
-
-              <div className="rounded-2xl border border-vo-line bg-vo-card p-5 space-y-1">
-                <p className="text-xs font-medium uppercase text-vo-muted">Direct Build Sites</p>
-                <div className="text-2xl font-bold text-vo-text font-mono">{summary.build} Sites</div>
-                <p className="text-xs text-vo-muted">Grid capacity available</p>
-              </div>
-
-              <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-5 space-y-1">
-                <p className="text-xs font-semibold uppercase text-amber-400">Managed Opportunity Sites</p>
-                <div className="text-2xl font-bold text-amber-400 font-mono">{summary.managed} Sites</div>
-                <p className="text-xs text-amber-300/80">Viable via smart load scheduling</p>
-              </div>
+          ) : (
+            <div className="space-y-3">
+              {reports.map((report) => (
+                <ReportCard
+                  key={report.id}
+                  report={report}
+                  siteMap={siteMap}
+                  isExpanded={expandedId === report.id}
+                  isHighlighted={report.id === highlightId}
+                  onToggle={() => setExpandedId((prev) => (prev === report.id ? null : report.id))}
+                  onDelete={() => void handleDelete(report.id)}
+                  ref={report.id === highlightId ? highlightRef : undefined}
+                />
+              ))}
             </div>
+          )}
+        </div>
+      </ScreenState>
+    </div>
+  );
+}
 
-            {/* Detailed Table */}
-            <div className="rounded-2xl border border-vo-line bg-vo-card p-6 space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <h2 className="text-base font-bold text-vo-text">Full Site Assessment Table</h2>
+interface ReportCardProps {
+  report: PlannerReport;
+  siteMap: Map<string, Site>;
+  isExpanded: boolean;
+  isHighlighted: boolean;
+  onToggle: () => void;
+  onDelete: () => void;
+}
 
-                <div className="no-print flex items-center space-x-2">
-                  <Filter className="w-3.5 h-3.5 text-vo-muted" />
-                  <select
-                    value={filter}
-                    onChange={(e) => setFilter(e.target.value)}
-                    className="rounded-xl border border-vo-line bg-vo-elevated px-3 py-1.5 text-xs text-vo-text focus:border-vo-accent focus:outline-none"
-                  >
-                    <option value="ALL">All Decisions</option>
-                    <option value="BUILD">🟢 BUILD Only</option>
-                    <option value="BUILD_IF_MANAGED">🟡 BUILD IF MANAGED Only</option>
-                    <option value="DONT_BUILD">🔴 DO NOT BUILD Only</option>
-                  </select>
-                </div>
-              </div>
+const ReportCard = forwardRef<HTMLDivElement, ReportCardProps>(function ReportCard(
+  { report, siteMap, isExpanded, isHighlighted, onToggle, onDelete },
+  ref,
+) {
+  // Boolean(s) filter guarantees no undefined entries reach render
+  const sites = report.site_ids.map((id) => siteMap.get(id)).filter((s): s is Site => Boolean(s));
 
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs border-collapse">
-                  <thead>
-                    <tr className="border-b border-vo-line/80 text-vo-muted font-mono uppercase">
-                      <th className="pb-3 font-semibold">Location</th>
-                      <th className="pb-3 font-semibold">Decision</th>
-                      <th className="pb-3 font-semibold">EV Demand</th>
-                      <th className="pb-3 font-semibold">Grid Capacity</th>
-                      <th className="pb-3 font-semibold">Rec. Chargers</th>
-                      <th className="pb-3 font-semibold">Action Item</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-vo-line/40 text-vo-soft">
-                    {filteredSites.map((site) => {
-                      const isBuild = site.recommendation === "BUILD";
-                      const isManaged = site.recommendation === "BUILD_IF_MANAGED";
-                      const chargers = isBuild
-                        ? Math.max(4, Math.round(site.demand_score / 12))
-                        : isManaged
-                        ? Math.max(2, Math.round(site.demand_score / 18))
-                        : 0;
+  const date = new Date(report.created_at).toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
 
-                      return (
-                        <tr key={site.id} className="hover:bg-white/5 transition-colors">
-                          <td className="py-3.5 font-bold text-vo-text">{site.name.replace(" (demo)", "")}</td>
-                          <td className="py-3.5">
-                            <span
-                              className={`inline-flex items-center px-2.5 py-0.5 rounded text-[10px] font-mono font-bold uppercase border ${
-                                isBuild
-                                  ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
-                                  : isManaged
-                                  ? "bg-amber-500/10 border-amber-500/30 text-amber-400"
-                                  : "bg-red-500/10 border-red-500/30 text-red-400"
-                              }`}
-                            >
-                              {isBuild ? "BUILD" : isManaged ? "BUILD IF MANAGED" : "DO NOT BUILD"}
-                            </span>
-                          </td>
-                          <td className="py-3.5 font-mono">{Math.round(site.demand_score)} / 100</td>
-                          <td className="py-3.5 font-mono">{Math.round(site.grid_capacity_score)} / 100</td>
-                          <td className="py-3.5 font-mono text-vo-accent font-bold">{chargers} Units</td>
-                          <td className="py-3.5 text-vo-muted">
-                            {isBuild
-                              ? "Proceed with tender & installation"
-                              : isManaged
-                              ? "Install smart load controllers"
-                              : "De-prioritize location"}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+  return (
+    <div
+      ref={ref}
+      className={`rounded-xl border bg-vo-card transition-colors ${
+        isHighlighted ? "border-[#4F6F9F]/50" : "border-vo-line"
+      }`}
+    >
+      {/* Card header */}
+      <div className="flex items-center justify-between gap-3 px-5 py-4">
+        <div className="flex-1 min-w-0 space-y-0.5">
+          <div className="flex items-center gap-2">
+            <FileText className="w-4 h-4 text-[#4F6F9F] dark:text-[#6F8FB8] shrink-0" />
+            <h3 className="text-sm font-bold text-vo-text truncate">{report.title}</h3>
+          </div>
+          <p className="text-xs text-vo-muted pl-6">
+            {report.site_ids.length} location{report.site_ids.length !== 1 ? "s" : ""}
+            {report.division ? ` · ${report.division}` : ""}
+            {" · "}Generated {date}
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            type="button"
+            onClick={() => {
+              if (!isExpanded) {
+                onToggle();
+              }
+              setTimeout(() => window.print(), 100);
+            }}
+            title="Print report"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-vo-line bg-vo-elevated text-xs font-semibold text-vo-text hover:border-[#4F6F9F]/30 transition-colors"
+          >
+            <Printer className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Print</span>
+          </button>
+          <button
+            type="button"
+            onClick={onToggle}
+            title={isExpanded ? "Collapse" : "View report"}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#4F6F9F] dark:bg-[#6F8FB8] text-white text-xs font-semibold hover:bg-[#3F5F8F] dark:hover:bg-[#5D7EA8] transition-colors"
+          >
+            <span>View</span>
+            {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+          </button>
+          <button
+            type="button"
+            onClick={onDelete}
+            title="Delete report"
+            className="rounded-lg p-1.5 text-vo-muted hover:text-[#B87979] hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      </div>
+
+      {/* Expanded report body */}
+      {isExpanded && (
+        <div className="border-t border-vo-line px-5 py-5 space-y-6 print-report">
+          {/* Report header */}
+          <div className="space-y-1">
+            <div>
+              <h2 className="text-base font-bold text-vo-text">{report.title}</h2>
+              <p className="text-xs text-vo-muted mt-0.5">
+                {report.site_ids.length} selected location{report.site_ids.length !== 1 ? "s" : ""} ·{" "}
+                {report.division ?? "Bengaluru Urban Division"} · Generated {date}
+              </p>
             </div>
           </div>
-        ) : null}
-      </ScreenState>
+
+          {/* Site entries */}
+          {sites.length === 0 ? (
+            <p className="text-xs text-vo-muted italic">Loading site details or site data not available...</p>
+          ) : (
+            <div className="space-y-4">
+              {sites.map((site) => (
+                <ReportSiteEntry key={site.id} site={site} division={report.division ?? "Bengaluru Urban Division"} />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+});
+
+function ReportSiteEntry({ site, division }: { site: Site; division: string }) {
+  if (!site) return null;
+
+  const isBuild = site.recommendation === "BUILD";
+  const isManaged = site.recommendation === "BUILD_IF_MANAGED";
+
+  const recommendedChargers = isBuild
+    ? Math.max(4, Math.round(site.demand_score / 12))
+    : isManaged
+    ? Math.max(2, Math.round(site.demand_score / 18))
+    : 0;
+
+  const gridReadiness =
+    site.grid_capacity_score >= 70
+      ? "Ready"
+      : site.grid_capacity_score >= 40
+      ? "Needs Management"
+      : "Upgrade Required";
+
+  const insights = insightsForSite(site);
+
+  return (
+    <div className="rounded-xl border border-vo-line bg-vo-elevated p-4 space-y-3">
+      {/* Site header */}
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h4 className="text-sm font-bold text-vo-text">{site.name.replace(" (demo)", "")}</h4>
+          <p className="text-xs text-vo-muted mt-0.5">{division}</p>
+        </div>
+        <div className="text-right space-y-1">
+          {isBuild ? (
+            <span className="text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded border bg-[#EDF4ED] border-[#7FA58A]/40 text-[#4A7C5F]">
+              BUILD
+            </span>
+          ) : isManaged ? (
+            <span className="text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded border bg-[#FDF4E3] border-[#C5A66A]/40 text-[#8C6D2E]">
+              NEEDS MANAGEMENT
+            </span>
+          ) : null}
+          <p className="text-[10px] font-mono text-vo-muted">Site Score: {site.site_score}</p>
+        </div>
+      </div>
+
+      {/* Key planning metrics */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+        <div className="space-y-0.5">
+          <p className="text-vo-muted uppercase tracking-wide text-[10px]">EV Demand</p>
+          <p className="font-bold text-vo-text font-mono">{Math.round(site.demand_score)}/100</p>
+        </div>
+        <div className="space-y-0.5">
+          <p className="text-vo-muted uppercase tracking-wide text-[10px]">Grid Readiness</p>
+          <p className="font-bold text-vo-text">{gridReadiness}</p>
+        </div>
+        <div className="space-y-0.5">
+          <p className="text-vo-muted uppercase tracking-wide text-[10px]">Rec. Chargers</p>
+          <p className="font-bold text-[#4F6F9F] dark:text-[#6F8FB8] font-mono">{recommendedChargers} Units</p>
+        </div>
+        <div className="space-y-0.5">
+          <p className="text-vo-muted uppercase tracking-wide text-[10px]">Accessibility</p>
+          <p className="font-bold text-vo-text font-mono">{Math.round(site.accessibility_score)}/100</p>
+        </div>
+      </div>
+
+      {/* Grid connection details */}
+      <div className="border-t border-vo-line/50 pt-3 grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs text-vo-muted">
+        <span>Feeder: <span className="text-vo-text font-medium">{insights.feederName}</span></span>
+        <span>Transformer: <span className="text-vo-text font-medium">{insights.transformerKva.toLocaleString("en-IN")} kVA</span></span>
+        <span>Headroom: <span className="text-vo-text font-medium">{insights.headroomKva} kVA</span></span>
+        <span>Peak load: <span className="text-vo-text font-medium">{insights.peakLoadPct}%</span></span>
+        <span>Connection lead: <span className="text-vo-text font-medium">{insights.connectionLead}</span></span>
+        <span>Coordinates: <span className="text-vo-text font-medium">{site.latitude.toFixed(4)}°N, {site.longitude.toFixed(4)}°E</span></span>
+      </div>
+
+      {/* Explanation */}
+      {site.explanation ? (
+        <p className="text-xs text-vo-muted border-t border-vo-line/50 pt-2 italic">{site.explanation}</p>
+      ) : null}
     </div>
   );
 }

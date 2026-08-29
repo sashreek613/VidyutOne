@@ -59,7 +59,7 @@ def _is_within_range(origin: tuple[float, float], point: dict, range_km: float) 
 def test_real_charger_maps_to_read_with_expected_provenance_and_bookable():
     read = _to_charger_read_from_real(WIDE_SPREAD_CHARGERS[0])
     assert read.provenance == ChargerProvenance.REAL
-    assert read.bookable is False
+    assert read.bookable is True
     assert read.site_id is None
 
 
@@ -71,9 +71,9 @@ def test_real_charger_with_no_ocm_status_maps_to_availability_none_not_true():
     assert read.availability is not True
 
 
-def test_real_charger_price_is_never_fabricated():
+def test_real_charger_price_uses_fallback_app_tariff():
     read = _to_charger_read_from_real(WIDE_SPREAD_CHARGERS[0])
-    assert read.price_per_kwh is None
+    assert read.price_per_kwh == 18.0
 
 
 # ---------------------------------------------------------------------------
@@ -96,7 +96,7 @@ def test_list_chargers_returns_both_demo_and_real_when_real_fixture_present(monk
     assert "REAL" in provenances
     real_rows = [row for row in body if row["provenance"] == "REAL"]
     assert len(real_rows) == len(WIDE_SPREAD_CHARGERS)
-    assert all(row["bookable"] is False for row in real_rows)
+    assert all(row["bookable"] is True for row in real_rows)
     assert all(row["site_id"] is None for row in real_rows)
 
     if "DEMO" in provenances:

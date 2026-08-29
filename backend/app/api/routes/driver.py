@@ -39,10 +39,10 @@ def post_charging_quote(
     db: Session = Depends(get_db),
     current: AuthUser = Depends(require_driver),
 ) -> ChargingQuoteRead:
-    charger = db.get(Charger, payload.charger_id)
-    if charger is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Charger not found")
-    return charging_service.quote_charging_slots(db, current.id, charger, payload.slots)
+    from app.services import charger_service
+    charger = charger_service.get_charger(db, payload.charger_id)
+    duration = payload.duration_minutes or 30
+    return charging_service.quote_charging_slots(db, current.id, charger, payload.slots, duration_minutes=duration)
 
 
 @router.post("/driver/voice-assistant", response_model=DriverAssistantChatResponse)

@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Map as MapLibreMap, Marker, type GeoJSONSource } from "maplibre-gl";
 
 import type { Charger } from "../../types";
-import { hasValidCoordinates, isChargerBookable } from "../../utils/chargerFilters";
+import { hasValidCoordinates } from "../../utils/chargerFilters";
 import { formatInr } from "../../utils/format";
 import { centroid, haversineKm } from "../../utils/geo";
 import { getLightBasemapStyle } from "../../utils/mapStyle";
@@ -230,20 +230,19 @@ export function DriverMap({
         const el = document.createElement("button");
         el.type = "button";
         el.dataset.chargerId = charger.id;
-        el.className = isSelected
-          ? "group relative flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500 text-slate-950 ring-4 ring-emerald-300 shadow-xl scale-110 z-30 transition-transform"
-          : "group relative flex h-7 w-7 items-center justify-center rounded-full bg-slate-900 text-emerald-400 border-2 border-white shadow-md hover:scale-110 hover:bg-emerald-500 hover:text-slate-950 transition-all z-10";
+        el.className = "group cursor-pointer border-none bg-transparent p-0 m-0 outline-none z-10 block";
         el.setAttribute("aria-label", charger.name);
         el.setAttribute("title", charger.name);
-        el.style.cursor = "pointer";
 
         const statusDot =
-          charger.availability === true ? "bg-emerald-500" : charger.availability === false ? "bg-amber-500" : "bg-gray-400";
+          charger.availability === true ? "bg-[#7FA58A]" : charger.availability === false ? "bg-[#C5A66A]" : "bg-slate-400";
         el.innerHTML = `
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
-          </svg>
-          <span class="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full border-1.5 border-white ${statusDot}"></span>
+          <span class="relative flex h-7 w-7 items-center justify-center rounded-full ${isSelected ? "bg-[#4F6F9F] text-white ring-2 ring-[#4F6F9F]" : "bg-[#4F6F9F] text-white"} border-2 border-white shadow-xs group-hover:bg-[#3F5F8F] transition-colors">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+            </svg>
+            <span class="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border border-white ${statusDot}"></span>
+          </span>
         `;
 
         el.addEventListener("mousedown", (event) => {
@@ -258,7 +257,7 @@ export function DriverMap({
           }
         });
 
-        markersRef.current.push(new Marker({ element: el }).setLngLat([charger.longitude, charger.latitude]).addTo(map));
+        markersRef.current.push(new Marker({ element: el, offset: [0, 0] }).setLngLat([charger.longitude, charger.latitude]).addTo(map));
       });
     };
 
@@ -297,7 +296,6 @@ export function DriverMap({
     ? haversineKm(here.latitude, here.longitude, selectedCharger.latitude, selectedCharger.longitude)
     : 0;
   const selectedStatus = selectedCharger ? availabilityLabel(selectedCharger) : null;
-  const bookable = selectedCharger ? isChargerBookable(selectedCharger) : false;
 
   return (
     <div className="relative h-full w-full">
@@ -341,7 +339,7 @@ export function DriverMap({
             <button
               type="button"
               onClick={() => handleNavigate(selectedCharger)}
-              className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-emerald-500 py-2.5 text-[12px] font-bold text-slate-950 hover:bg-emerald-400 transition-colors cursor-pointer"
+              className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-[#e2ebe4] border border-[#cbe4d3] py-2.5 text-[12px] font-semibold text-[#1e4530] hover:bg-[#d6e5d9] transition-colors cursor-pointer"
             >
               <Navigation size={14} />
               <span>Navigate</span>
@@ -349,24 +347,18 @@ export function DriverMap({
             <button
               type="button"
               onClick={() => navigate(`/driver/charger/${selectedCharger.id}`)}
-              className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-gray-300 bg-gray-50 py-2.5 text-[12px] font-bold text-gray-800 hover:bg-gray-100 transition-colors cursor-pointer"
+              className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-gray-300 bg-gray-50 py-2.5 text-[12px] font-semibold text-gray-800 hover:bg-gray-100 transition-colors cursor-pointer"
             >
               View Details
             </button>
-            {bookable ? (
-              <button
-                type="button"
-                onClick={() => navigate(`/driver/charger/${selectedCharger.id}/book`)}
-                className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-vo-accent py-2.5 text-[12px] font-bold text-[#06231b] cursor-pointer"
-              >
-                <Calendar size={14} />
-                Book Now
-              </button>
-            ) : (
-              <div className="flex flex-1 items-center justify-center rounded-xl border border-[#c7d2fe] bg-[#eef2ff] py-2.5 text-[12px] font-medium text-[#4338ca]">
-                Info only
-              </div>
-            )}
+            <button
+              type="button"
+              onClick={() => navigate(`/driver/charger/${selectedCharger.id}/book`)}
+              className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-[#2e5b44] py-2.5 text-[12px] font-semibold text-white hover:bg-[#254b38] transition-colors cursor-pointer"
+            >
+              <Calendar size={14} />
+              Book Now
+            </button>
           </div>
         </div>
       ) : (

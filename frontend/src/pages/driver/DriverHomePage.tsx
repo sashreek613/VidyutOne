@@ -376,7 +376,7 @@ export function DriverHomePage() {
           </div>
           <div className="flex items-center space-x-3">
             <ThemeToggle compact />
-            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-vo-good-bg border border-vo-good-border text-[13px] font-bold text-vo-accent-ink">
+            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#EEF2F7] dark:bg-[#1c242f] border border-[#4F6F9F]/30 dark:border-[#6F8FB8]/40 text-[13px] font-bold text-[#4F6F9F] dark:text-[#6F8FB8] select-none">
               {initialsFromName(profile?.full_name ?? "Driver")}
             </span>
             <button

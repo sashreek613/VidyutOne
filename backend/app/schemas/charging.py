@@ -54,6 +54,7 @@ class ChargingSummaryRead(BaseModel):
 class ChargingQuoteRequest(BaseModel):
     charger_id: str
     slots: list[datetime]
+    duration_minutes: int | None = 30
 
 
 class ChargingSlotQuote(BaseModel):

@@ -62,15 +62,23 @@ def estimated_energy_kwh(
     battery_capacity_kwh: float | None,
     current_battery_pct: float | None,
     charger_power_kw: float,
+    duration_minutes: int | None = None,
 ) -> float:
     """kWh to add for a session. Quantity only — not a tariff formula."""
     if battery_capacity_kwh and battery_capacity_kwh > 0 and current_battery_pct is not None:
         delta = max(TARGET_SOC_PCT - current_battery_pct, 0.0)
-        energy = battery_capacity_kwh * (delta / 100.0)
+        needed = battery_capacity_kwh * (delta / 100.0)
+        if duration_minutes is not None and duration_minutes > 0:
+            hours = duration_minutes / 60.0
+            delivered = float(charger_power_kw) * hours
+            energy = min(needed, delivered) if needed > 0 else delivered
+        else:
+            energy = needed
         if energy < 0.5:
             energy = max(battery_capacity_kwh * MIN_TOPUP_FRACTION, 0.1)
         return round(energy, 2)
-    return round(min(float(charger_power_kw) * 0.5, 40.0), 2)
+    hours = (duration_minutes or 30) / 60.0
+    return round(min(float(charger_power_kw) * hours, 40.0), 2)
 
 
 def session_cost(energy_kwh: float, tariff_per_kwh: float) -> float:
@@ -255,21 +263,28 @@ def list_charging_history(db: Session, user_id: str) -> list[ChargingSessionRead
 def quote_charging_slots(
     db: Session,
     user_id: str,
-    charger: Charger,
+    charger: Charger | ChargerRead,
     slots: list[datetime],
+    duration_minutes: int = 30,
 ) -> ChargingQuoteRead:
     """Same energy + tariff + rupee rounding as create_booking."""
+    from app.core.config import get_settings
+    settings = get_settings()
     vehicle = vehicle_service.get_primary_vehicle(db, user_id)
+    power_kw = float(charger.power_kw) if charger.power_kw is not None else 7.4
+    price_per_kwh = float(charger.price_per_kwh) if (charger.price_per_kwh is not None and charger.price_per_kwh > 0) else settings.DEFAULT_FALLBACK_TARIFF
+
     energy = estimated_energy_kwh(
         battery_capacity_kwh=vehicle.battery_capacity_kwh if vehicle else None,
         current_battery_pct=vehicle.current_battery_pct if vehicle else None,
-        charger_power_kw=float(charger.power_kw),
+        charger_power_kw=power_kw,
+        duration_minutes=duration_minutes,
     )
     quotes: list[ChargingSlotQuote] = []
     for slot in slots:
         aware = _aware(slot)
-        total = authoritative_session_price(aware, charger.price_per_kwh, energy)
-        tier = calculate_slot_price(aware, charger.price_per_kwh)
+        total = authoritative_session_price(aware, price_per_kwh, energy)
+        tier = calculate_slot_price(aware, price_per_kwh)
         quotes.append(
             ChargingSlotQuote(
                 slot_time=aware,

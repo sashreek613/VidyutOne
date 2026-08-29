@@ -118,29 +118,29 @@ function buildRecommendationPopupHTML(data: {
 function buildChargerPopupHTML(charger: Charger): string {
   const availability =
     charger.availability === true
-      ? { text: charger.provenance === "REAL" ? "Operational" : "Available", color: "#047857", dot: "#10b981" }
+      ? { text: charger.provenance === "REAL" ? "Operational" : "Available", color: "#7FA58A", dot: "#7FA58A" }
       : charger.availability === false
-        ? { text: charger.provenance === "REAL" ? "Reported down" : "In use", color: "#b45309", dot: "#f59e0b" }
-        : { text: "Status unknown", color: "#64748b", dot: "#94a3b8" };
+        ? { text: charger.provenance === "REAL" ? "Reported down" : "In use", color: "#C5A66A", dot: "#C5A66A" }
+        : { text: "Status unknown", color: "#667085", dot: "#9AA5B1" };
   const powerText = charger.power_kw != null ? `${charger.power_kw} kW` : "Unknown";
   const priceText = charger.price_per_kwh != null ? `₹${charger.price_per_kwh}/kWh` : "Unknown";
   const connectorText = charger.connector_type?.trim() ? charger.connector_type : "Unknown";
 
   return `
-    <div style="min-width:200px;max-width:250px;font-family:var(--font-sans, sans-serif);padding:2px">
+    <div style="min-width:190px;max-width:230px;font-family:var(--font-sans, sans-serif);padding:2px">
       <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
-        <span style="height:8px;width:8px;border-radius:9999px;background:${availability.dot}"></span>
-        <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:${availability.color}">
+        <span style="height:7px;width:7px;border-radius:9999px;background:${availability.dot}"></span>
+        <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:${availability.color}">
           ${availability.text}
         </span>
       </div>
-      <div style="font-weight:700;font-size:13px;color:#0f172a;line-height:1.2">
+      <div style="font-weight:700;font-size:12.5px;color:#1f2937;line-height:1.2">
         ${charger.name}
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px;padding-top:8px;border-top:1px solid #e2e8f0;font-size:11px">
-        <div><span style="color:#64748b">Power:</span> <b style="color:#0f172a">${powerText}</b></div>
-        <div><span style="color:#64748b">Rate:</span> <b style="color:#0f172a">${priceText}</b></div>
-        <div style="grid-column:span 2"><span style="color:#64748b">Connector:</span> <b style="color:#0f172a">${connectorText}</b></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:6px;padding-top:6px;border-top:1px solid #e5e7eb;font-size:10.5px">
+        <div><span style="color:#667085">Power:</span> <b style="color:#1f2937">${powerText}</b></div>
+        <div><span style="color:#667085">Rate:</span> <b style="color:#1f2937">${priceText}</b></div>
+        <div style="grid-column:span 2"><span style="color:#667085">Connector:</span> <b style="color:#1f2937">${connectorText}</b></div>
       </div>
     </div>
   `;
@@ -259,57 +259,15 @@ export function SiteMap({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeStyle, interactive]);
 
-  // --- Candidate / recommended site markers, keyed by stable site id.
+  // --- Candidate / recommended site markers: REMOVED per requirements.
+  // The map only renders existing charging stations.
   useEffect(() => {
-    const map = mapRef.current;
-    if (!map) {
-      return;
-    }
+    siteMarkersRef.current.forEach((marker) => marker.remove());
+    siteMarkersRef.current = [];
+  }, [siteMarkerKey]);
 
-    const paintSites = () => {
-      siteMarkersRef.current.forEach((marker) => marker.remove());
-      siteMarkersRef.current = [];
-
-      pointsRef.current.forEach((point) => {
-        if (!hasValidCoordinates(point)) {
-          return;
-        }
-        const isSelected = selectedSite?.id === point.id;
-        const color = point.color ?? (point.recommendation ? RECOMMENDATION_COLOR[point.recommendation] : "#64748b");
-        const el = document.createElement("button");
-        el.type = "button";
-        el.dataset.siteId = point.id;
-        el.className = isSelected
-          ? "relative flex h-5 w-5 items-center justify-center rounded-full border-2 border-white shadow-lg ring-4 ring-white/70 scale-125 z-20 cursor-pointer"
-          : "relative flex h-3.5 w-3.5 items-center justify-center rounded-full border-2 border-white shadow-md hover:scale-125 z-10 cursor-pointer";
-        el.style.background = color;
-        el.setAttribute("aria-label", point.name);
-        el.setAttribute("title", point.name);
-
-        el.addEventListener("mousedown", (event) => {
-          event.stopPropagation();
-        });
-        el.addEventListener("click", (event) => {
-          event.stopPropagation();
-          setClickedCharger(null);
-          const siteId = el.dataset.siteId;
-          if (siteId) {
-            onPointClickRef.current?.(siteId);
-          }
-        });
-
-        siteMarkersRef.current.push(new Marker({ element: el }).setLngLat([point.longitude, point.latitude]).addTo(map));
-      });
-    };
-
-    if (map.loaded()) {
-      paintSites();
-    } else {
-      map.once("load", paintSites);
-    }
-  }, [siteMarkerKey, selectedSite?.id]);
-
-  // --- Existing charger pins (info markers). Clicks must NOT select a site.
+  // --- Existing charger pins (info markers). Renders ONLY existing chargers.
+  // Outer element has zero hover transform to ensure absolute geographic anchor stability.
   useEffect(() => {
     const map = mapRef.current;
     if (!map) {
@@ -327,14 +285,17 @@ export function SiteMap({
         const el = document.createElement("button");
         el.type = "button";
         el.dataset.chargerId = charger.id;
-        el.className = "group relative flex h-7 w-7 items-center justify-center rounded-full bg-slate-900 text-emerald-400 border-2 border-white shadow-md hover:scale-110 hover:bg-emerald-500 hover:text-slate-950 transition-all z-10";
-        el.style.cursor = "pointer";
+        // Outer wrapper MUST NOT have CSS hover transforms (e.g. hover:scale) so MapLibre's marker positioning transform is 100% stable!
+        el.className = "group cursor-pointer border-none bg-transparent p-0 m-0 outline-none z-10 block";
         el.setAttribute("aria-label", charger.name);
-        el.setAttribute("title", `[Existing Station] ${charger.name}`);
+        el.setAttribute("title", charger.name);
+        // Inner element receives color & hover highlight
         el.innerHTML = `
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
-          </svg>
+          <span class="flex h-6 w-6 items-center justify-center rounded-full bg-[#4F6F9F] text-white border-2 border-white shadow-xs group-hover:bg-[#3F5F8F] transition-colors">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+            </svg>
+          </span>
         `;
 
         el.addEventListener("mousedown", (event) => {
@@ -347,7 +308,7 @@ export function SiteMap({
           setClickedCharger(match);
         });
 
-        chargerMarkersRef.current.push(new Marker({ element: el }).setLngLat([charger.longitude, charger.latitude]).addTo(map));
+        chargerMarkersRef.current.push(new Marker({ element: el, offset: [0, 0] }).setLngLat([charger.longitude, charger.latitude]).addTo(map));
       });
     };
 
@@ -400,7 +361,7 @@ export function SiteMap({
       if (clickedCharger && hasValidCoordinates(clickedCharger)) {
         const html = buildChargerPopupHTML(clickedCharger);
         if (!popupRef.current) {
-          popupRef.current = new Popup({ closeButton: true, closeOnClick: false, maxWidth: "260px" });
+          popupRef.current = new Popup({ closeButton: true, closeOnClick: false, focusAfterOpen: false, offset: [0, -12], maxWidth: "230px" });
         }
         popupRef.current
           .setLngLat([clickedCharger.longitude, clickedCharger.latitude])
@@ -423,7 +384,7 @@ export function SiteMap({
           charger_gap_score: selectedSite.charger_gap_score,
         });
         if (!popupRef.current) {
-          popupRef.current = new Popup({ closeButton: true, closeOnClick: false, maxWidth: "280px" });
+          popupRef.current = new Popup({ closeButton: true, closeOnClick: false, focusAfterOpen: false, offset: [0, -12], maxWidth: "260px" });
         }
         popupRef.current
           .setLngLat([selectedSite.longitude, selectedSite.latitude])
@@ -450,7 +411,7 @@ export function SiteMap({
         });
 
         if (!popupRef.current) {
-          popupRef.current = new Popup({ closeButton: true, closeOnClick: false, maxWidth: "280px" });
+          popupRef.current = new Popup({ closeButton: true, closeOnClick: false, focusAfterOpen: false, offset: [0, -12], maxWidth: "260px" });
         }
         popupRef.current
           .setLngLat([activeTarget.longitude, activeTarget.latitude])

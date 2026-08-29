@@ -1,4 +1,4 @@
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, BookmarkPlus, Check } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import { Bar, BarChart, ResponsiveContainer, XAxis } from "recharts";
 
@@ -7,10 +7,12 @@ import { ChartCard } from "../../components/planner/ChartCard";
 import { ExplainableVerdictCard } from "../../components/planner/ExplainableVerdictCard";
 import { SiteMap } from "../../components/planner/SiteMap";
 import { TopBar } from "../../components/planner/TopBar";
+import { useConsiderationContext } from "../../context/ConsiderationContext";
 import { useChargers, useSite } from "../../hooks/useApiData";
 import { formatCoord, formatKm } from "../../utils/format";
 import { RECOMMENDATION_COLOR, RECOMMENDATION_COPY, RECOMMENDATION_LABEL } from "../../utils/recommendations";
 import { insightsForSite, managedLoadSeries, nearbyChargers } from "../../utils/siteInsights";
+
 
 export function PlannerSiteDetailsPage() {
   const { siteId } = useParams<{ siteId: string }>();
@@ -40,6 +42,8 @@ function SiteIntelligence({
   const nearby = nearbyChargers(site, chargers);
   const series = managedLoadSeries(site.grid_capacity_score);
   const color = RECOMMENDATION_COLOR[site.recommendation];
+  const consideration = useConsiderationContext();
+  const inConsideration = consideration.isInConsideration(site.id);
 
   return (
     <div className="space-y-5 px-6 py-5">
@@ -57,12 +61,30 @@ function SiteIntelligence({
           </p>
           <p className="text-[13px] text-vo-muted">Bengaluru Urban · BESCOM demo division</p>
         </div>
-        <aside className="max-w-[360px] rounded-2xl border px-5 py-4" style={{ borderColor: color, background: `${color}14` }}>
-          <p className="text-[22px] font-semibold" style={{ color }}>
-            ● {RECOMMENDATION_LABEL[site.recommendation]}
-          </p>
-          <p className="mt-1 text-[12px] leading-5 text-vo-soft">{RECOMMENDATION_COPY[site.recommendation]}</p>
-        </aside>
+        <div className="flex flex-col gap-3 items-end">
+          <aside className="max-w-[360px] rounded-2xl border px-5 py-4" style={{ borderColor: color, background: `${color}14` }}>
+            <p className="text-[22px] font-semibold" style={{ color }}>
+              ● {RECOMMENDATION_LABEL[site.recommendation]}
+            </p>
+            <p className="mt-1 text-[12px] leading-5 text-vo-soft">{RECOMMENDATION_COPY[site.recommendation]}</p>
+          </aside>
+          <button
+            type="button"
+            onClick={() => void consideration.add(site.id)}
+            disabled={inConsideration}
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg border text-xs font-semibold transition-colors ${
+              inConsideration
+                ? "border-[#4F6F9F]/30 bg-[#EEF2F7] dark:bg-[#4F6F9F]/10 text-[#4F6F9F] dark:text-[#6F8FB8] cursor-default"
+                : "border-vo-line bg-vo-elevated hover:border-[#4F6F9F]/40 hover:text-[#4F6F9F] dark:hover:text-[#6F8FB8] text-vo-soft"
+            }`}
+          >
+            {inConsideration ? (
+              <><Check className="w-3.5 h-3.5" /><span>In consideration</span></>
+            ) : (
+              <><BookmarkPlus className="w-3.5 h-3.5" /><span>Add to consideration</span></>
+            )}
+          </button>
+        </div>
       </div>
 
       <div className="grid gap-4 xl:grid-cols-[0.9fr_1.1fr_0.95fr]">

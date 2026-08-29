@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -5,12 +7,22 @@ from app.api.router import api_router
 from app.core.config import get_settings
 from app.schemas.health import HealthResponse
 
+logger = logging.getLogger(__name__)
+
 
 def create_app() -> FastAPI:
     settings = get_settings()
-    if "sqlite" in settings.DATABASE_URL:
-        from app.database.session import Base, engine
-        Base.metadata.create_all(bind=engine)
+    from app.database.session import Base, engine
+    import app.models  # noqa: F401 -- ensures all model definitions are registered
+    Base.metadata.create_all(bind=engine)
+
+    # Safe startup config validation -- never logs secret values
+    logger.info(
+        "VidyutOne startup: GEMINI_API_KEY configured=%s, LYZR_API_KEY configured=%s, LYZR_DRIVER_AGENT_ID configured=%s",
+        bool(settings.GEMINI_API_KEY),
+        bool(settings.LYZR_API_KEY),
+        bool(settings.LYZR_DRIVER_AGENT_ID),
+    )
 
     app = FastAPI(
         title="VidyutOne API",
