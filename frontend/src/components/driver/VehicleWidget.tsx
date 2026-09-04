@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Battery, BatteryMedium, Building2, Edit2, Gauge, Plus, RefreshCw, Route, Shuffle, Thermometer, Wind, Zap } from "lucide-react";
 import type { DrivingProfile, Vehicle } from "../../types";
 import { useVehicleRange } from "../../hooks/useApiData";
+import { useT } from "../../i18n";
 
 interface VehicleWidgetProps {
   vehicle: Vehicle | null;
@@ -111,10 +112,12 @@ async function fetchOutdoorTemperature(latitude: number, longitude: number): Pro
   }
 }
 
-const DRIVING_PROFILE_OPTIONS: { value: DrivingProfile; label: string; icon: typeof Building2 }[] = [
-  { value: "city", label: "City", icon: Building2 },
-  { value: "mixed", label: "Mixed", icon: Shuffle },
-  { value: "highway", label: "Highway", icon: Route },
+// labelKey resolved via t() inside the component -- this constant lives
+// outside it, so it can't call useT() itself.
+const DRIVING_PROFILE_OPTIONS: { value: DrivingProfile; labelKey: string; icon: typeof Building2 }[] = [
+  { value: "city", labelKey: "vehicle_widget.profile.city", icon: Building2 },
+  { value: "mixed", labelKey: "vehicle_widget.profile.mixed", icon: Shuffle },
+  { value: "highway", labelKey: "vehicle_widget.profile.highway", icon: Route },
 ];
 
 export function VehicleWidget({
@@ -128,6 +131,7 @@ export function VehicleWidget({
   drivingProfile,
   onDrivingProfileChange,
 }: VehicleWidgetProps) {
+  const t = useT();
   const [updating, setUpdating] = useState(false);
   const [tempPct, setTempPct] = useState<number | null>(null);
   const [outdoorTempC, setOutdoorTempC] = useState<number | null>(null);
@@ -165,9 +169,9 @@ export function VehicleWidget({
           <Zap className="w-5 h-5" />
         </div>
         <div>
-          <h3 className="text-sm font-bold text-driver-ink">Add your EV for smarter recommendations</h3>
+          <h3 className="text-sm font-bold text-driver-ink">{t("vehicle_widget.empty_title")}</h3>
           <p className="text-xs text-vo-muted mt-1">
-            Calculate your estimated range and filter chargers you can reach.
+            {t("vehicle_widget.empty_body")}
           </p>
         </div>
         <button
@@ -176,7 +180,7 @@ export function VehicleWidget({
           className="vo-hover-interactive inline-flex items-center space-x-1.5 px-4 py-2 rounded-[8px] bg-emerald-400 hover:bg-emerald-300 text-black font-semibold text-xs transition-all shadow-md shadow-emerald-400/10"
         >
           <Plus className="w-4 h-4" />
-          <span>Add Your EV</span>
+          <span>{t("common.add_your_ev")}</span>
         </button>
       </div>
     );
@@ -193,8 +197,8 @@ export function VehicleWidget({
   const batteryHealthLabel = batteryHealthFactor
     ? batteryHealthFactor.detail
     : vehicle.registration_date
-      ? `~${Math.round(previewBatteryHealthMultiplier(vehicle.registration_date) * 100)}% of original capacity`
-      : "Registration date not on file";
+      ? t("vehicle_widget.battery_health_preview", { pct: Math.round(previewBatteryHealthMultiplier(vehicle.registration_date) * 100) })
+      : t("vehicle_widget.registration_not_on_file");
 
   // While dragging (or immediately after flipping a control, before the
   // backend call resolves): instant local preview mirroring all three
@@ -224,7 +228,7 @@ export function VehicleWidget({
             <Zap className="w-5 h-5" />
           </div>
           <div>
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-vo-accent-ink">Your Vehicle</span>
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-vo-accent-ink">{t("vehicle_widget.your_vehicle")}</span>
             <h3 className="text-base font-bold text-driver-ink">
               {vehicle.make} {vehicle.model}
             </h3>
@@ -235,7 +239,7 @@ export function VehicleWidget({
           type="button"
           onClick={() => onEditVehicle(vehicle)}
           className="vo-hover-interactive p-2 rounded-[8px] bg-driver-bg hover:bg-driver-line text-driver-muted transition-colors"
-          title="Edit Vehicle"
+          title={t("vehicle_widget.edit_title")}
         >
           <Edit2 className="w-4 h-4" />
         </button>
@@ -246,7 +250,7 @@ export function VehicleWidget({
         <div className="rounded-[8px] border border-vo-line bg-vo-card/80 p-3 flex flex-col justify-between">
           <div className="flex items-center space-x-1.5 text-xs text-vo-muted mb-1">
             <Battery className="w-3.5 h-3.5 text-emerald-400" />
-            <span>Battery Level</span>
+            <span>{t("vehicle_widget.battery_level")}</span>
           </div>
           <div className="text-xl font-bold text-driver-ink flex items-baseline space-x-1">
             <span>{Math.round(currentPct)}</span>
@@ -258,13 +262,13 @@ export function VehicleWidget({
         <div className="rounded-[8px] border border-vo-line bg-vo-card/80 p-3 flex flex-col justify-between">
           <div className="flex items-center space-x-1.5 text-xs text-vo-muted mb-1">
             <Gauge className="w-3.5 h-3.5 text-cyan-400" />
-            <span>Est. Range</span>
+            <span>{t("vehicle_widget.est_range")}</span>
           </div>
           <div className="text-xl font-bold text-driver-ink flex items-baseline space-x-1">
             <span>{rawRangeKm}</span>
             <span className="text-xs font-normal text-emerald-500">km</span>
           </div>
-          <p className="text-[10px] text-vo-muted mt-0.5">{bufferedRangeKm} km with reserve</p>
+          <p className="text-[10px] text-vo-muted mt-0.5">{t("vehicle_widget.range_with_reserve", { km: bufferedRangeKm })}</p>
         </div>
       </div>
 
@@ -272,7 +276,7 @@ export function VehicleWidget({
       <div className="space-y-1.5 pt-1">
         <div className="flex items-center justify-between text-xs text-vo-muted">
           <span className="flex items-center space-x-1">
-            <span>Update Charge</span>
+            <span>{t("vehicle_widget.update_charge")}</span>
             {updating ? <RefreshCw className="w-3 h-3 animate-spin text-emerald-400" /> : null}
           </span>
           <span className="font-mono text-vo-accent-ink">{Math.round(currentPct)}%</span>
@@ -294,7 +298,7 @@ export function VehicleWidget({
         <div className="flex items-center justify-between text-xs pt-2.5">
           <span className="flex items-center space-x-1.5 text-vo-muted">
             <Thermometer className="w-3.5 h-3.5 text-cyan-400" />
-            <span>Outside temperature</span>
+            <span>{t("vehicle_widget.outside_temp")}</span>
           </span>
           <span className="font-mono text-driver-ink">{outdoorTempC !== null ? `${outdoorTempC.toFixed(1)}°C` : "—"}</span>
         </div>
@@ -302,12 +306,12 @@ export function VehicleWidget({
         <div className="flex items-center justify-between text-xs">
           <span className="flex items-center space-x-1.5 text-vo-muted">
             <BatteryMedium className="w-3.5 h-3.5 text-emerald-400" />
-            <span>Battery health</span>
+            <span>{t("vehicle_widget.battery_health")}</span>
           </span>
           <span className="font-mono text-driver-ink text-right max-w-[60%]" title={batteryHealthLabel}>
             {vehicle.registration_date
               ? `~${Math.round((batteryHealthFactor?.multiplier ?? previewBatteryHealthMultiplier(vehicle.registration_date)) * 100)}%`
-              : "Unknown"}
+              : t("common.unknown")}
           </span>
         </div>
 
@@ -322,13 +326,13 @@ export function VehicleWidget({
         >
           <span className="flex items-center space-x-1.5">
             <Wind className="w-3.5 h-3.5" />
-            <span>AC</span>
+            <span>{t("vehicle_widget.ac_label")}</span>
           </span>
-          <span className="font-semibold">{climateControl ? "On" : "Off"}</span>
+          <span className="font-semibold">{climateControl ? t("common.on") : t("common.off")}</span>
         </button>
 
         <div className="grid grid-cols-3 gap-1.5">
-          {DRIVING_PROFILE_OPTIONS.map(({ value, label, icon: Icon }) => (
+          {DRIVING_PROFILE_OPTIONS.map(({ value, labelKey, icon: Icon }) => (
             <button
               key={value}
               type="button"
@@ -340,7 +344,7 @@ export function VehicleWidget({
               }`}
             >
               <Icon className="w-3.5 h-3.5" />
-              {label}
+              {t(labelKey)}
             </button>
           ))}
         </div>

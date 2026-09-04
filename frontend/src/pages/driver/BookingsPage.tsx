@@ -9,10 +9,12 @@ import { useBookings } from "../../hooks/useApiData";
 import { cancelBooking } from "../../services/api";
 import type { Booking } from "../../types";
 import { formatInr } from "../../utils/format";
+import { useT } from "../../i18n";
 
 type Tab = "upcoming" | "history";
 
 export function BookingsPage() {
+  const t = useT();
   const [refetchKey, setRefetchKey] = useState(0);
   const { data: bookings, error, loading } = useBookings([refetchKey]);
 
@@ -44,13 +46,13 @@ export function BookingsPage() {
     setSuccessMessage(null);
     try {
       await cancelBooking(cancellingBooking.id);
-      setSuccessMessage("Booking cancelled successfully.");
+      setSuccessMessage(t("common.booking_cancelled_success"));
       setCancellingBooking(null);
       setRefetchKey((prev) => prev + 1);
       // Auto fade success message after 4s
       setTimeout(() => setSuccessMessage(null), 4000);
     } catch (err: unknown) {
-      setActionError(err instanceof Error ? err.message : "Failed to cancel booking.");
+      setActionError(err instanceof Error ? err.message : t("common.error_cancel_booking"));
     } finally {
       setSubmittingCancel(false);
     }
@@ -65,10 +67,10 @@ export function BookingsPage() {
       <div className="px-5 pt-3">
         <Link to="/driver" className="inline-flex items-center gap-1 text-[12px] text-[#0b7a52] font-semibold">
           <ArrowLeft size={14} />
-          Home
+          {t("common.home")}
         </Link>
-        <h1 className="mt-3 text-[28px] font-bold text-driver-ink tracking-tight">My Bookings</h1>
-        <p className="mt-1 text-[13px] text-driver-muted">View upcoming and past charging reservations.</p>
+        <h1 className="mt-3 text-[28px] font-bold text-driver-ink tracking-tight">{t("common.my_bookings")}</h1>
+        <p className="mt-1 text-[13px] text-driver-muted">{t("bookings_page.subtitle")}</p>
       </div>
 
       {/* Tabs */}
@@ -82,7 +84,7 @@ export function BookingsPage() {
               : "text-driver-muted hover:text-driver-ink"
           }`}
         >
-          Upcoming ({upcomingBookings.length})
+          {t("bookings_page.tab_upcoming", { count: upcomingBookings.length })}
         </button>
         <button
           type="button"
@@ -93,7 +95,7 @@ export function BookingsPage() {
               : "text-driver-muted hover:text-driver-ink"
           }`}
         >
-          History ({historyBookings.length})
+          {t("bookings_page.tab_history", { count: historyBookings.length })}
         </button>
       </div>
 
@@ -113,7 +115,13 @@ export function BookingsPage() {
 
       {/* Bookings List */}
       <div className="mt-5 px-5">
-        <ScreenState loading={loading} error={error} tone="light">
+        <ScreenState
+          loading={loading}
+          error={error}
+          tone="light"
+          loadingText={t("common.loading")}
+          errorLabel={t("common.load_error_prefix")}
+        >
           {currentList.length > 0 ? (
             <div className="flex flex-col gap-4">
               {currentList.map((booking) => (
@@ -133,19 +141,19 @@ export function BookingsPage() {
                 <Calendar size={20} />
               </div>
               <h3 className="mt-3 text-[15px] font-bold text-driver-ink">
-                {activeTab === "upcoming" ? "No upcoming bookings" : "No booking history"}
+                {activeTab === "upcoming" ? t("bookings_page.empty_title_upcoming") : t("bookings_page.empty_title_history")}
               </h3>
               <p className="mt-1 max-w-[220px] text-[12px] text-driver-muted">
                 {activeTab === "upcoming"
-                  ? "Your future charging reservations will appear here."
-                  : "Completed and cancelled bookings will appear here."}
+                  ? t("bookings_page.empty_body_upcoming")
+                  : t("bookings_page.empty_body_history")}
               </p>
               {activeTab === "upcoming" && (
                 <Link
                   to="/driver"
                   className="mt-4 inline-flex h-9 items-center justify-center rounded-xl bg-[#0b7a52] px-4 text-[12px] font-bold text-white shadow-sm hover:bg-[#096342] transition-colors"
                 >
-                  Find a Charger
+                  {t("bookings_page.find_charger")}
                 </Link>
               )}
             </div>
@@ -168,16 +176,16 @@ export function BookingsPage() {
 
             <div className="space-y-4">
               <div>
-                <h2 className="text-[18px] font-bold tracking-tight">Cancel this booking?</h2>
+                <h2 className="text-[18px] font-bold tracking-tight">{t("common.cancel_modal_title")}</h2>
                 <p className="mt-1 text-[13px] text-driver-muted">
-                  This action cannot be undone. Your reservation slot will be released.
+                  {t("common.cancel_modal_body")}
                 </p>
               </div>
 
               {/* Booking Summary Box */}
               <div className="rounded-xl bg-[#f7f8f5] border border-driver-line p-4 space-y-2">
                 <p className="text-[11px] font-semibold uppercase tracking-wider text-driver-muted">
-                  Reservation Detail
+                  {t("common.reservation_detail")}
                 </p>
                 <div className="text-[13px] space-y-1">
                   <p className="font-bold">
@@ -193,7 +201,7 @@ export function BookingsPage() {
                     })}
                   </p>
                   <p className="font-semibold text-[#0b7a52]">
-                    Price: {formatInr(cancellingBooking.price)}
+                    {t("common.price_label", { amount: formatInr(cancellingBooking.price) })}
                   </p>
                 </div>
               </div>
@@ -210,7 +218,7 @@ export function BookingsPage() {
                   className="flex-1 flex h-11 items-center justify-center rounded-xl border border-driver-line text-[13px] font-bold hover:bg-gray-50 transition-colors"
                   disabled={submittingCancel}
                 >
-                  Keep Booking
+                  {t("common.keep_booking")}
                 </button>
                 <button
                   type="button"
@@ -218,7 +226,7 @@ export function BookingsPage() {
                   className="flex-1 flex h-11 items-center justify-center rounded-xl bg-red-600 hover:bg-red-700 text-[13px] font-bold text-white transition-colors"
                   disabled={submittingCancel}
                 >
-                  {submittingCancel ? "Cancelling…" : "Cancel Booking"}
+                  {submittingCancel ? t("common.cancelling") : t("common.cancel_booking")}
                 </button>
               </div>
             </div>

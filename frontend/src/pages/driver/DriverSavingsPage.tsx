@@ -12,6 +12,7 @@ import type { PricingTier, Vehicle } from "../../types";
 import { estimatedEnergyKwh, nextUtcHour, sessionTotal } from "../../utils/chargingEnergy";
 import { getErrorMessage } from "../../utils/errors";
 import { formatInr, formatKwh } from "../../utils/format";
+import { useT } from "../../i18n";
 
 function formatSessionDate(iso: string): string {
   return new Date(iso).toLocaleString("en-IN", {
@@ -23,6 +24,7 @@ function formatSessionDate(iso: string): string {
 }
 
 export function DriverSavingsPage() {
+  const t = useT();
   const { data: summary, error, loading } = useChargingSummary();
   const chargersQuery = useChargers();
   const [vehicles, setVehicles] = useState<Vehicle[] | null>(null);
@@ -146,25 +148,25 @@ export function DriverSavingsPage() {
       <div className="px-5 pt-3">
         <Link to="/driver" className="vo-hover-interactive inline-flex items-center gap-1 rounded-[6px] px-1.5 py-0.5 text-[12px] text-emerald-400">
           <ArrowLeft size={14} />
-          Home
+          {t("common.home")}
         </Link>
-        <p className="mt-3 text-[10px] font-semibold uppercase tracking-wider text-emerald-400">Driver</p>
-        <h1 className="mt-1 text-[26px] font-bold tracking-tight">Charging Cost & Savings</h1>
+        <p className="mt-3 text-[10px] font-semibold uppercase tracking-wider text-emerald-400">{t("savings_page.eyebrow")}</p>
+        <h1 className="mt-1 text-[26px] font-bold tracking-tight">{t("savings_page.heading")}</h1>
         <p className="mt-1 text-[13px] text-vo-muted">
-          Live tariffs from the existing pricing engine. History from your bookings only.
+          {t("savings_page.subtitle")}
         </p>
       </div>
 
       <div className="mt-5 space-y-5 px-5">
         <section className="space-y-3 rounded-[12px] border border-vo-line bg-[#111827] p-4">
           <h2 className="text-[12px] font-semibold uppercase tracking-[0.16em] text-vo-muted">
-            Next charge estimate
+            {t("savings_page.next_charge_heading")}
           </h2>
-          {quoteLoading ? <p className="text-[13px] text-vo-muted">Loading live tariff…</p> : null}
+          {quoteLoading ? <p className="text-[13px] text-vo-muted">{t("savings_page.loading_tariff")}</p> : null}
           {quoteError ? <p className="text-[13px] text-vo-red">{quoteError}</p> : null}
           {!quoteLoading && !quote && !quoteError ? (
             <p className="text-[13px] text-vo-muted">
-              Station data is needed to estimate the next charge. Try again after chargers load.
+              {t("savings_page.station_needed")}
             </p>
           ) : null}
           {quote ? (
@@ -173,7 +175,7 @@ export function DriverSavingsPage() {
               <p className="text-[28px] font-bold">{nowTotal != null ? formatInr(nowTotal) : "—"}</p>
               <p className="text-[13px] text-vo-muted">
                 {formatKwh(quote.energyKwh)} ·{" "}
-                {quote.now.is_off_peak ? "Off-Peak" : quote.now.is_peak ? "Peak" : "Standard"}
+                {quote.now.is_off_peak ? t("common.off_peak") : quote.now.is_peak ? t("common.peak") : t("common.standard")}
               </p>
               <PeakOffPeakCompare
                 peakTariff={quote.peak.price}
@@ -187,55 +189,60 @@ export function DriverSavingsPage() {
               />
               {cheaper === "off-peak" && savingsTotal != null && savingsTotal > 0 ? (
                 <div className="rounded-[8px] bg-emerald-500/10 px-3 py-3 text-[13px] text-emerald-300">
-                  <p className="font-semibold">Best time to charge · Off-Peak</p>
-                  <p className="mt-0.5">Estimated saving {formatInr(savingsTotal)} vs Peak</p>
+                  <p className="font-semibold">{t("savings_page.best_time")}</p>
+                  <p className="mt-0.5">{t("savings_page.estimated_saving", { amount: formatInr(savingsTotal) })}</p>
                 </div>
               ) : null}
             </>
           ) : null}
         </section>
 
-        <ScreenState loading={loading} error={error}>
+        <ScreenState
+          loading={loading}
+          error={error}
+          loadingText={t("common.loading")}
+          errorLabel={t("common.load_error_prefix")}
+        >
           {summary ? (
             <>
               <section className="rounded-[12px] border border-vo-line bg-[#111827] p-4">
                 <h2 className="text-[12px] font-semibold uppercase tracking-[0.16em] text-vo-muted">
-                  Monthly summary
+                  {t("savings_page.monthly_heading")}
                 </h2>
                 {month && month.sessions > 0 ? (
                   <>
                     <div className="mt-3 grid grid-cols-2 gap-3">
-                      <Metric label="Cost" value={month.cost != null ? formatInr(month.cost) : "—"} />
-                      <Metric label="Savings" value={month.savings != null ? formatInr(month.savings) : "—"} />
+                      <Metric label={t("savings_page.metric.cost")} value={month.cost != null ? formatInr(month.cost) : "—"} />
+                      <Metric label={t("savings_page.metric.savings")} value={month.savings != null ? formatInr(month.savings) : "—"} />
                       <Metric
-                        label="Energy"
+                        label={t("savings_page.metric.energy")}
                         value={month.energy_kwh != null ? formatKwh(month.energy_kwh) : "—"}
                       />
-                      <Metric label="Sessions" value={String(month.sessions)} />
+                      <Metric label={t("savings_page.metric.sessions")} value={String(month.sessions)} />
                     </div>
                     <div className="mt-3 grid grid-cols-2 gap-3">
                       <Metric
-                        label="Avg / session"
+                        label={t("savings_page.metric.avg_per_session")}
                         value={
                           month.avg_cost_per_session != null ? formatInr(month.avg_cost_per_session) : "—"
                         }
                       />
                       <Metric
-                        label="Avg / kWh"
+                        label={t("savings_page.metric.avg_per_kwh")}
                         value={month.avg_cost_per_kwh != null ? formatInr(month.avg_cost_per_kwh) : "—"}
                       />
                     </div>
                     {summary.total_energy_kwh != null ? (
                       <div className="mt-3 rounded-[8px] border border-vo-line bg-vo-card/60 px-3 py-3">
                         <p className="text-[11px] uppercase tracking-wider text-vo-muted">
-                          Total energy charged
+                          {t("savings_page.total_energy")}
                         </p>
                         <p className="mt-1 text-[22px] font-bold">{formatKwh(summary.total_energy_kwh)}</p>
                       </div>
                     ) : null}
                   </>
                 ) : (
-                  <EmptyHistory />
+                  <EmptyHistory t={t} />
                 )}
               </section>
 
@@ -246,7 +253,7 @@ export function DriverSavingsPage() {
               ) : null}
 
               <section className="rounded-[12px] border border-vo-line bg-[#111827] p-4">
-                <h2 className="text-[12px] font-semibold uppercase tracking-[0.16em] text-vo-muted">Cost trend</h2>
+                <h2 className="text-[12px] font-semibold uppercase tracking-[0.16em] text-vo-muted">{t("savings_page.cost_trend_heading")}</h2>
                 {summary.trend.length > 0 ? (
                   <div className="mt-3 h-[180px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
@@ -269,7 +276,7 @@ export function DriverSavingsPage() {
                   </div>
                 ) : (
                   <p className="mt-3 text-[13px] text-vo-muted">
-                    Cost trend appears after you complete charging sessions.
+                    {t("savings_page.cost_trend_empty")}
                   </p>
                 )}
               </section>
@@ -277,7 +284,7 @@ export function DriverSavingsPage() {
               {energyTrend.length >= 2 ? (
                 <section className="rounded-[12px] border border-vo-line bg-[#111827] p-4">
                   <h2 className="text-[12px] font-semibold uppercase tracking-[0.16em] text-vo-muted">
-                    Energy trend
+                    {t("savings_page.energy_trend_heading")}
                   </h2>
                   <div className="mt-3 h-[180px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
@@ -303,7 +310,7 @@ export function DriverSavingsPage() {
 
               <section className="rounded-[12px] border border-vo-line bg-[#111827] p-4">
                 <h2 className="text-[12px] font-semibold uppercase tracking-[0.16em] text-vo-muted">
-                  Charging history
+                  {t("savings_page.history_heading")}
                 </h2>
                 {hasHistory ? (
                   <ul className="mt-3 divide-y divide-vo-line">
@@ -319,34 +326,34 @@ export function DriverSavingsPage() {
                           <p className="text-[14px] font-semibold">{formatInr(row.cost)}</p>
                         </div>
                         <p className="mt-1 text-[12px] text-vo-muted">
-                          {row.energy_kwh != null ? formatKwh(row.energy_kwh) : "Energy unavailable"}
-                          {row.savings != null && row.savings > 0 ? ` · Saved ${formatInr(row.savings)}` : ""}
+                          {row.energy_kwh != null ? formatKwh(row.energy_kwh) : t("savings_page.energy_unavailable")}
+                          {row.savings != null && row.savings > 0 ? t("savings_page.saved_suffix", { amount: formatInr(row.savings) }) : ""}
                         </p>
                       </li>
                     ))}
                   </ul>
                 ) : (
-                  <EmptyHistory />
+                  <EmptyHistory t={t} />
                 )}
               </section>
 
               <section className="rounded-[12px] border border-vo-line bg-[#111827] p-4">
                 <h2 className="text-[12px] font-semibold uppercase tracking-[0.16em] text-vo-muted">
-                  Last charging session
+                  {t("savings_page.last_session_heading")}
                 </h2>
                 {last ? (
                   <dl className="mt-3 space-y-2 text-[13px]">
-                    <Row label="Station" value={last.station_name} />
-                    <Row label="Date" value={formatSessionDate(last.slot_time)} />
+                    <Row label={t("savings_page.row.station")} value={last.station_name} />
+                    <Row label={t("savings_page.row.date")} value={formatSessionDate(last.slot_time)} />
                     <Row
-                      label="Energy"
-                      value={last.energy_kwh != null ? formatKwh(last.energy_kwh) : "Unavailable"}
+                      label={t("savings_page.row.energy")}
+                      value={last.energy_kwh != null ? formatKwh(last.energy_kwh) : t("savings_page.unavailable")}
                     />
-                    <Row label="Cost" value={formatInr(last.cost)} />
-                    <Row label="Window" value={last.window_label} />
+                    <Row label={t("savings_page.row.cost")} value={formatInr(last.cost)} />
+                    <Row label={t("savings_page.row.window")} value={last.window_label} />
                   </dl>
                 ) : (
-                  <p className="mt-3 text-[13px] text-vo-muted">No previous charging sessions.</p>
+                  <p className="mt-3 text-[13px] text-vo-muted">{t("savings_page.no_last_session")}</p>
                 )}
               </section>
             </>
@@ -375,12 +382,12 @@ function Row({ label, value }: { label: string; value: string }) {
   );
 }
 
-function EmptyHistory() {
+function EmptyHistory({ t }: { t: (key: string) => string }) {
   return (
     <div className="mt-3 rounded-[8px] border border-dashed border-emerald-500/20 bg-emerald-500/5 px-3 py-4">
-      <p className="text-[14px] font-semibold text-driver-ink">No charging history yet</p>
+      <p className="text-[14px] font-semibold text-driver-ink">{t("common.empty_history_title")}</p>
       <p className="mt-1 text-[12px] text-vo-muted">
-        Savings and trends appear after you complete charging sessions. Nothing here is invented.
+        {t("common.empty_history_body")}
       </p>
     </div>
   );

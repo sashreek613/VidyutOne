@@ -1,7 +1,17 @@
 import { useState, type FormEvent } from "react";
 import { X, Zap, Trash2, Search } from "lucide-react";
 import type { Vehicle, VehicleCreate, VehicleUpdate } from "../../types";
-import { EV_CATALOG, SOURCE_LABEL, findCatalogEntry, type EvCatalogEntry, type SpecSource } from "../../data/evCatalog";
+import { EV_CATALOG, findCatalogEntry, type EvCatalogEntry, type SpecSource } from "../../data/evCatalog";
+import { useT } from "../../i18n";
+
+// Keys into locales/en.json for evCatalog.ts's SOURCE_LABEL values -- kept
+// here rather than in the data file so evCatalog.ts (shared, non-driver-only
+// data) doesn't need to depend on the driver i18n context.
+const SOURCE_LABEL_KEY: Record<SpecSource, string> = {
+  manufacturer_real_world: "vehicle_modal.source.manufacturer_real_world",
+  arai: "vehicle_modal.source.arai",
+  estimated: "vehicle_modal.source.estimated",
+};
 
 interface VehicleModalProps {
   isOpen: boolean;
@@ -20,6 +30,7 @@ export function VehicleModal({
   onSave,
   onDelete,
 }: VehicleModalProps) {
+  const t = useT();
   // Editing an existing vehicle: we don't know which catalog entry (if any)
   // it came from, so start in free-text mode showing its current values --
   // same as before this catalog existed. Adding a new one: pre-fill from a
@@ -82,7 +93,7 @@ export function VehicleModal({
       });
       onClose();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Failed to save vehicle profile.");
+      setError(err instanceof Error ? err.message : t("vehicle_modal.error_save"));
     } finally {
       setSaving(false);
     }
@@ -90,13 +101,13 @@ export function VehicleModal({
 
   async function handleDelete() {
     if (!vehicle || !onDelete) return;
-    if (!confirm("Are you sure you want to remove this vehicle?")) return;
+    if (!confirm(t("vehicle_modal.confirm_delete"))) return;
     setSaving(true);
     try {
       await onDelete(vehicle.id);
       onClose();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Failed to delete vehicle.");
+      setError(err instanceof Error ? err.message : t("vehicle_modal.error_delete"));
     } finally {
       setSaving(false);
     }
@@ -118,7 +129,7 @@ export function VehicleModal({
             <Zap className="w-4 h-4" />
           </div>
           <h2 className="text-lg font-bold text-vo-text">
-            {vehicle ? "Edit EV Specs" : "Add Your EV"}
+            {vehicle ? t("vehicle_modal.title_edit") : t("common.add_your_ev")}
           </h2>
         </div>
 
@@ -127,7 +138,7 @@ export function VehicleModal({
         <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4 text-xs">
           <div className="relative">
             <label className="block font-semibold text-vo-muted mb-1 uppercase tracking-wider">
-              Find your vehicle
+              {t("vehicle_modal.find_vehicle_label")}
             </label>
             <div className="relative">
               <Search className="w-3.5 h-3.5 text-vo-muted absolute left-3 top-1/2 -translate-y-1/2" />
@@ -180,7 +191,7 @@ export function VehicleModal({
                     }}
                     className="w-full px-3 py-2 text-left text-vo-accent border-t border-vo-line/60 hover:bg-white/5"
                   >
-                    My vehicle isn't listed — enter specs manually
+                    {t("vehicle_modal.not_listed")}
                   </button>
                 </li>
               </ul>
@@ -189,13 +200,13 @@ export function VehicleModal({
 
           {pickedSpec ? (
             <p className="rounded-lg bg-emerald-500/5 border border-emerald-500/20 px-3 py-2 text-[11px] text-vo-soft">
-              <span className="font-semibold text-emerald-400">{SOURCE_LABEL[pickedSpec.source]}: </span>
+              <span className="font-semibold text-emerald-400">{t(SOURCE_LABEL_KEY[pickedSpec.source])}: </span>
               {pickedSpec.note}
             </p>
           ) : null}
 
           <div>
-            <label className="block font-semibold text-vo-muted mb-1 uppercase tracking-wider">Manufacturer / Make</label>
+            <label className="block font-semibold text-vo-muted mb-1 uppercase tracking-wider">{t("vehicle_modal.make_label")}</label>
             <input
               type="text"
               required
@@ -210,7 +221,7 @@ export function VehicleModal({
           </div>
 
           <div>
-            <label className="block font-semibold text-vo-muted mb-1 uppercase tracking-wider">Model</label>
+            <label className="block font-semibold text-vo-muted mb-1 uppercase tracking-wider">{t("vehicle_modal.model_label")}</label>
             <input
               type="text"
               required
@@ -226,7 +237,7 @@ export function VehicleModal({
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block font-semibold text-vo-muted mb-1 uppercase tracking-wider">Capacity (kWh)</label>
+              <label className="block font-semibold text-vo-muted mb-1 uppercase tracking-wider">{t("vehicle_modal.capacity_label")}</label>
               <input
                 type="number"
                 step="0.1"
@@ -240,7 +251,7 @@ export function VehicleModal({
             </div>
 
             <div>
-              <label className="block font-semibold text-vo-muted mb-1 uppercase tracking-wider">Efficiency (Wh/km)</label>
+              <label className="block font-semibold text-vo-muted mb-1 uppercase tracking-wider">{t("vehicle_modal.efficiency_label")}</label>
               <input
                 type="number"
                 step="1"
@@ -256,7 +267,7 @@ export function VehicleModal({
 
           <div>
             <label className="block font-semibold text-vo-muted mb-1 uppercase tracking-wider">
-              Registration / purchase date <span className="normal-case font-normal text-vo-muted/70">(optional)</span>
+              {t("vehicle_modal.registration_label")} <span className="normal-case font-normal text-vo-muted/70">{t("vehicle_modal.optional")}</span>
             </label>
             <input
               type="date"
@@ -266,13 +277,13 @@ export function VehicleModal({
               className="w-full rounded-xl border border-vo-line bg-vo-card px-3 py-2.5 text-vo-text focus:border-emerald-400 focus:outline-none"
             />
             <p className="mt-1 text-[10px] text-vo-muted">
-              Used to estimate battery health by age -- affects range only, never shown as a typed-in number.
+              {t("vehicle_modal.registration_hint")}
             </p>
           </div>
 
           <div>
             <div className="flex justify-between font-semibold text-vo-muted mb-1 uppercase tracking-wider">
-              <span>Current Battery %</span>
+              <span>{t("vehicle_modal.current_battery_label")}</span>
               <span className="text-emerald-400 font-mono">{currentPct}%</span>
             </div>
             <input
@@ -291,7 +302,7 @@ export function VehicleModal({
                 type="button"
                 onClick={() => void handleDelete()}
                 className="p-2.5 rounded-xl border border-red-500/20 bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors"
-                title="Delete Vehicle"
+                title={t("vehicle_modal.delete_title")}
               >
                 <Trash2 className="w-4 h-4" />
               </button>
@@ -303,14 +314,14 @@ export function VehicleModal({
                 onClick={onClose}
                 className="px-4 py-2.5 rounded-xl border border-vo-line text-vo-muted hover:text-vo-text transition-colors"
               >
-                Cancel
+                {t("vehicle_modal.cancel")}
               </button>
               <button
                 type="submit"
                 disabled={saving}
                 className="px-5 py-2.5 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-black font-semibold transition-all shadow-md shadow-emerald-400/10"
               >
-                {saving ? "Saving…" : "Save Vehicle"}
+                {saving ? t("vehicle_modal.saving") : t("vehicle_modal.save_vehicle")}
               </button>
             </div>
           </div>

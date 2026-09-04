@@ -16,7 +16,7 @@ export function VerifyEmailPage() {
     return (
       <AuthShell>
         <AuthCard>
-          <h2 className="text-[28px] font-semibold text-white">Email Verified</h2>
+          <h2 className="text-[28px] font-semibold text-vo-text">Email Verified</h2>
           <p className="mt-3 text-[14px] leading-6 text-vo-accent">
             Your email is confirmed and verified. You can now access VidyutOne.
           </p>
@@ -54,7 +54,7 @@ export function VerifyEmailPage() {
   return (
     <AuthShell>
       <AuthCard>
-        <h2 className="text-[28px] font-semibold text-white">Please verify your email</h2>
+        <h2 className="text-[28px] font-semibold text-vo-text">Please verify your email</h2>
         <p className="mt-3 text-[14px] leading-6 text-vo-soft">
           We sent a verification link{email ? ` to ${email}` : ""}. Open that email and click the link before you can
           enter the Planner or Driver console.
@@ -68,7 +68,7 @@ export function VerifyEmailPage() {
           <AuthSubmit disabled={submitting || !email}>{submitting ? "Sending…" : "Resend verification email"}</AuthSubmit>
         </form>
         <p className="mt-4 text-center text-[12px] text-vo-muted">
-          <Link to="/login" className="text-white hover:underline">
+          <Link to="/login" className="text-vo-text hover:underline">
             Back to sign in
           </Link>
         </p>

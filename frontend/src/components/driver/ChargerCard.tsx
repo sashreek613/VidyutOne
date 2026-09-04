@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 
 import type { Charger } from "../../types";
 import { formatInr, formatKm } from "../../utils/format";
+import { useT } from "../../i18n";
 
 interface ChargerCardProps {
   charger: Charger;
@@ -19,13 +20,13 @@ interface ChargerCardProps {
   onSelect?: (chargerId: string) => void;
 }
 
-function availabilityCopy(charger: Charger): string {
+function availabilityCopy(charger: Charger, t: (key: string) => string): string {
   if (charger.provenance === "REAL") {
-    if (charger.availability === null) return "Status unknown";
-    return charger.availability ? "Operational" : "Reported down";
+    if (charger.availability === null) return t("common.charger_status.unknown");
+    return charger.availability ? t("common.charger_status.operational") : t("common.charger_status.reported_down");
   }
-  if (charger.availability === null) return "Status unknown";
-  return charger.availability ? "Live" : "Offline";
+  if (charger.availability === null) return t("common.charger_status.unknown");
+  return charger.availability ? t("common.charger_status.live") : t("common.charger_status.offline");
 }
 
 export function ChargerCard({
@@ -38,6 +39,7 @@ export function ChargerCard({
   selected = false,
   onSelect,
 }: ChargerCardProps) {
+  const t = useT();
   const isReal = charger.provenance === "REAL";
   const tight = freeCount <= 1;
 
@@ -82,7 +84,7 @@ export function ChargerCard({
           </div>
           <p className="mt-0.5 text-[12px] text-driver-muted">
             {charger.connector_type}
-            <> · {availabilityCopy(charger)}</>
+            <> · {availabilityCopy(charger, t)}</>
           </p>
         </div>
         <div className="flex flex-col items-end gap-1.5">
@@ -93,19 +95,23 @@ export function ChargerCard({
           >
             {isReal
               ? charger.availability === true
-                ? "OPERATIONAL"
-                : "REPORTED IN USE"
-              : `${freeCount} OF ${totalCount} FREE`}
+                ? t("charger_card.badge.operational")
+                : t("charger_card.badge.reported_in_use")
+              : t("charger_card.badge.free_of_total", { free: freeCount, total: totalCount })}
           </span>
           <p className={`text-[12px] ${charger.availability === true ? "text-[#3d7a5a]" : charger.availability === false ? "text-[#9e7d3b]" : "text-driver-muted"}`}>
-            {charger.availability === true ? "Available" : charger.availability === false ? "Busy" : "Ready"}
+            {charger.availability === true
+              ? t("common.charger_status.available")
+              : charger.availability === false
+                ? t("common.charger_status.busy")
+                : t("common.charger_status.ready")}
           </p>
         </div>
       </div>
       <p className="mt-3 text-[12px] text-driver-muted">
         {formatKm(km)}
         <span className="mx-2 text-driver-line">|</span>
-        {charger.power_kw !== null ? `${charger.power_kw} kW` : "7.4 kW standard"}
+        {charger.power_kw !== null ? `${charger.power_kw} kW` : t("common.power_fallback")}
         <span className="mx-2 text-driver-line">|</span>
         {charger.price_per_kwh !== null ? `${formatInr(charger.price_per_kwh)}/kWh` : "₹18.00/kWh"}
       </p>
@@ -115,7 +121,7 @@ export function ChargerCard({
           onClick={(event) => event.stopPropagation()}
           className="inline-flex items-center rounded-full border border-driver-line bg-driver-bg px-2.5 py-1 text-[10px] font-bold text-driver-ink hover:bg-slate-100 transition-colors"
         >
-          View Details
+          {t("common.view_details")}
         </Link>
         <Link
           to={`/driver/charger/${charger.id}/book`}
@@ -123,7 +129,7 @@ export function ChargerCard({
           className="inline-flex items-center gap-1 rounded-full bg-[#2e5b44] px-2.5 py-1 text-[10px] font-bold text-white hover:bg-[#254b38] transition-colors"
         >
           <Calendar size={10} />
-          Book Now
+          {t("common.book_now")}
         </Link>
         <button
           type="button"
@@ -131,7 +137,7 @@ export function ChargerCard({
           className="inline-flex items-center gap-1 rounded-full bg-[#e2ebe4] border border-[#cbe4d3] px-2.5 py-1 text-[10px] font-bold text-[#1e4530] hover:bg-[#d6e5d9] transition-colors shadow-xs cursor-pointer"
         >
           <Navigation size={10} />
-          Navigate
+          {t("common.navigate")}
         </button>
       </div>
     </div>

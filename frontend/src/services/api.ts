@@ -238,8 +238,20 @@ export async function rejectPlanner(userId: string, reason?: string): Promise<Pr
   return data;
 }
 
+// Gemini/Lyzr-backed endpoints can genuinely take longer than the default
+// 10s client timeout -- gemini_service.ask_assistant() tries up to 3 models
+// in sequence (30s each) before giving up, so a slow-but-real reply can take
+// well over 10s without anything being wrong. Longer per-request timeout
+// only for these two calls; everything else keeps the snappy 10s default so
+// a genuinely broken endpoint still fails fast.
+const ASSISTANT_TIMEOUT_MS = 60_000;
+
 export async function sendAssistantMessage(message: string, sessionId: string): Promise<{ reply: string }> {
-  const { data } = await client.post("/api/assistant/chat", { message, session_id: sessionId });
+  const { data } = await client.post(
+    "/api/assistant/chat",
+    { message, session_id: sessionId },
+    { timeout: ASSISTANT_TIMEOUT_MS },
+  );
   return data;
 }
 
@@ -248,11 +260,11 @@ export async function sendDriverAssistantMessage(
   sessionId: string,
   contextSummary: string,
 ): Promise<{ reply: string }> {
-  const { data } = await client.post("/api/driver/voice-assistant", {
-    message,
-    session_id: sessionId,
-    context_summary: contextSummary,
-  });
+  const { data } = await client.post(
+    "/api/driver/voice-assistant",
+    { message, session_id: sessionId, context_summary: contextSummary },
+    { timeout: ASSISTANT_TIMEOUT_MS },
+  );
   return data;
 }
 

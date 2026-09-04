@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Calendar, Clock, ShieldCheck } from "lucide-react";
+import { isAxiosError } from "axios";
 
 import { StatusBar } from "../../components/driver/StatusBar";
 import { DynamicPriceCard } from "../../components/driver/DynamicPriceCard";
@@ -18,13 +19,16 @@ import {
 import type { ChargingSlotQuote, PricingTier, Vehicle } from "../../types";
 import { getErrorMessage } from "../../utils/errors";
 import { formatInr, formatKwh } from "../../utils/format";
+import { useT } from "../../i18n";
 
+// labelKey resolved via t() inside the component -- this constant lives
+// outside it, so it can't call useT() itself.
 const DURATION_OPTIONS = [
-  { minutes: 30, label: "30 min" },
-  { minutes: 45, label: "45 min" },
-  { minutes: 60, label: "1 hour" },
-  { minutes: 90, label: "1.5 hours" },
-  { minutes: 120, label: "2 hours" },
+  { minutes: 30, labelKey: "charging_window.duration.30" },
+  { minutes: 45, labelKey: "charging_window.duration.45" },
+  { minutes: 60, labelKey: "charging_window.duration.60" },
+  { minutes: 90, labelKey: "charging_window.duration.90" },
+  { minutes: 120, labelKey: "charging_window.duration.120" },
 ];
 
 function loadRazorpaySdk(): Promise<boolean> {
@@ -42,7 +46,11 @@ function loadRazorpaySdk(): Promise<boolean> {
   });
 }
 
-function generateDateOptions(): Array<{ date: Date; key: string; label: string; subLabel: string }> {
+// t is threaded in (rather than called here) because this runs inside a
+// useMemo -- see its call site, which lists t in that memo's deps so "Today"
+// / "Tomorrow" re-translate on a language switch. Weekday/month names stay
+// "en-IN" on purpose -- see the call site comment on why.
+function generateDateOptions(t: (key: string) => string): Array<{ date: Date; key: string; label: string; subLabel: string }> {
   const options = [];
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -52,7 +60,7 @@ function generateDateOptions(): Array<{ date: Date; key: string; label: string; 
     d.setDate(today.getDate() + i);
 
     const key = d.toISOString().split("T")[0]!;
-    const label = i === 0 ? "Today" : i === 1 ? "Tomorrow" : d.toLocaleDateString("en-IN", { weekday: "short" });
+    const label = i === 0 ? t("charging_window.today") : i === 1 ? t("charging_window.tomorrow") : d.toLocaleDateString("en-IN", { weekday: "short" });
     const subLabel = d.toLocaleDateString("en-IN", { day: "numeric", month: "short" });
 
     options.push({ date: d, key, label, subLabel });
@@ -95,12 +103,13 @@ function quoteAsPricing(quote: ChargingSlotQuote): PricingTier {
 }
 
 export function ChargingWindowPage() {
+  const t = useT();
   const { chargerId } = useParams<{ chargerId: string }>();
   const navigate = useNavigate();
   const { profile } = useAuth();
   const { data: charger, error, loading } = useCharger(chargerId);
 
-  const dateOptions = useMemo(() => generateDateOptions(), []);
+  const dateOptions = useMemo(() => generateDateOptions(t), [t]);
   const [selectedDateKey, setSelectedDateKey] = useState<string>(dateOptions[0]!.key);
   const [selectedDuration, setSelectedDuration] = useState<number>(30);
   const [selectedSlotTimeIso, setSelectedSlotTimeIso] = useState<string | null>(null);
@@ -229,11 +238,11 @@ export function ChargingWindowPage() {
   async function handleLaunchRazorpayPayment() {
     if (!charger) return;
     if (!profile) {
-      setSubmitError("You must be signed in to complete a booking.");
+      setSubmitError(t("charging_window.error_not_signed_in"));
       return;
     }
     if (!selectedSlotTimeIso || !selectedQuote) {
-      setSubmitError("Please select a valid charging slot before proceeding.");
+      setSubmitError(t("charging_window.error_invalid_slot"));
       return;
     }
 
@@ -243,7 +252,7 @@ export function ChargingWindowPage() {
     try {
       const sdkReady = await loadRazorpaySdk();
       if (!sdkReady || !window.Razorpay) {
-        throw new Error("Unable to load Razorpay payment gateway. Please check your internet connection.");
+        throw new Error(t("charging_window.error_gateway_load"));
       }
 
       // 1. Create booking in PAYMENT_PENDING state
@@ -279,7 +288,7 @@ export function ChargingWindowPage() {
         modal: {
           ondismiss: () => {
             setSubmitting(false);
-            setSubmitError("Payment was cancelled or closed. You can retry your reservation when ready.");
+            setSubmitError(t("charging_window.error_payment_dismissed"));
           },
         },
         handler: async (response: {
@@ -299,10 +308,25 @@ export function ChargingWindowPage() {
             if (verifyRes.success) {
               void navigate(`/driver/booking/${booking.id}`);
             } else {
-              setSubmitError(verifyRes.message || "Payment verification failed.");
+              setSubmitError(verifyRes.message || t("charging_window.error_verification_failed"));
               setSubmitting(false);
             }
           } catch (err: unknown) {
+            // A network error here (no response reached us at all) doesn't
+            // mean the payment failed -- Razorpay only calls this handler
+            // after IT has confirmed the payment, and the booking already
+            // exists (created in step 1, before Razorpay Checkout even
+            // opened). Stranding the driver on an error banner would leave
+            // them unsure whether they were charged. Route to the booking
+            // page instead -- it does its own fresh fetch and shows whatever
+            // status the backend actually recorded. A real rejection from
+            // the backend (an HTTP error response, e.g. bad signature) is
+            // NOT this case -- that still shows the error below and stays
+            // put, since the payment genuinely may not have gone through.
+            if (isAxiosError(err) && !err.response) {
+              void navigate(`/driver/booking/${booking.id}`);
+              return;
+            }
             setSubmitError(getErrorMessage(err));
             setSubmitting(false);
           }
@@ -311,7 +335,7 @@ export function ChargingWindowPage() {
 
       const razorpayInstance = new window.Razorpay(rzpOptions);
       razorpayInstance.on("payment.failed", (response: { error?: { description?: string } }) => {
-        setSubmitError(response.error?.description || "Payment failed. Please retry with a valid payment method.");
+        setSubmitError(response.error?.description || t("charging_window.error_payment_failed"));
         setSubmitting(false);
       });
 
@@ -323,19 +347,25 @@ export function ChargingWindowPage() {
   }
 
   const proceedButtonLabel = selectedTotal != null
-    ? `Proceed to Payment · ${formatInr(selectedTotal)}`
-    : "Proceed to Payment";
+    ? t("charging_window.proceed_with_amount", { amount: formatInr(selectedTotal) })
+    : t("charging_window.proceed_plain");
 
   const payButtonLabel = submitting
-    ? "Opening Razorpay Gateway…"
+    ? t("charging_window.opening_gateway")
     : selectedTotal != null
-      ? `Pay ${formatInr(selectedTotal)} via Razorpay`
-      : "Confirm & Pay";
+      ? t("charging_window.pay_with_amount", { amount: formatInr(selectedTotal) })
+      : t("charging_window.confirm_pay_title");
 
   return (
     <div className="flex min-h-screen flex-col bg-white pb-28 text-driver-ink">
       <StatusBar />
-      <ScreenState loading={loading} error={error} tone="light">
+      <ScreenState
+        loading={loading}
+        error={error}
+        tone="light"
+        loadingText={t("common.loading")}
+        errorLabel={t("common.load_error_prefix")}
+      >
         {charger ? (
           <div className="px-5 pt-4">
             <button
@@ -348,7 +378,7 @@ export function ChargingWindowPage() {
                 }
               }}
               className="mb-4 flex h-9 w-9 items-center justify-center rounded-full bg-white shadow border border-driver-line hover:bg-slate-50 transition-colors"
-              aria-label="Back"
+              aria-label={t("common.back")}
             >
               <ArrowLeft size={16} />
             </button>
@@ -358,16 +388,16 @@ export function ChargingWindowPage() {
                 <p className="text-[11px] tracking-[0.18em] text-driver-muted uppercase font-semibold">
                   — {charger.name.replace(" (demo)", "")}
                 </p>
-                <h1 className="mt-2 text-[26px] leading-tight font-bold tracking-tight">Select Charging Window</h1>
+                <h1 className="mt-2 text-[26px] leading-tight font-bold tracking-tight">{t("charging_window.select_window_title")}</h1>
 
                 {charger.bookable === false || charger.price_per_kwh === null ? (
                   <div className="mt-4 rounded-2xl border border-[#c7d2fe] bg-[#eef2ff] px-4 py-3.5 text-[13px] text-[#4338ca]">
-                    <strong>Info Only Station:</strong> Real OpenChargeMap stations cannot be booked. Live reservations are available on VidyutOne network stations.
+                    <strong>{t("charging_window.info_only_title")}</strong> {t("charging_window.info_only_body")}
                   </div>
                 ) : (
                   <>
                     <p className="mt-1.5 text-[13px] text-driver-muted">
-                      Live tariffs are generated by VidyutOne's grid engine. Off-peak hours offer a 20% discount.
+                      {t("charging_window.live_tariff_note")}
                     </p>
 
                     {primaryVehicle ? (
@@ -384,7 +414,10 @@ export function ChargingWindowPage() {
                       </div>
                     ) : (
                       <p className="mt-2 text-[12px] text-driver-muted">
-                        Energy is estimated at {charger.power_kw !== null ? `${charger.power_kw} kW` : "standard power"} for {selectedDuration} mins.
+                        {t("charging_window.energy_estimate", {
+                          power: charger.power_kw !== null ? `${charger.power_kw} kW` : t("charging_window.standard_power"),
+                          duration: selectedDuration,
+                        })}
                       </p>
                     )}
 
@@ -392,7 +425,7 @@ export function ChargingWindowPage() {
                     <div className="mt-5">
                       <div className="flex items-center gap-1.5 text-[12px] font-bold text-driver-muted uppercase tracking-wider mb-2.5">
                         <Calendar size={14} />
-                        <span>1. Select Date</span>
+                        <span>{t("charging_window.step1_date")}</span>
                       </div>
                       <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
                         {dateOptions.map((opt) => {
@@ -425,7 +458,7 @@ export function ChargingWindowPage() {
                     <div className="mt-5">
                       <div className="flex items-center gap-1.5 text-[12px] font-bold text-driver-muted uppercase tracking-wider mb-2.5">
                         <Clock size={14} />
-                        <span>2. Charging Duration</span>
+                        <span>{t("charging_window.step2_duration")}</span>
                       </div>
                       <div className="flex flex-wrap gap-2">
                         {DURATION_OPTIONS.map((opt) => {
@@ -443,7 +476,7 @@ export function ChargingWindowPage() {
                                   : "bg-white border-driver-line text-driver-ink hover:bg-slate-50"
                               }`}
                             >
-                              {opt.label}
+                              {t(opt.labelKey)}
                             </button>
                           );
                         })}
@@ -454,14 +487,14 @@ export function ChargingWindowPage() {
                     <div className="mt-6">
                       <div className="flex items-center justify-between mb-3">
                         <span className="text-[12px] font-bold text-driver-muted uppercase tracking-wider">
-                          3. Available Time Slots ({candidateSlots.length})
+                          {t("charging_window.step3_slots", { count: candidateSlots.length })}
                         </span>
-                        {quoteLoading && <span className="text-[11px] text-driver-muted animate-pulse">Updating live rates…</span>}
+                        {quoteLoading && <span className="text-[11px] text-driver-muted animate-pulse">{t("charging_window.updating_rates")}</span>}
                       </div>
 
                       {candidateSlots.length === 0 ? (
                         <div className="rounded-2xl border border-dashed border-driver-line p-6 text-center text-[13px] text-driver-muted">
-                          No more slots available for today. Please select a future date.
+                          {t("charging_window.no_slots")}
                         </div>
                       ) : (
                         <div className="grid grid-cols-1 gap-2.5 max-h-[320px] overflow-y-auto pr-1">
@@ -507,7 +540,7 @@ export function ChargingWindowPage() {
                                                 : active ? "bg-slate-800 text-slate-300" : "bg-slate-200 text-slate-700"
                                           }`}
                                         >
-                                          {quote.is_off_peak ? "Off-Peak (-20%)" : quote.is_peak ? "Peak (+25%)" : "Standard"}
+                                          {quote.is_off_peak ? t("charging_window.badge_off_peak") : quote.is_peak ? t("charging_window.badge_peak") : t("common.standard")}
                                         </span>
                                         <span className={`text-[11px] ${active ? "text-slate-300" : "text-driver-muted"}`}>
                                           {formatInr(quote.tariff_per_kwh)} / kWh
@@ -515,7 +548,7 @@ export function ChargingWindowPage() {
                                       </div>
                                     ) : (
                                       <span className={`text-[11px] ${active ? "text-slate-300" : "text-driver-muted"}`}>
-                                        Calculating…
+                                        {t("charging_window.calculating")}
                                       </span>
                                     )}
                                   </div>
@@ -549,7 +582,7 @@ export function ChargingWindowPage() {
                         />
                       ) : (
                         <div className="rounded-xl border border-driver-line bg-[#f6f7f4] p-3.5 text-[12px] text-driver-muted">
-                          {quoteLoading ? "Loading live tariff calculation…" : "Select a time slot above to see pricing details."}
+                          {quoteLoading ? t("charging_window.loading_calc") : t("charging_window.select_slot_prompt")}
                         </div>
                       )}
                     </div>
@@ -557,7 +590,7 @@ export function ChargingWindowPage() {
                     {/* --- Peak vs Off-Peak Savings Insights --- */}
                     <div className="mt-5">
                       <h2 className="text-[12px] font-bold uppercase tracking-[0.14em] text-driver-muted mb-2">
-                        Peak vs Off-Peak Rate Comparison
+                        {t("charging_window.compare_heading")}
                       </h2>
                       <div>
                         {samplePeakQuote && sampleOffPeakQuote ? (
@@ -573,7 +606,7 @@ export function ChargingWindowPage() {
                           />
                         ) : (
                           <p className="text-[12px] text-driver-muted">
-                            Comparing standard and off-peak windows for selected duration…
+                            {t("charging_window.comparing_note")}
                           </p>
                         )}
                       </div>
@@ -604,35 +637,35 @@ export function ChargingWindowPage() {
               <>
                 <div className="flex items-center justify-between">
                   <span className="rounded-full bg-[#edf6f0] border border-[#cbe4d3] px-2.5 py-1 text-[10px] font-semibold tracking-wider text-[#3d7a5a] uppercase">
-                    Razorpay Test Mode
+                    {t("charging_window.test_mode_badge")}
                   </span>
-                  <span className="text-[12px] font-mono text-driver-muted">Step 2 of 2</span>
+                  <span className="text-[12px] font-mono text-driver-muted">{t("charging_window.step_2_of_2")}</span>
                 </div>
-                <h1 className="mt-2 text-[26px] leading-tight font-bold text-driver-ink">Confirm & Pay</h1>
+                <h1 className="mt-2 text-[26px] leading-tight font-bold text-driver-ink">{t("charging_window.confirm_pay_title")}</h1>
                 <p className="mt-1 text-[13px] text-driver-muted">
-                  Review your session details and complete your reservation via Razorpay.
+                  {t("charging_window.review_note")}
                 </p>
 
                 {/* Booking Order Summary */}
                 <div className="mt-5 rounded-2xl border border-driver-line bg-driver-card p-5 space-y-3 shadow-[0_4px_16px_rgba(16,24,20,0.03)]">
                   <div className="flex items-center justify-between border-b border-driver-line pb-3">
-                    <span className="text-[11px] font-bold text-driver-muted uppercase tracking-wider">Charging Hub</span>
+                    <span className="text-[11px] font-bold text-driver-muted uppercase tracking-wider">{t("charging_window.summary.hub")}</span>
                     <span className="text-[14px] font-semibold text-driver-ink">{charger.name.replace(" (demo)", "")}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-[13px] text-driver-muted">Date & Time</span>
+                    <span className="text-[13px] text-driver-muted">{t("charging_window.summary.datetime")}</span>
                     <span className="text-[13px] font-semibold text-driver-ink">
                       {selectedSlotTimeIso ? formatSlotTime(new Date(selectedSlotTimeIso), selectedDuration) : "—"}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-[13px] text-driver-muted">Duration & Energy</span>
+                    <span className="text-[13px] text-driver-muted">{t("charging_window.summary.duration_energy")}</span>
                     <span className="text-[13px] font-medium text-driver-ink">
                       {selectedDuration} mins {energyKwh != null ? `(${formatKwh(energyKwh)})` : ""}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-[13px] text-driver-muted">Applicable Tariff</span>
+                    <span className="text-[13px] text-driver-muted">{t("charging_window.summary.tariff")}</span>
                     <div className="text-right">
                       <span className="text-[13px] font-medium text-driver-ink">
                         {selectedQuote ? `${formatInr(selectedQuote.tariff_per_kwh)} / kWh` : "—"}
@@ -640,16 +673,16 @@ export function ChargingWindowPage() {
                       {selectedQuote && (
                         <span className="block text-[10px] text-driver-muted">
                           {selectedQuote.is_off_peak
-                            ? "Off-Peak (-20%)"
+                            ? t("charging_window.rate_off_peak")
                             : selectedQuote.is_peak
-                              ? "Peak (+25%)"
-                              : "Standard Rate"}
+                              ? t("charging_window.rate_peak")
+                              : t("charging_window.rate_standard")}
                         </span>
                       )}
                     </div>
                   </div>
                   <div className="border-t border-driver-line pt-3 flex items-center justify-between font-bold">
-                    <span className="text-[14px] text-driver-ink">Total Amount</span>
+                    <span className="text-[14px] text-driver-ink">{t("charging_window.summary.total")}</span>
                     <span className="text-[20px] text-[#2e5b44]">{selectedTotal != null ? formatInr(selectedTotal) : "—"}</span>
                   </div>
                 </div>
@@ -658,10 +691,10 @@ export function ChargingWindowPage() {
                 <div className="mt-5 rounded-2xl border border-driver-line bg-[#fbfcfb] p-4 text-[12px] text-driver-muted space-y-2">
                   <div className="flex items-center gap-2 text-driver-ink font-semibold">
                     <ShieldCheck size={16} className="text-[#3d7a5a]" />
-                    <span>Razorpay Secure Test Gateway</span>
+                    <span>{t("charging_window.gateway_heading")}</span>
                   </div>
                   <p className="leading-relaxed">
-                    Test Mode is active. You can simulate instant UPI, cards, or Netbanking checkout. Amount is validated and signed securely on VidyutOne servers.
+                    {t("charging_window.gateway_body")}
                   </p>
                 </div>
 
@@ -680,7 +713,7 @@ export function ChargingWindowPage() {
                   {submitting ? (
                     <span className="flex items-center gap-2">
                       <span className="h-4 w-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
-                      Opening Gateway…
+                      {t("charging_window.opening_gateway_inline")}
                     </span>
                   ) : (
                     payButtonLabel

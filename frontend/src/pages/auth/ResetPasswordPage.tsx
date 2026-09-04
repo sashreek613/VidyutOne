@@ -83,7 +83,7 @@ export function ResetPasswordPage() {
     <AuthShell>
       <form onSubmit={(event) => void handleSubmit(event)}>
         <AuthCard>
-          <h2 className="text-[28px] font-semibold text-white">Set a new password</h2>
+          <h2 className="text-[28px] font-semibold text-vo-text">Set a new password</h2>
           {!sessionReady ? (
             <>
               <p className="mt-3 text-[14px] text-vo-red">
