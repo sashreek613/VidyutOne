@@ -8,6 +8,15 @@ from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 from app.core.config import get_settings
 
 
+def _sqlalchemy_database_url(database_url: str) -> str:
+    """Use psycopg v3. Render/Supabase often provide postgres:// or postgresql://."""
+    if database_url.startswith("postgres://"):
+        return "postgresql+psycopg://" + database_url.removeprefix("postgres://")
+    if database_url.startswith("postgresql://"):
+        return "postgresql+psycopg://" + database_url.removeprefix("postgresql://")
+    return database_url
+
+
 def _engine_kwargs(database_url: str) -> dict:
     """SQLAlchemy engine options compatible with local Postgres and Supabase.
 
@@ -32,8 +41,9 @@ def _engine_kwargs(database_url: str) -> dict:
 
 
 settings = get_settings()
+_database_url = _sqlalchemy_database_url(settings.DATABASE_URL)
 
-engine = create_engine(settings.DATABASE_URL, **_engine_kwargs(settings.DATABASE_URL))
+engine = create_engine(_database_url, **_engine_kwargs(_database_url))
 
 SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False, class_=Session)
 
