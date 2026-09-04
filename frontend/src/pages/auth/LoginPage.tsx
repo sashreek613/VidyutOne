@@ -58,7 +58,7 @@ export function LoginPage() {
         <AuthCard>
           <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-[var(--vo-text)]">Sign in</h2>
           <p className="mt-1 text-xs text-[var(--vo-muted)]">
-            Sign in to access your planner dashboard or driver portal.
+            Sign in to access your planner dashboard, driver portal, or admin console.
           </p>
 
           {!supabaseConfigured ? (

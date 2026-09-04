@@ -7,7 +7,7 @@ import { useAuth } from "../../hooks/useAuth";
 export function ForbiddenPage() {
   const navigate = useNavigate();
   const { profile, signOut } = useAuth();
-  const home = homeForRole(profile?.role);
+  const home = homeForRole(profile);
 
   async function handleSignOut() {
     await signOut();

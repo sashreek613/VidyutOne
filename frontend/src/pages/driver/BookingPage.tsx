@@ -269,7 +269,7 @@ function Row({ label, value, highlight = false }: { label: string; value: string
   return (
     <div className="flex items-center justify-between py-3.5 text-[13px]">
       <dt className="text-driver-muted">{label}</dt>
-      <dd className={`font-semibold ${highlight ? "text-[16px] text-[#2e5b44]" : "text-driver-ink"}`}>{value}</dd>
+      <dd className={`font-semibold ${highlight ? "text-[16px] text-vo-good-ink" : "text-driver-ink"}`}>{value}</dd>
     </div>
   );
 }

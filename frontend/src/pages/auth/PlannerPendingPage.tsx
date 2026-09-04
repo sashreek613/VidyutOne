@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link, Navigate, useNavigate } from "react-router-dom";
 import { Clock, ShieldAlert, LogOut } from "lucide-react";
 import { AuthCard, AuthShell } from "../../components/auth/AuthShell";
 import { useAuth } from "../../hooks/useAuth";
@@ -6,6 +6,13 @@ import { useAuth } from "../../hooks/useAuth";
 export function PlannerPendingPage() {
   const { profile, signOut } = useAuth();
   const navigate = useNavigate();
+
+  if (profile?.role === "driver") {
+    return <Navigate to="/driver" replace />;
+  }
+  if (profile?.role === "admin") {
+    return <Navigate to="/admin" replace />;
+  }
 
   async function handleSignOut() {
     await signOut();

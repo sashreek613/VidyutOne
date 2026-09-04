@@ -1,5 +1,5 @@
 import { ArrowUpRight, LocateFixed, LogOut, MapPin, RefreshCw, X } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 import { VehicleWidget } from "../../components/driver/VehicleWidget";
@@ -96,6 +96,7 @@ export function DriverHomePage() {
   // recenterSignal prop. A plain counter, not a boolean: it must change on
   // every click (even consecutive ones) for DriverMap's effect to refire.
   const [recenterSignal, setRecenterSignal] = useState(0);
+  const geoRequestId = useRef(0);
   const hour = new Date().getHours();
 
   useEffect(() => {
@@ -156,20 +157,18 @@ export function DriverHomePage() {
     setSearchBoxKey((key) => key + 1);
   }
 
-  // "Recenter to my location": clears any active search (only if one is
-  // active, so an idle tap doesn't needlessly remount the search box) so
-  // `origin` falls back to real GPS, (re)requests location if it was denied
-  // or never granted, and always bumps recenterSignal so DriverMap forces
-  // the camera back even if origin doesn't end up changing (e.g. the driver
-  // just panned the map by hand with no search active).
+  // Always fetch a fresh GPS fix. Previously, if geoStatus was already
+  // "granted", this only flew the camera to the existing origin -- which is
+  // often the charger-centroid fallback from before GPS resolved, or a
+  // stale reading. Bump recenterSignal after the request settles so the
+  // map recenters even when coordinates did not change (user panned).
   function handleRecenter() {
     if (searchedLocation) {
       handleClearSearch();
     }
-    if (geoStatus !== "granted") {
-      requestLocation();
-    }
-    setRecenterSignal((n) => n + 1);
+    requestLocation(() => {
+      setRecenterSignal((n) => n + 1);
+    });
   }
 
   function handleMapPickLocation(lat: number, lon: number) {
@@ -212,39 +211,42 @@ export function DriverHomePage() {
   }, []);
 
   // Real driver location via the browser Geolocation API. On denial,
-  // unavailability, or any error, driverLocation stays null and origin
-  // below falls back to centroid(chargers) -- this must never crash or
-  // block the page. geoStatus is what makes that fallback VISIBLE (see the
-  // badge in the JSX below) instead of silent.
-  function requestLocation() {
-    // Secure-context check happens before ever touching the Geolocation
-    // API -- on plain HTTP + a non-localhost host, getCurrentPosition would
-    // just hang or reject with no useful signal, so this is checked first
-    // and explicitly, not inferred from a failed request.
+  // unavailability, or any error, driverLocation stays at its last value
+  // (or null) and origin falls back to centroid(chargers). geoStatus is what
+  // makes that fallback VISIBLE instead of silently labeling centroid as live.
+  function requestLocation(onSettled?: () => void) {
+    const requestId = ++geoRequestId.current;
+
     if (!window.isSecureContext) {
       setGeoStatus("insecure_context");
+      onSettled?.();
       return;
     }
     if (!("geolocation" in navigator)) {
       setGeoStatus("unavailable");
+      onSettled?.();
       return;
     }
     setGeoStatus("pending");
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        setDriverLocation({ latitude: position.coords.latitude, longitude: position.coords.longitude });
-        setGeoStatus("granted");
+        if (requestId !== geoRequestId.current) {
+          return;
+        }
+        const { latitude, longitude, accuracy } = position.coords;
+        setDriverLocation({ latitude, longitude });
+        // IP/cell-level fixes (often 5–50 km) are not a live device location.
+        const accurate = Number.isFinite(accuracy) && accuracy <= 5000;
+        setGeoStatus(accurate ? "granted" : "unavailable");
+        onSettled?.();
       },
       (err) => {
+        if (requestId !== geoRequestId.current) {
+          return;
+        }
         setGeoStatus(err.code === err.PERMISSION_DENIED ? "denied" : "unavailable");
+        onSettled?.();
       },
-      // enableHighAccuracy: true asks the OS for its best available fix
-      // (GPS/Wi-Fi-positioning) instead of a quick, coarse IP-based lookup --
-      // on a laptop with no GPS chip, the coarse lookup can be off by whole
-      // city districts or more. maximumAge: 0 refuses a stale cached fix, so
-      // "current location" always means an actual fresh reading, not
-      // whatever the browser happened to cache up to 5 minutes ago. Costs a
-      // bit more time/battery to acquire, hence the longer timeout below.
       { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 },
     );
   }
@@ -615,7 +617,7 @@ export function DriverHomePage() {
               chargers={mapChargers}
               origin={origin}
               rangeKm={isRangeLimited ? bufferedRangeKm : null}
-              isLiveLocation={geoStatus === "granted" && !searchedLocation}
+              isLiveLocation={geoStatus === "granted" && driverLocation !== null && !searchedLocation}
               selectedChargerId={selectedChargerId}
               onSelectCharger={setSelectedChargerId}
               onMapClick={handleMapPickLocation}
@@ -639,14 +641,17 @@ export function DriverHomePage() {
                 {t("driver_home.back_to_my_location")}
               </button>
             </div>
-          ) : geoStatus === "granted" ? (
+          ) : geoStatus === "granted" && driverLocation ? (
             <div className="flex items-center gap-1.5 text-[11px] text-vo-accent-ink">
               <span className="h-1.5 w-1.5 rounded-full bg-vo-accent-ink" />
               <span>{t("driver_home.using_live_location")}</span>
             </div>
           ) : (
             <div className="flex items-center justify-between gap-2 rounded-[8px] border border-amber-500/20 bg-amber-500/5 px-3 py-2">
-              <div className="flex items-center gap-1.5 text-[11px] text-vo-warn-ink" title={t(GEO_STATUS_KEY[geoStatus])}>
+              <div
+                className="flex items-center gap-1.5 text-[11px] text-vo-warn-ink"
+                title={geoStatus === "granted" ? t("driver_home.geo.estimated_area") : t(GEO_STATUS_KEY[geoStatus])}
+              >
                 <span className="h-1.5 w-1.5 rounded-full bg-vo-warn-ink" />
                 <span>
                   {geoStatus === "pending"
@@ -657,7 +662,7 @@ export function DriverHomePage() {
               {geoStatus === "denied" || geoStatus === "unavailable" ? (
                 <button
                   type="button"
-                  onClick={requestLocation}
+                  onClick={() => requestLocation()}
                   className="flex shrink-0 items-center gap-1 text-[11px] font-medium text-vo-warn-ink hover:opacity-80"
                 >
                   <LocateFixed size={12} />

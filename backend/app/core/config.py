@@ -40,6 +40,10 @@ class Settings(BaseSettings):
     RAZORPAY_KEY_SECRET: str = ""
     DEFAULT_FALLBACK_TARIFF: float = 18.0
 
+    # Optional. If set, this email is the designated admin on first authenticated
+    # /api/me. Password stays in Supabase Auth — never put it here or in the frontend.
+    ADMIN_EMAIL: str = ""
+
     @property
     def cors_origin_list(self) -> list[str]:
         origins = [

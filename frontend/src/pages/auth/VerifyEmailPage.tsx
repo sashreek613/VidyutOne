@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 
 import { AuthCard, AuthShell, AuthSubmit } from "../../components/auth/AuthShell";
 import { useAuth } from "../../hooks/useAuth";
+import { homeForRole } from "../../lib/authRoutes";
 import { mapAuthError, readPendingEmail } from "../../lib/authErrors";
 
 export function VerifyEmailPage() {
@@ -22,7 +23,7 @@ export function VerifyEmailPage() {
           </p>
           <div className="mt-6 flex flex-col gap-3">
             <Link
-              to={profile ? `/` : "/login?verified=1"}
+              to={profile ? homeForRole(profile) : "/login?verified=1"}
               className="flex h-12 items-center justify-center rounded-xl bg-vo-accent text-[14px] font-semibold text-[#06231b]"
             >
               {profile ? "Go to Dashboard" : "Sign in now"}

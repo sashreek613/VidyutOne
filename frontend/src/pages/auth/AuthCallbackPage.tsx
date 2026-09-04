@@ -55,8 +55,17 @@ export function AuthCallbackPage() {
 
         await refreshProfileRef.current();
         if (!cancelled) {
+          const role = nextSession.user.user_metadata?.role;
           setState("verified");
-          setMessage("Email verified successfully. Your Planner/Authority account is now awaiting administrator approval.");
+          if (role === "planner") {
+            setMessage(
+              "Email verified successfully. Your Planner/Authority account is now awaiting administrator approval.",
+            );
+          } else if (role === "admin") {
+            setMessage("Email verified successfully. You can continue to the admin console.");
+          } else {
+            setMessage("Email verified successfully. You can continue to the Driver portal.");
+          }
         }
       } catch (err: unknown) {
         logAuthError("callback-error", err);

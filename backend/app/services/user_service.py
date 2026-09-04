@@ -2,20 +2,37 @@ from fastapi import HTTPException, status
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.core.config import get_settings
 from app.database.session import utcnow
-from app.models.user import ROLE_DRIVER, ROLE_PLANNER, VALID_ROLES, User
+from app.models.user import ROLE_ADMIN, ROLE_DRIVER, ROLE_PLANNER, User
 
 
 def _role_from_metadata(metadata: object) -> str | None:
+    """Signup metadata may choose planner or driver only. Never admin."""
     if not isinstance(metadata, dict):
         return None
     raw = metadata.get("role")
     if not isinstance(raw, str):
         return None
     role = raw.strip().lower()
-    if role in VALID_ROLES:
+    if role == ROLE_PLANNER or role == ROLE_DRIVER:
         return role
     return None
+
+
+def _is_designated_admin(email: str) -> bool:
+    designated = get_settings().ADMIN_EMAIL.strip().lower()
+    if not designated:
+        return False
+    return email.strip().lower() == designated
+
+
+def _promote_to_admin(user: User) -> None:
+    user.role = ROLE_ADMIN
+    user.is_verified = True
+    user.is_active = True
+    user.verification_status = "approved"
+    user.rejection_reason = None
 
 
 def _full_name_from_metadata(metadata: object, email: str) -> str:
@@ -36,10 +53,33 @@ def get_or_create_profile(
     metadata: object,
 ) -> User:
     existing = db.get(User, user_id)
+    if existing is None:
+        taken = db.query(User).filter(User.email == email).one_or_none()
+        if taken is not None and taken.id != user_id:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="An account with this email already exists.",
+            )
+
     if existing is not None:
         updated = False
         if email and existing.email != email:
             existing.email = email
+            updated = True
+        # Drivers must never be stuck in planner/admin approval. Repair stale rows.
+        if existing.role == ROLE_DRIVER and (
+            existing.verification_status != "approved"
+            or not existing.is_verified
+            or not existing.is_active
+        ):
+            existing.is_verified = True
+            existing.is_active = True
+            existing.verification_status = "approved"
+            existing.rejection_reason = None
+            updated = True
+        # Designated admin is identified by ADMIN_EMAIL, never by client metadata.
+        if _is_designated_admin(email) and existing.role != ROLE_ADMIN:
+            _promote_to_admin(existing)
             updated = True
         if isinstance(metadata, dict):
             org = metadata.get("organization")
@@ -60,26 +100,21 @@ def get_or_create_profile(
             db.refresh(existing)
         return existing
 
-
-    taken = db.query(User).filter(User.email == email).one_or_none()
-    if taken is not None and taken.id != user_id:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="An account with this email already exists.",
-        )
-
-    role = _role_from_metadata(metadata) or ROLE_DRIVER
-
-
     org = metadata.get("organization") if isinstance(metadata, dict) and isinstance(metadata.get("organization"), str) else None
     phone = metadata.get("phone_number") if isinstance(metadata, dict) and isinstance(metadata.get("phone_number"), str) else None
     designation = metadata.get("designation") if isinstance(metadata, dict) and isinstance(metadata.get("designation"), str) else None
 
-    # Planners are verified & active by default
-    is_planner = (role == ROLE_PLANNER)
-    is_verified = True
-    is_active = True
-    verification_status = "approved"
+    if _is_designated_admin(email):
+        role = ROLE_ADMIN
+        is_verified = True
+        is_active = True
+        verification_status = "approved"
+    else:
+        role = _role_from_metadata(metadata) or ROLE_DRIVER
+        is_planner = role == ROLE_PLANNER
+        is_verified = not is_planner
+        is_active = not is_planner
+        verification_status = "pending" if is_planner else "approved"
 
     user = User(
         id=user_id,

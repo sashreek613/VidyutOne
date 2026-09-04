@@ -60,7 +60,7 @@ export function SignupPage() {
         void navigate("/verify-email");
         return;
       }
-      void navigate(homeForRole(result.profile.role), { replace: true });
+      void navigate(homeForRole(result.profile), { replace: true });
     } catch (err: unknown) {
       setError(mapAuthError(err));
     } finally {

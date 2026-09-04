@@ -126,7 +126,7 @@ export function ChargerCard({
         <Link
           to={`/driver/charger/${charger.id}/book`}
           onClick={(event) => event.stopPropagation()}
-          className="inline-flex items-center gap-1 rounded-full bg-[#2e5b44] px-2.5 py-1 text-[10px] font-bold text-white hover:bg-[#254b38] transition-colors"
+          className="inline-flex items-center gap-1 rounded-full bg-[#2e5b44] px-2.5 py-1 text-[10px] font-bold text-white hover:bg-[#254b38] active:bg-[#1d3c2d] transition-colors cursor-pointer"
         >
           <Calendar size={10} />
           {t("common.book_now")}

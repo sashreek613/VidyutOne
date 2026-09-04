@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios, { AxiosHeaders, isAxiosError, type InternalAxiosRequestConfig } from "axios";
 
 import { supabase } from "../lib/supabase";
 import type {
@@ -33,8 +33,41 @@ const client = axios.create({
   timeout: 10_000,
 });
 
+const inflightGets = new Map<string, Promise<unknown>>();
+
+function coalesceGet<T>(key: string, run: () => Promise<T>): Promise<T> {
+  const existing = inflightGets.get(key);
+  if (existing) {
+    return existing as Promise<T>;
+  }
+  const pending = run().finally(() => {
+    inflightGets.delete(key);
+  });
+  inflightGets.set(key, pending);
+  return pending;
+}
+
+function attachAuthorization(config: InternalAxiosRequestConfig, token: string): void {
+  const headers = AxiosHeaders.from(config.headers);
+  headers.set("Authorization", `Bearer ${token}`);
+  config.headers = headers;
+}
+
+function shouldRetryGet(error: unknown): boolean {
+  if (!isAxiosError(error)) {
+    return false;
+  }
+  if (error.code === "ECONNABORTED" || error.code === "ERR_NETWORK") {
+    return true;
+  }
+  const status = error.response?.status;
+  return status === 500 || status === 502 || status === 503 || status === 504;
+}
+
 client.interceptors.request.use(async (config) => {
-  if (config.headers.Authorization) {
+  const headers = AxiosHeaders.from(config.headers);
+  if (headers.get("Authorization")) {
+    config.headers = headers;
     return config;
   }
   const stored = localStorage.getItem("vidyutone-mock-session");
@@ -42,7 +75,7 @@ client.interceptors.request.use(async (config) => {
     try {
       const mockSession = JSON.parse(stored);
       if (mockSession.access_token) {
-        config.headers.Authorization = `Bearer ${mockSession.access_token}`;
+        attachAuthorization(config, mockSession.access_token);
         return config;
       }
     } catch {
@@ -54,7 +87,7 @@ client.interceptors.request.use(async (config) => {
       const { data } = await supabase.auth.getSession();
       const token = data.session?.access_token;
       if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
+        attachAuthorization(config, token);
       }
     } catch {
       // ignore
@@ -69,15 +102,29 @@ export async function getHealth(): Promise<HealthStatus> {
 }
 
 export async function getMe(accessToken?: string): Promise<Profile> {
-  const { data } = await client.get<Profile>("/api/me", {
-    headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
+  return coalesceGet(`me:${accessToken ?? ""}`, async () => {
+    const request = async () => {
+      const { data } = await client.get<Profile>("/api/me", {
+        headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
+      });
+      return data;
+    };
+    try {
+      return await request();
+    } catch (error) {
+      if (!shouldRetryGet(error)) {
+        throw error;
+      }
+      return await request();
+    }
   });
-  return data;
 }
 
 export async function getSites(): Promise<Site[]> {
-  const { data } = await client.get<Site[]>("/api/sites");
-  return data;
+  return coalesceGet("sites", async () => {
+    const { data } = await client.get<Site[]>("/api/sites");
+    return data;
+  });
 }
 
 export async function getSite(id: string): Promise<Site> {
@@ -86,8 +133,10 @@ export async function getSite(id: string): Promise<Site> {
 }
 
 export async function getRecommendedSites(limit: number = 10): Promise<RecommendedSite[]> {
-  const { data } = await client.get<RecommendedSite[]>("/api/sites/recommended", { params: { limit } });
-  return data;
+  return coalesceGet(`sites-recommended:${limit}`, async () => {
+    const { data } = await client.get<RecommendedSite[]>("/api/sites/recommended", { params: { limit } });
+    return data;
+  });
 }
 
 export async function classifyByCoords(lat: number, lon: number): Promise<ClassifiedSite> {
@@ -106,8 +155,10 @@ export async function suggestLocations(q: string, limit: number = 8): Promise<Lo
 }
 
 export async function getChargers(): Promise<Charger[]> {
-  const { data } = await client.get<Charger[]>("/api/chargers");
-  return data;
+  return coalesceGet("chargers", async () => {
+    const { data } = await client.get<Charger[]>("/api/chargers");
+    return data;
+  });
 }
 
 export async function getCharger(id: string): Promise<Charger> {

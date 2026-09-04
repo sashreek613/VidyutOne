@@ -2,6 +2,7 @@ from datetime import timedelta, timezone, datetime
 from uuid import uuid4
 
 from fastapi import HTTPException, status
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.database.session import utcnow
@@ -72,6 +73,17 @@ def create_booking(db: Session, payload: BookingCreate, user_id: str) -> Booking
         b_start = charging_service._aware(b.slot_time)
         b_duration = getattr(b, "duration_minutes", 30) or 30
         b_end = b_start + timedelta(minutes=b_duration)
+
+        # Retrying payment for the same slot must reuse the pending booking
+        # instead of colliding with it (Razorpay cancel/retry).
+        if (
+            b.status == BookingStatus.PAYMENT_PENDING.value
+            and b.user_id == user_id
+            and b_start == new_start
+            and b_duration == duration_minutes
+        ):
+            return BookingRead.model_validate(b)
+
         if new_start < b_end and new_end > b_start:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
@@ -104,7 +116,14 @@ def create_booking(db: Session, payload: BookingCreate, user_id: str) -> Booking
     if charger_obj_for_booking is not None:
         booking.charger = charger_obj_for_booking
     db.add(booking)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError as exc:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Could not reserve this charger. Please try another hub or time.",
+        ) from exc
     return BookingRead.model_validate(booking)
 
 

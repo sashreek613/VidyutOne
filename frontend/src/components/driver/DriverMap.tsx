@@ -358,10 +358,14 @@ export function DriverMap({
       {onRecenter ? (
         <button
           type="button"
-          onClick={onRecenter}
+          onClick={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            onRecenter();
+          }}
           aria-label={t("driver_map.recenter_aria")}
           title={t("driver_map.recenter_aria")}
-          className="absolute top-3 right-3 z-20 flex h-9 w-9 items-center justify-center rounded-full bg-white/95 border border-gray-200 text-driver-ink shadow-md backdrop-blur hover:bg-white transition-colors cursor-pointer"
+          className="absolute top-3 right-3 z-30 flex h-9 w-9 items-center justify-center rounded-full bg-white/95 border border-gray-200 text-driver-ink shadow-md backdrop-blur hover:bg-white transition-colors cursor-pointer pointer-events-auto"
         >
           <LocateFixed size={16} />
         </button>

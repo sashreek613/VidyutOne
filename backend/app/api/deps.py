@@ -61,7 +61,11 @@ def get_current_user(
 def require_planner(user: AuthUser = Depends(get_current_user)) -> AuthUser:
     if user.role != ROLE_PLANNER:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
-    if not (user.is_verified and user.is_active):
+    if not (
+        user.is_verified
+        and user.is_active
+        and user.verification_status == "approved"
+    ):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Planner account is pending verification by an administrator.",

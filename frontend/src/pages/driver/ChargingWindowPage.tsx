@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Calendar, Clock, ShieldCheck } from "lucide-react";
 import { isAxiosError } from "axios";
@@ -8,6 +8,7 @@ import { DynamicPriceCard } from "../../components/driver/DynamicPriceCard";
 import { PeakOffPeakCompare } from "../../components/driver/PeakOffPeakCompare";
 import { ScreenState } from "../../components/common/ScreenState";
 import { useAuth } from "../../hooks/useAuth";
+import { useTheme } from "../../hooks/useTheme";
 import { useCharger } from "../../hooks/useApiData";
 import {
   createBooking,
@@ -19,7 +20,7 @@ import {
 import type { ChargingSlotQuote, PricingTier, Vehicle } from "../../types";
 import { getErrorMessage } from "../../utils/errors";
 import { formatInr, formatKwh } from "../../utils/format";
-import { useT } from "../../i18n";
+import { useLocale, useT } from "../../i18n";
 
 // labelKey resolved via t() inside the component -- this constant lives
 // outside it, so it can't call useT() itself.
@@ -102,14 +103,25 @@ function quoteAsPricing(quote: ChargingSlotQuote): PricingTier {
   };
 }
 
+// Fixed bar sits above the slot scroller's compositing layer so taps reach the CTA.
+const CTA_BAR_CLASS =
+  "pointer-events-none fixed inset-x-0 bottom-0 z-50 flex justify-center px-5 pb-5";
+const CTA_BUTTON_CLASS =
+  "pointer-events-auto relative flex h-12 w-full max-w-[382px] items-center justify-center rounded-2xl bg-[#2e5b44] text-[14px] font-bold text-white shadow-lg hover:bg-[#254b38] active:bg-[#1d3c2d] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-[#2e5b44] cursor-pointer transition-colors";
+
 export function ChargingWindowPage() {
   const t = useT();
+  const { locale } = useLocale();
+  const { theme } = useTheme();
   const { chargerId } = useParams<{ chargerId: string }>();
   const navigate = useNavigate();
   const { profile } = useAuth();
   const { data: charger, error, loading } = useCharger(chargerId);
+  const cardTone = theme === "dark" ? "dark" : "light";
 
-  const dateOptions = useMemo(() => generateDateOptions(t), [t]);
+  // useT() returns a new function each render. Depend on locale so this list
+  // (and the quotes effect below) does not reset on every paint.
+  const dateOptions = useMemo(() => generateDateOptions(t), [locale]);
   const [selectedDateKey, setSelectedDateKey] = useState<string>(dateOptions[0]!.key);
   const [selectedDuration, setSelectedDuration] = useState<number>(30);
   const [selectedSlotTimeIso, setSelectedSlotTimeIso] = useState<string | null>(null);
@@ -117,6 +129,8 @@ export function ChargingWindowPage() {
   const [bookingStep, setBookingStep] = useState<"select_slot" | "payment">("select_slot");
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [pendingBookingId, setPendingBookingId] = useState<string | null>(null);
+  const paymentLock = useRef(false);
 
   const [vehicles, setVehicles] = useState<Vehicle[] | null>(null);
   const [quotesByIso, setQuotesByIso] = useState<Record<string, ChargingSlotQuote>>({});
@@ -205,6 +219,10 @@ export function ChargingWindowPage() {
     };
   }, [charger, candidateSlots, selectedDuration]);
 
+  useEffect(() => {
+    setPendingBookingId(null);
+  }, [selectedSlotTimeIso, selectedDuration, selectedDateKey]);
+
   const selectedQuote = selectedSlotTimeIso ? quotesByIso[selectedSlotTimeIso] : undefined;
   const selectedPricing = selectedQuote ? quoteAsPricing(selectedQuote) : undefined;
   const selectedTotal = selectedQuote?.total ?? null;
@@ -237,6 +255,7 @@ export function ChargingWindowPage() {
 
   async function handleLaunchRazorpayPayment() {
     if (!charger) return;
+    if (paymentLock.current) return;
     if (!profile) {
       setSubmitError(t("charging_window.error_not_signed_in"));
       return;
@@ -246,6 +265,7 @@ export function ChargingWindowPage() {
       return;
     }
 
+    paymentLock.current = true;
     setSubmitting(true);
     setSubmitError(null);
 
@@ -255,21 +275,23 @@ export function ChargingWindowPage() {
         throw new Error(t("charging_window.error_gateway_load"));
       }
 
-      // 1. Create booking in PAYMENT_PENDING state
-      const booking = await createBooking({
-        charger_id: charger.id,
-        slot_time: selectedSlotTimeIso,
-        duration_minutes: selectedDuration,
-      });
+      let bookingId = pendingBookingId;
+      if (!bookingId) {
+        const booking = await createBooking({
+          charger_id: charger.id,
+          slot_time: selectedSlotTimeIso,
+          duration_minutes: selectedDuration,
+        });
+        bookingId = booking.id;
+        setPendingBookingId(booking.id);
+      }
 
-      // 2. Create Razorpay order on backend (amount validated server-side from booking.price)
       const orderData = await createPaymentOrder({
-        booking_id: booking.id,
-        amount: booking.price,
+        booking_id: bookingId,
+        amount: selectedQuote.total,
         currency: "INR",
       });
 
-      // 3. Open Razorpay Checkout modal in Test Mode
       const rzpOptions = {
         key: orderData.razorpay_key_id,
         amount: orderData.amount_paise,
@@ -287,6 +309,7 @@ export function ChargingWindowPage() {
         },
         modal: {
           ondismiss: () => {
+            paymentLock.current = false;
             setSubmitting(false);
             setSubmitError(t("charging_window.error_payment_dismissed"));
           },
@@ -299,35 +322,26 @@ export function ChargingWindowPage() {
           try {
             setSubmitting(true);
             const verifyRes = await verifyPayment({
-              booking_id: booking.id,
+              booking_id: bookingId,
               razorpay_order_id: response.razorpay_order_id,
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_signature: response.razorpay_signature,
             });
 
             if (verifyRes.success) {
-              void navigate(`/driver/booking/${booking.id}`);
+              void navigate(`/driver/booking/${bookingId}`);
             } else {
               setSubmitError(verifyRes.message || t("charging_window.error_verification_failed"));
+              paymentLock.current = false;
               setSubmitting(false);
             }
           } catch (err: unknown) {
-            // A network error here (no response reached us at all) doesn't
-            // mean the payment failed -- Razorpay only calls this handler
-            // after IT has confirmed the payment, and the booking already
-            // exists (created in step 1, before Razorpay Checkout even
-            // opened). Stranding the driver on an error banner would leave
-            // them unsure whether they were charged. Route to the booking
-            // page instead -- it does its own fresh fetch and shows whatever
-            // status the backend actually recorded. A real rejection from
-            // the backend (an HTTP error response, e.g. bad signature) is
-            // NOT this case -- that still shows the error below and stays
-            // put, since the payment genuinely may not have gone through.
             if (isAxiosError(err) && !err.response) {
-              void navigate(`/driver/booking/${booking.id}`);
+              void navigate(`/driver/booking/${bookingId}`);
               return;
             }
             setSubmitError(getErrorMessage(err));
+            paymentLock.current = false;
             setSubmitting(false);
           }
         },
@@ -336,33 +350,37 @@ export function ChargingWindowPage() {
       const razorpayInstance = new window.Razorpay(rzpOptions);
       razorpayInstance.on("payment.failed", (response: { error?: { description?: string } }) => {
         setSubmitError(response.error?.description || t("charging_window.error_payment_failed"));
+        paymentLock.current = false;
         setSubmitting(false);
       });
 
       razorpayInstance.open();
     } catch (err: unknown) {
       setSubmitError(getErrorMessage(err));
+      paymentLock.current = false;
       setSubmitting(false);
     }
   }
 
-  const proceedButtonLabel = selectedTotal != null
-    ? t("charging_window.proceed_with_amount", { amount: formatInr(selectedTotal) })
-    : t("charging_window.proceed_plain");
+  const proceedButtonLabel = submitting
+    ? t("charging_window.processing")
+    : selectedTotal != null
+      ? t("charging_window.proceed_with_amount", { amount: formatInr(selectedTotal) })
+      : t("charging_window.proceed_plain");
 
   const payButtonLabel = submitting
-    ? t("charging_window.opening_gateway")
+    ? t("charging_window.processing")
     : selectedTotal != null
       ? t("charging_window.pay_with_amount", { amount: formatInr(selectedTotal) })
       : t("charging_window.confirm_pay_title");
 
   return (
-    <div className="flex min-h-screen flex-col bg-white pb-28 text-driver-ink">
+    <div className="flex min-h-screen flex-col bg-driver-bg pb-28 text-driver-ink">
       <StatusBar />
       <ScreenState
         loading={loading}
         error={error}
-        tone="light"
+        tone={cardTone}
         loadingText={t("common.loading")}
         errorLabel={t("common.load_error_prefix")}
       >
@@ -377,7 +395,7 @@ export function ChargingWindowPage() {
                   void navigate(-1);
                 }
               }}
-              className="mb-4 flex h-9 w-9 items-center justify-center rounded-full bg-white shadow border border-driver-line hover:bg-slate-50 transition-colors"
+              className="mb-4 flex h-9 w-9 items-center justify-center rounded-full bg-driver-card shadow border border-driver-line text-driver-ink hover:bg-driver-line transition-colors cursor-pointer"
               aria-label={t("common.back")}
             >
               <ArrowLeft size={16} />
@@ -391,7 +409,7 @@ export function ChargingWindowPage() {
                 <h1 className="mt-2 text-[26px] leading-tight font-bold tracking-tight">{t("charging_window.select_window_title")}</h1>
 
                 {charger.bookable === false || charger.price_per_kwh === null ? (
-                  <div className="mt-4 rounded-2xl border border-[#c7d2fe] bg-[#eef2ff] px-4 py-3.5 text-[13px] text-[#4338ca]">
+                  <div className="mt-4 rounded-2xl border border-vo-accent/40 bg-vo-accent-dim px-4 py-3.5 text-[13px] text-vo-accent-ink">
                     <strong>{t("charging_window.info_only_title")}</strong> {t("charging_window.info_only_body")}
                   </div>
                 ) : (
@@ -401,14 +419,14 @@ export function ChargingWindowPage() {
                     </p>
 
                     {primaryVehicle ? (
-                      <div className="mt-3 inline-flex items-center gap-2 rounded-xl bg-[#f6f7f4] px-3 py-1.5 text-[12px] text-driver-ink border border-driver-line">
+                      <div className="mt-3 inline-flex items-center gap-2 rounded-xl bg-driver-card px-3 py-1.5 text-[12px] text-driver-ink border border-driver-line">
                         <span className="font-semibold">{primaryVehicle.make} {primaryVehicle.model}</span>
                         <span className="text-driver-muted">·</span>
                         <span>{Math.round(primaryVehicle.current_battery_pct)}% → 80%</span>
                         {energyKwh != null && (
                           <>
                             <span className="text-driver-muted">·</span>
-                            <span className="font-medium text-[#0b7a52]">{formatKwh(energyKwh)}</span>
+                            <span className="font-medium text-vo-good-ink">{formatKwh(energyKwh)}</span>
                           </>
                         )}
                       </div>
@@ -434,18 +452,19 @@ export function ChargingWindowPage() {
                             <button
                               key={opt.key}
                               type="button"
+                              disabled={submitting}
                               onClick={() => {
                                 setSelectedDateKey(opt.key);
                                 setSelectedSlotTimeIso(null);
                               }}
-                              className={`flex flex-col items-center justify-center rounded-2xl px-4 py-2.5 min-w-[80px] border transition-all text-center ${
+                              className={`flex flex-col items-center justify-center rounded-2xl px-4 py-2.5 min-w-[80px] border transition-all text-center cursor-pointer disabled:cursor-not-allowed ${
                                 active
-                                  ? "bg-[#111417] border-[#111417] text-white shadow-sm"
-                                  : "bg-[#f6f7f4] border-driver-line text-driver-ink hover:bg-slate-100"
+                                  ? "bg-vo-text border-vo-text text-vo-bg shadow-sm"
+                                  : "bg-driver-card border-driver-line text-driver-ink hover:bg-driver-line"
                               }`}
                             >
                               <span className="text-[13px] font-bold">{opt.label}</span>
-                              <span className={`text-[11px] ${active ? "text-slate-300" : "text-driver-muted"}`}>
+                              <span className={`text-[11px] ${active ? "text-vo-muted" : "text-driver-muted"}`}>
                                 {opt.subLabel}
                               </span>
                             </button>
@@ -467,13 +486,14 @@ export function ChargingWindowPage() {
                             <button
                               key={opt.minutes}
                               type="button"
+                              disabled={submitting}
                               onClick={() => {
                                 setSelectedDuration(opt.minutes);
                               }}
-                              className={`rounded-xl px-3.5 py-2 text-[13px] font-semibold border transition-all ${
+                              className={`rounded-xl px-3.5 py-2 text-[13px] font-semibold border transition-all cursor-pointer disabled:cursor-not-allowed ${
                                 active
-                                  ? "bg-[#0b7a52] border-[#0b7a52] text-white shadow-sm"
-                                  : "bg-white border-driver-line text-driver-ink hover:bg-slate-50"
+                                  ? "bg-[#2e5b44] border-[#2e5b44] text-white shadow-sm"
+                                  : "bg-driver-card border-driver-line text-driver-ink hover:bg-driver-line"
                               }`}
                             >
                               {t(opt.labelKey)}
@@ -497,7 +517,7 @@ export function ChargingWindowPage() {
                           {t("charging_window.no_slots")}
                         </div>
                       ) : (
-                        <div className="grid grid-cols-1 gap-2.5 max-h-[320px] overflow-y-auto pr-1">
+                        <div className="relative z-0 grid grid-cols-1 gap-2.5 max-h-[320px] overflow-y-auto overscroll-contain pr-1">
                           {candidateSlots.map((slot) => {
                             const iso = slot.toISOString();
                             const active = iso === selectedSlotTimeIso;
@@ -508,20 +528,21 @@ export function ChargingWindowPage() {
                               <button
                                 key={iso}
                                 type="button"
+                                disabled={submitting}
                                 onClick={() => setSelectedSlotTimeIso(iso)}
-                                className={`flex items-center justify-between rounded-2xl p-3.5 text-left border transition-all ${
+                                className={`flex items-center justify-between rounded-2xl p-3.5 text-left border transition-all cursor-pointer disabled:cursor-not-allowed ${
                                   active
-                                    ? "bg-[#111417] border-[#111417] text-white shadow-md ring-2 ring-[#111417]/20"
-                                    : "bg-[#f6f7f4] border-driver-line text-driver-ink hover:bg-slate-100"
+                                    ? "bg-vo-text border-vo-text text-vo-bg shadow-md"
+                                    : "bg-driver-card border-driver-line text-driver-ink hover:bg-driver-line"
                                 }`}
                               >
                                 <div className="flex items-center gap-3">
                                   <span
                                     className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${
-                                      active ? "border-[#00c98a] bg-[#00c98a]" : "border-driver-muted"
+                                      active ? "border-vo-accent bg-vo-accent" : "border-driver-muted"
                                     }`}
                                   >
-                                    {active ? <span className="h-1.5 w-1.5 rounded-full bg-[#111417]" /> : null}
+                                    {active ? <span className="h-1.5 w-1.5 rounded-full bg-vo-bg" /> : null}
                                   </span>
 
                                   <div>
@@ -534,20 +555,20 @@ export function ChargingWindowPage() {
                                         <span
                                           className={`inline-block rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
                                             quote.is_off_peak
-                                              ? active ? "bg-emerald-950 text-emerald-300" : "bg-emerald-100 text-emerald-800"
+                                              ? active ? "bg-emerald-700 text-emerald-100" : "bg-vo-good-bg text-vo-good-ink"
                                               : quote.is_peak
-                                                ? active ? "bg-amber-950 text-amber-300" : "bg-amber-100 text-amber-800"
-                                                : active ? "bg-slate-800 text-slate-300" : "bg-slate-200 text-slate-700"
+                                                ? active ? "bg-amber-700 text-amber-100" : "bg-vo-warn-bg text-vo-warn-ink"
+                                                : active ? "bg-vo-elevated text-vo-muted" : "bg-driver-line text-driver-ink"
                                           }`}
                                         >
                                           {quote.is_off_peak ? t("charging_window.badge_off_peak") : quote.is_peak ? t("charging_window.badge_peak") : t("common.standard")}
                                         </span>
-                                        <span className={`text-[11px] ${active ? "text-slate-300" : "text-driver-muted"}`}>
+                                        <span className={`text-[11px] ${active ? "text-vo-muted" : "text-driver-muted"}`}>
                                           {formatInr(quote.tariff_per_kwh)} / kWh
                                         </span>
                                       </div>
                                     ) : (
-                                      <span className={`text-[11px] ${active ? "text-slate-300" : "text-driver-muted"}`}>
+                                      <span className={`text-[11px] ${active ? "text-vo-muted" : "text-driver-muted"}`}>
                                         {t("charging_window.calculating")}
                                       </span>
                                     )}
@@ -556,7 +577,7 @@ export function ChargingWindowPage() {
 
                                 <div className="text-right">
                                   {quote ? (
-                                    <span className={`block text-[16px] font-bold ${active ? "text-emerald-400" : "text-slate-900"}`}>
+                                    <span className={`block text-[16px] font-bold ${active ? "text-emerald-500" : "text-driver-ink"}`}>
                                       {formatInr(total ?? quote.total)}
                                     </span>
                                   ) : (
@@ -578,10 +599,10 @@ export function ChargingWindowPage() {
                         <DynamicPriceCard
                           pricing={selectedPricing}
                           total={selectedQuote.total}
-                          tone="light"
+                          tone={cardTone}
                         />
                       ) : (
-                        <div className="rounded-xl border border-driver-line bg-[#f6f7f4] p-3.5 text-[12px] text-driver-muted">
+                        <div className="rounded-xl border border-driver-line bg-driver-card p-3.5 text-[12px] text-driver-muted">
                           {quoteLoading ? t("charging_window.loading_calc") : t("charging_window.select_slot_prompt")}
                         </div>
                       )}
@@ -602,7 +623,7 @@ export function ChargingWindowPage() {
                             savingsTotal={savingsTotal}
                             savingsPct={savingsPct}
                             cheaper={cheaper}
-                            tone="light"
+                            tone={cardTone}
                           />
                         ) : (
                           <p className="text-[12px] text-driver-muted">
@@ -613,22 +634,32 @@ export function ChargingWindowPage() {
                     </div>
 
                     {submitError && (
-                      <div className="mt-4 rounded-xl bg-red-50 border border-red-200 p-3 text-[13px] font-medium text-red-600">
+                      <div className="mt-4 rounded-xl bg-vo-bad-bg border border-vo-bad-border p-3 text-[13px] font-medium text-vo-bad-ink">
                         {submitError}
                       </div>
                     )}
 
-                    <button
-                      type="button"
-                      disabled={!selectedQuote || quoteLoading}
-                      onClick={() => {
-                        setSubmitError(null);
-                        setBookingStep("payment");
-                      }}
-                      className="fixed bottom-5 left-1/2 flex h-12 w-[min(382px,calc(100%-40px))] -translate-x-1/2 items-center justify-center rounded-2xl bg-vo-accent text-[14px] font-bold text-[#06231b] disabled:opacity-60 shadow-lg hover:brightness-105 transition-all cursor-pointer"
-                    >
-                      {proceedButtonLabel}
-                    </button>
+                    <div className={CTA_BAR_CLASS}>
+                      <button
+                        type="button"
+                        disabled={!selectedQuote || submitting}
+                        onClick={() => {
+                          setSubmitError(null);
+                          setBookingStep("payment");
+                          void handleLaunchRazorpayPayment();
+                        }}
+                        className={CTA_BUTTON_CLASS}
+                      >
+                        {submitting ? (
+                          <span className="flex items-center gap-2">
+                            <span className="h-4 w-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
+                            {t("charging_window.processing")}
+                          </span>
+                        ) : (
+                          proceedButtonLabel
+                        )}
+                      </button>
+                    </div>
                   </>
                 )}
               </>
@@ -636,7 +667,7 @@ export function ChargingWindowPage() {
               /* --- Step 2: Razorpay Payment Checkout Step --- */
               <>
                 <div className="flex items-center justify-between">
-                  <span className="rounded-full bg-[#edf6f0] border border-[#cbe4d3] px-2.5 py-1 text-[10px] font-semibold tracking-wider text-[#3d7a5a] uppercase">
+                  <span className="rounded-full bg-vo-good-bg border border-vo-good-border px-2.5 py-1 text-[10px] font-semibold tracking-wider text-vo-good-ink uppercase">
                     {t("charging_window.test_mode_badge")}
                   </span>
                   <span className="text-[12px] font-mono text-driver-muted">{t("charging_window.step_2_of_2")}</span>
@@ -683,14 +714,14 @@ export function ChargingWindowPage() {
                   </div>
                   <div className="border-t border-driver-line pt-3 flex items-center justify-between font-bold">
                     <span className="text-[14px] text-driver-ink">{t("charging_window.summary.total")}</span>
-                    <span className="text-[20px] text-[#2e5b44]">{selectedTotal != null ? formatInr(selectedTotal) : "—"}</span>
+                    <span className="text-[20px] text-vo-good-ink">{selectedTotal != null ? formatInr(selectedTotal) : "—"}</span>
                   </div>
                 </div>
 
                 {/* Razorpay Gateway Info */}
-                <div className="mt-5 rounded-2xl border border-driver-line bg-[#fbfcfb] p-4 text-[12px] text-driver-muted space-y-2">
+                <div className="mt-5 rounded-2xl border border-driver-line bg-driver-card p-4 text-[12px] text-driver-muted space-y-2">
                   <div className="flex items-center gap-2 text-driver-ink font-semibold">
-                    <ShieldCheck size={16} className="text-[#3d7a5a]" />
+                    <ShieldCheck size={16} className="text-vo-good-ink" />
                     <span>{t("charging_window.gateway_heading")}</span>
                   </div>
                   <p className="leading-relaxed">
@@ -699,26 +730,28 @@ export function ChargingWindowPage() {
                 </div>
 
                 {submitError && (
-                  <div className="mt-4 rounded-xl bg-[#fdf2f2] border border-[#f5c6cb] p-3 text-[13px] font-medium text-[#721c24]">
+                  <div className="mt-4 rounded-xl bg-vo-bad-bg border border-vo-bad-border p-3 text-[13px] font-medium text-vo-bad-ink">
                     {submitError}
                   </div>
                 )}
 
-                <button
-                  type="button"
-                  disabled={submitting}
-                  onClick={() => void handleLaunchRazorpayPayment()}
-                  className="fixed bottom-5 left-1/2 flex h-12 w-[min(382px,calc(100%-40px))] -translate-x-1/2 items-center justify-center gap-2 rounded-2xl bg-[#2e5b44] text-[15px] font-semibold text-white disabled:opacity-60 shadow-lg hover:bg-[#254b38] transition-all cursor-pointer"
-                >
-                  {submitting ? (
-                    <span className="flex items-center gap-2">
-                      <span className="h-4 w-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
-                      {t("charging_window.opening_gateway_inline")}
-                    </span>
-                  ) : (
-                    payButtonLabel
-                  )}
-                </button>
+                <div className={CTA_BAR_CLASS}>
+                  <button
+                    type="button"
+                    disabled={submitting || !selectedQuote}
+                    onClick={() => void handleLaunchRazorpayPayment()}
+                    className={CTA_BUTTON_CLASS}
+                  >
+                    {submitting ? (
+                      <span className="flex items-center gap-2">
+                        <span className="h-4 w-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
+                        {t("charging_window.processing")}
+                      </span>
+                    ) : (
+                      payButtonLabel
+                    )}
+                  </button>
+                </div>
               </>
             )}
           </div>

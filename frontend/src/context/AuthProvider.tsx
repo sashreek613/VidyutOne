@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import type { Session, User } from "@supabase/supabase-js";
+import { isAxiosError } from "axios";
 
 import { AuthContext, type AuthContextValue } from "../hooks/useAuth";
 import { clearPendingEmail, logAuthError, mapAuthError, storePendingEmail } from "../lib/authErrors";
@@ -39,8 +40,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       setProfile(me);
       return me;
-    } catch {
-      setProfile(null);
+    } catch (error) {
+      const status = isAxiosError(error) ? error.response?.status : undefined;
+      if (status === 401 || status === 403) {
+        setProfile(null);
+        return null;
+      }
+      // A racing timeout/5xx must not wipe a profile that already loaded for this user.
+      setProfile((current) => {
+        if (current && current.id === nextSession.user.id) {
+          return current;
+        }
+        return null;
+      });
       return null;
     }
   }, []);
@@ -69,6 +81,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 full_name: mockSession.user.user_metadata.full_name,
                 email: mockSession.user.email,
                 role: "driver",
+                is_verified: true,
+                is_active: true,
+                verification_status: "approved",
                 created_at: new Date().toISOString(),
               }
             : {
@@ -76,6 +91,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 full_name: mockSession.user.user_metadata.full_name,
                 email: mockSession.user.email,
                 role: "planner",
+                is_verified: true,
+                is_active: true,
+                verification_status: "approved",
                 created_at: new Date().toISOString(),
               };
           setProfile(mockProfile);
@@ -111,7 +129,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     void bootstrap();
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+    const { data: listener } = supabase.auth.onAuthStateChange((event, nextSession) => {
+      if (event === "INITIAL_SESSION") {
+        return;
+      }
       void (async () => {
         await applySession(nextSession);
         setLoading(false);
@@ -142,6 +163,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 full_name: "Driver Two",
                 email: "driver2@vidyutone.local",
                 role: "driver",
+                is_verified: true,
+                is_active: true,
+                verification_status: "approved",
                 created_at: new Date().toISOString(),
               }
             : isDriver
@@ -150,6 +174,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                   full_name: "Nikhil",
                   email: "driver.demo@vidyutone.local",
                   role: "driver",
+                  is_verified: true,
+                  is_active: true,
+                  verification_status: "approved",
                   created_at: new Date().toISOString(),
                 }
               : {
@@ -157,6 +184,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                   full_name: "A. Rao",
                   email: "a.rao@bescom.karnataka.gov.in",
                   role: "planner",
+                  is_verified: true,
+                  is_active: true,
+                  verification_status: "approved",
                   created_at: new Date().toISOString(),
                 };
 
@@ -184,18 +214,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           throw new Error(mapAuthError(error));
         }
         storePendingEmail(email);
-        let me = await applySession(data.session);
-        if (!me && data.user) {
-          const role = (data.user.user_metadata?.role as import("../types").Profile["role"]) || "planner";
-          me = {
-            id: data.user.id,
-            full_name: (data.user.user_metadata?.full_name as string) || email.split("@")[0],
-            email: data.user.email || email,
-            role,
-            created_at: data.user.created_at || new Date().toISOString(),
-          };
-          setProfile(me);
-        }
+        const me = await applySession(data.session);
         if (!me) {
           throw new Error("Could not load user profile. Please check backend connection.");
         }
@@ -206,7 +225,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!supabase) {
           throw new Error("Supabase configuration error. Set VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY.");
         }
-        if (!isAppRole(role)) {
+        if (role !== "planner" && role !== "driver") {
           throw new Error("Choose Planner or Driver.");
         }
         const { data, error } = await supabase.auth.signUp({
@@ -301,12 +320,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       },
 
       refreshProfile: async () => {
-        if (!supabase) {
-          await applySession(null);
-          return;
+        setLoading(true);
+        try {
+          if (!supabase) {
+            await applySession(null);
+            return;
+          }
+          const { data } = await supabase.auth.getSession();
+          await applySession(data.session);
+        } finally {
+          setLoading(false);
         }
-        const { data } = await supabase.auth.getSession();
-        await applySession(data.session);
       },
     };
   }, [applySession, loading, profile, session, user]);

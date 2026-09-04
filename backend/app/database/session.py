@@ -26,6 +26,8 @@ def _engine_kwargs(database_url: str) -> dict:
     connect_args: dict = {}
     if "sqlite" not in database_url:
         connect_args["connect_timeout"] = 10
+        if "supabase.co" in database_url:
+            connect_args["sslmode"] = "require"
     pooled = ":6543" in database_url or "pooler.supabase.com" in database_url
     if pooled:
         connect_args["prepare_threshold"] = None
@@ -34,9 +36,11 @@ def _engine_kwargs(database_url: str) -> dict:
         "future": True,
         "connect_args": connect_args,
     }
-    if pooled:
+    if "sqlite" not in database_url:
         kwargs["pool_size"] = 5
         kwargs["max_overflow"] = 5
+        kwargs["pool_recycle"] = 280
+        kwargs["pool_use_lifo"] = True
     return kwargs
 
 

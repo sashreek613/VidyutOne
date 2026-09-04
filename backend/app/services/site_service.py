@@ -17,8 +17,9 @@ DB row; everything around it comes from the real data files.
 
 from __future__ import annotations
 
+import math
 from functools import lru_cache
-from typing import Any
+from typing import Any, Iterable
 
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
@@ -150,27 +151,79 @@ def _citywide_ev_share_pct() -> float | None:
     return round(100 * total_ev / total_all, 2)
 
 
+# ~1.1 km / ~5.5 km cells. Lookups expand by the search radius so results
+# match a full scan; this only avoids walking the whole Bengaluru extract.
+_CANDIDATE_GRID_DEG = 0.01
+_SUBSTATION_GRID_DEG = 0.05
+
+
+def _cell(lat: float, lon: float, cell_deg: float) -> tuple[int, int]:
+    return (math.floor(lat / cell_deg), math.floor(lon / cell_deg))
+
+
+def _cells_for_radius(lat: float, lon: float, radius_km: float, cell_deg: float) -> Iterable[tuple[int, int]]:
+    lat_pad = radius_km / 111.0
+    lon_pad = radius_km / (111.0 * max(0.2, math.cos(math.radians(lat))))
+    row0, col0 = _cell(lat - lat_pad, lon - lon_pad, cell_deg)
+    row1, col1 = _cell(lat + lat_pad, lon + lon_pad, cell_deg)
+    for row in range(row0, row1 + 1):
+        for col in range(col0, col1 + 1):
+            yield (row, col)
+
+
+@lru_cache(maxsize=1)
+def _candidate_spatial_index() -> tuple[float, dict[tuple[int, int], list[dict[str, Any]]]]:
+    grid: dict[tuple[int, int], list[dict[str, Any]]] = {}
+    for candidate in _candidate_sites():
+        key = _cell(candidate["latitude"], candidate["longitude"], _CANDIDATE_GRID_DEG)
+        grid.setdefault(key, []).append(candidate)
+    return _CANDIDATE_GRID_DEG, grid
+
+
+@lru_cache(maxsize=1)
+def _substation_spatial_index() -> tuple[float, dict[tuple[int, int], list[dict[str, Any]]]]:
+    grid: dict[tuple[int, int], list[dict[str, Any]]] = {}
+    for sub in _substations():
+        key = _cell(sub["latitude"], sub["longitude"], _SUBSTATION_GRID_DEG)
+        grid.setdefault(key, []).append(sub)
+    return _SUBSTATION_GRID_DEG, grid
+
+
+def _candidates_near(lat: float, lon: float, radius_km: float) -> list[dict[str, Any]]:
+    cell_deg, grid = _candidate_spatial_index()
+    nearby: list[dict[str, Any]] = []
+    for key in _cells_for_radius(lat, lon, radius_km, cell_deg):
+        nearby.extend(grid.get(key, ()))
+    return nearby
+
+
+def _substations_near(lat: float, lon: float, radius_km: float) -> list[dict[str, Any]]:
+    cell_deg, grid = _substation_spatial_index()
+    nearby: list[dict[str, Any]] = []
+    for key in _cells_for_radius(lat, lon, radius_km, cell_deg):
+        nearby.extend(grid.get(key, ()))
+    return nearby
+
+
 def _nearest_candidate(lat: float, lon: float) -> dict[str, Any] | None:
-    candidates = _candidate_sites()
-    if not candidates:
+    nearby = _candidates_near(lat, lon, _LAND_MATCH_RADIUS_KM)
+    if not nearby:
         return None
-    best = min(candidates, key=lambda c: haversine_km(lat, lon, c["latitude"], c["longitude"]))
+    best = min(nearby, key=lambda c: haversine_km(lat, lon, c["latitude"], c["longitude"]))
     if haversine_km(lat, lon, best["latitude"], best["longitude"]) > _LAND_MATCH_RADIUS_KM:
         return None
     return best
 
 
 def _poi_density(lat: float, lon: float) -> int:
-    return sum(1 for c in _candidate_sites() if haversine_km(lat, lon, c["latitude"], c["longitude"]) <= POI_DENSITY_RADIUS_KM)
+    return sum(
+        1
+        for c in _candidates_near(lat, lon, POI_DENSITY_RADIUS_KM)
+        if haversine_km(lat, lon, c["latitude"], c["longitude"]) <= POI_DENSITY_RADIUS_KM
+    )
 
 
-def _nearest_substation(lat: float, lon: float) -> SubstationRef | None:
-    subs = _substations()
-    if not subs:
-        return None
-    best = min(subs, key=lambda s: haversine_km(lat, lon, s["latitude"], s["longitude"]))
-    if haversine_km(lat, lon, best["latitude"], best["longitude"]) > _MAX_SUBSTATION_SEARCH_KM:
-        return None
+def _substation_ref(best: dict[str, Any]) -> SubstationRef:
     voltage = best.get("bescom_voltage_class_kv")
     if voltage is None:
         osm_voltages = best.get("osm_voltage_kv") or []
@@ -184,13 +237,46 @@ def _nearest_substation(lat: float, lon: float) -> SubstationRef | None:
     )
 
 
-def _nearby_chargers(db: Session, *, exclude_site_id: str | None) -> list[ChargerRef]:
+def _nearest_substation(lat: float, lon: float) -> SubstationRef | None:
+    nearby = _substations_near(lat, lon, _MAX_SUBSTATION_SEARCH_KM)
+    if not nearby:
+        return None
+    best = min(nearby, key=lambda s: haversine_km(lat, lon, s["latitude"], s["longitude"]))
+    if haversine_km(lat, lon, best["latitude"], best["longitude"]) > _MAX_SUBSTATION_SEARCH_KM:
+        return None
+    return _substation_ref(best)
+
+
+@lru_cache(maxsize=1)
+def _ocm_charger_refs() -> tuple[ChargerRef, ...] | None:
     real = _real_chargers()
-    if real is not None:
-        return [
-            ChargerRef(id=c["id"], name=c["name"], latitude=c["latitude"], longitude=c["longitude"], source="OCM")
-            for c in real
-        ]
+    if real is None:
+        return None
+    return tuple(
+        ChargerRef(id=c["id"], name=c["name"], latitude=c["latitude"], longitude=c["longitude"], source="OCM")
+        for c in real
+    )
+
+
+def _demo_chargers_with_site(db: Session) -> list[tuple[ChargerRef, str | None]]:
+    return [
+        (
+            ChargerRef(id=c.id, name=c.name, latitude=c.latitude, longitude=c.longitude, source="DEMO"),
+            c.site_id,
+        )
+        for c in db.query(Charger).all()
+    ]
+
+
+def _nearby_chargers(
+    db: Session,
+    *,
+    exclude_site_id: str | None,
+    demo_chargers: list[tuple[ChargerRef, str | None]] | None = None,
+) -> list[ChargerRef]:
+    ocm = _ocm_charger_refs()
+    if ocm is not None:
+        return list(ocm)
     # Fallback: OpenChargeMap not fetched yet (see data/README.md). Use the
     # DB's demo chargers instead -- but CRITICAL: when scoring an existing
     # seeded Site, exclude ITS OWN linked charger(s). The demo seed data
@@ -199,13 +285,10 @@ def _nearby_chargers(db: Session, *, exclude_site_id: str | None) -> list[Charge
     # identical to every other site's and collapse the whole coverage_gap
     # sub-score. An arbitrary classify()'d point has no own-site charger to
     # exclude, so exclude_site_id is None there -- correct, not an oversight.
-    query = db.query(Charger)
-    if exclude_site_id is not None:
-        query = query.filter(Charger.site_id != exclude_site_id)
-    return [
-        ChargerRef(id=c.id, name=c.name, latitude=c.latitude, longitude=c.longitude, source="DEMO")
-        for c in query.all()
-    ]
+    rows = demo_chargers if demo_chargers is not None else _demo_chargers_with_site(db)
+    if exclude_site_id is None:
+        return [ref for ref, _site_id in rows]
+    return [ref for ref, site_id in rows if site_id != exclude_site_id]
 
 
 def _build_scoring_input_for_point(
@@ -216,6 +299,7 @@ def _build_scoring_input_for_point(
     latitude: float,
     longitude: float,
     exclude_site_id: str | None,
+    demo_chargers: list[tuple[ChargerRef, str | None]] | None = None,
 ) -> SiteScoringInput:
     """The ONE place a SiteScoringInput gets built -- used for every seeded
     Site (via _build_scoring_input below) AND for classify()'s arbitrary
@@ -230,14 +314,18 @@ def _build_scoring_input_for_point(
         poi_density_count=_poi_density(latitude, longitude),
         land_category=nearest["category"] if nearest else "unknown",
         citywide_ev_share_pct=_citywide_ev_share_pct(),
-        nearby_chargers=_nearby_chargers(db, exclude_site_id=exclude_site_id),
+        nearby_chargers=_nearby_chargers(db, exclude_site_id=exclude_site_id, demo_chargers=demo_chargers),
         nearest_substation=_nearest_substation(latitude, longitude),
         parking_capacity=(nearest.get("capacity") if nearest else None),
         land_area_m2=(nearest.get("area_m2") if nearest else None),
     )
 
 
-def _build_scoring_input(db: Session, site: Site) -> SiteScoringInput:
+def _build_scoring_input(
+    db: Session,
+    site: Site,
+    demo_chargers: list[tuple[ChargerRef, str | None]] | None = None,
+) -> SiteScoringInput:
     return _build_scoring_input_for_point(
         db,
         point_id=site.id,
@@ -245,11 +333,16 @@ def _build_scoring_input(db: Session, site: Site) -> SiteScoringInput:
         latitude=site.latitude,
         longitude=site.longitude,
         exclude_site_id=site.id,
+        demo_chargers=demo_chargers,
     )
 
 
-def _to_site_read(db: Session, site: Site) -> SiteRead:
-    result = score_site(_build_scoring_input(db, site))
+def _to_site_read(
+    db: Session,
+    site: Site,
+    demo_chargers: list[tuple[ChargerRef, str | None]] | None = None,
+) -> SiteRead:
+    result = score_site(_build_scoring_input(db, site, demo_chargers=demo_chargers))
     return SiteRead(
         id=site.id,
         name=site.name,
@@ -266,6 +359,12 @@ def _to_site_read(db: Session, site: Site) -> SiteRead:
     )
 
 
+def _demo_chargers_for_batch(db: Session) -> list[tuple[ChargerRef, str | None]] | None:
+    if _ocm_charger_refs() is not None:
+        return None
+    return _demo_chargers_with_site(db)
+
+
 def list_sites(db: Session, limit: int = DEFAULT_PAGE_SIZE, offset: int = 0) -> list[SiteRead]:
     sites = (
         db.query(Site)
@@ -274,7 +373,8 @@ def list_sites(db: Session, limit: int = DEFAULT_PAGE_SIZE, offset: int = 0) -> 
         .limit(max(1, min(limit, MAX_PAGE_SIZE)))
         .all()
     )
-    return [_to_site_read(db, site) for site in sites]
+    demo_chargers = _demo_chargers_for_batch(db)
+    return [_to_site_read(db, site, demo_chargers=demo_chargers) for site in sites]
 
 
 def get_site(db: Session, site_id: str) -> SiteRead:
@@ -292,7 +392,12 @@ def list_recommended_sites(db: Session, limit: int = DEFAULT_RECOMMENDED_LIMIT) 
     is ready to send an auth header from the planner dashboard.
     """
     sites = db.query(Site).all()
-    scored = sorted((_to_site_read(db, site) for site in sites), key=lambda s: s.site_score, reverse=True)
+    demo_chargers = _demo_chargers_for_batch(db)
+    scored = sorted(
+        (_to_site_read(db, site, demo_chargers=demo_chargers) for site in sites),
+        key=lambda s: s.site_score,
+        reverse=True,
+    )
     capped = scored[: max(1, min(limit, MAX_RECOMMENDED_LIMIT))]
     return [RecommendedSiteRead(rank=i + 1, **site.model_dump()) for i, site in enumerate(capped)]
 

@@ -188,7 +188,7 @@ export function ChargerDetailsPage() {
             </div>
 
             {/* Bottom action bar: Navigate + Book Now */}
-            <div className="fixed bottom-5 left-1/2 z-10 flex w-[min(382px,calc(100%-40px))] -translate-x-1/2 items-center gap-2.5">
+            <div className="fixed bottom-5 left-1/2 z-30 flex w-[min(382px,calc(100%-40px))] -translate-x-1/2 items-center gap-2.5">
               <button
                 type="button"
                 onClick={() => {
@@ -202,7 +202,7 @@ export function ChargerDetailsPage() {
               </button>
               <Link
                 to={`/driver/charger/${charger.id}/book`}
-                className="flex h-12 flex-1 items-center justify-center rounded-2xl bg-[#2e5b44] text-[14px] font-semibold text-white shadow-md hover:bg-[#254b38] transition-colors"
+                className="flex h-12 flex-1 items-center justify-center rounded-2xl bg-[#2e5b44] text-[14px] font-semibold text-white shadow-md hover:bg-[#254b38] active:bg-[#1d3c2d] transition-colors cursor-pointer"
               >
                 {t("common.book_now")}
               </Link>

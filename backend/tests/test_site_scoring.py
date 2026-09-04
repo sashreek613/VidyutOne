@@ -332,6 +332,60 @@ def test_out_of_bbox_point_is_rejected():
     assert is_within_bbox(BBMP_BBOX["min_lat"], BBMP_BBOX["min_lon"]) is True
 
 
+def test_spatial_index_matches_full_scan():
+    """Overview scoring must not skip POIs/substations that a linear scan would find."""
+    from app.engines.site_scoring import POI_DENSITY_RADIUS_KM, haversine_km
+    from app.services import site_service
+
+    samples = [(12.9716, 77.5946), (12.9352, 77.6245), (13.05, 77.62)]
+    candidates = site_service._candidate_sites()
+    substations = site_service._substations()
+    for lat, lon in samples:
+        brute_density = sum(
+            1 for c in candidates if haversine_km(lat, lon, c["latitude"], c["longitude"]) <= POI_DENSITY_RADIUS_KM
+        )
+        assert site_service._poi_density(lat, lon) == brute_density
+
+        brute_subs = [s for s in substations if haversine_km(lat, lon, s["latitude"], s["longitude"]) <= 15.0]
+        indexed = site_service._nearest_substation(lat, lon)
+        if not brute_subs:
+            assert indexed is None
+            continue
+        brute_best = min(brute_subs, key=lambda s: haversine_km(lat, lon, s["latitude"], s["longitude"]))
+        assert indexed is not None
+        assert indexed.id == brute_best["id"]
+
+
+@pytest.mark.db
+def test_overview_site_lists_complete_quickly():
+    """Regression for Planner Overview axios 10s timeout: scoring 161 sites
+    used to full-scan ~2000 OSM POIs per site and hold DB connections."""
+    import time
+
+    from sqlalchemy import text
+
+    from app.database.session import SessionLocal
+    from app.services import site_service
+
+    db = SessionLocal()
+    try:
+        db.execute(text("SELECT 1"))
+    except Exception:
+        pytest.skip("DB not reachable in this environment")
+        return
+
+    try:
+        t0 = time.perf_counter()
+        sites = site_service.list_sites(db, limit=50)
+        recommended = site_service.list_recommended_sites(db, limit=10)
+        elapsed = time.perf_counter() - t0
+        assert len(sites) > 0
+        assert len(recommended) > 0
+        assert elapsed < 5.0, f"Overview scoring took {elapsed:.2f}s"
+    finally:
+        db.close()
+
+
 @pytest.mark.db
 def test_classify_matches_ranked_list_for_a_seeded_site():
     """The one test in this file that needs a live DB connection (same

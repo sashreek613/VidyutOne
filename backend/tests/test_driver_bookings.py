@@ -110,6 +110,29 @@ def test_driver_can_create_and_retrieve_booking():
         app.dependency_overrides.clear()
 
 
+def test_ocm_charger_booking_does_not_require_chargers_row():
+    """Pay on a live OpenChargeMap hub must INSERT a booking without a chargers FK row."""
+    user1 = AuthUser(id="driver-1", email="driver1@example.com", full_name="Driver One", role=ROLE_DRIVER)
+    app.dependency_overrides[get_current_user] = lambda: user1
+    slot_time = (datetime.now(timezone.utc) + timedelta(hours=30)).isoformat()
+    try:
+        response = client.post(
+            "/api/bookings",
+            json={
+                "charger_id": "ocm-309285-0",
+                "slot_time": slot_time,
+                "duration_minutes": 30,
+            },
+        )
+        assert response.status_code == 201, response.text
+        data = response.json()
+        assert data["charger_id"] == "ocm-309285-0"
+        assert data["status"] == "PAYMENT_PENDING"
+        assert data["price"] > 0
+    finally:
+        app.dependency_overrides.clear()
+
+
 def test_driver_cancellation_rules():
     user1 = AuthUser(id="driver-1", email="driver1@example.com", full_name="Driver One", role=ROLE_DRIVER)
     user2 = AuthUser(id="driver-2", email="driver2@example.com", full_name="Driver Two", role=ROLE_DRIVER)

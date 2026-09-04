@@ -31,12 +31,14 @@ logger = logging.getLogger(__name__)
 def _razorpay_client():
     import razorpay  # local import so server starts even if key is empty during tests
     settings = get_settings()
-    if not settings.RAZORPAY_KEY_ID or not settings.RAZORPAY_KEY_SECRET:
+    key_id = settings.RAZORPAY_KEY_ID.strip()
+    secret = settings.RAZORPAY_KEY_SECRET.strip()
+    if not key_id or not secret:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Payment gateway not configured. Please contact support.",
         )
-    return razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+    return razorpay.Client(auth=(key_id, secret))
 
 
 def create_order(
@@ -59,6 +61,7 @@ def create_order(
             detail=f"Booking is in status '{booking.status}', not PAYMENT_PENDING.",
         )
 
+    # Amount always comes from the persisted booking price, never the client payload.
     amount_paise = int(round(booking.price * 100))  # Razorpay uses smallest currency unit
 
     client = _razorpay_client()
@@ -75,7 +78,14 @@ def create_order(
             }
         )
     except Exception as exc:
-        logger.exception("Razorpay order creation failed: %s", exc)
+        message = str(exc).lower()
+        if "auth" in message:
+            logger.exception("Razorpay order creation failed category=invalid_credentials")
+            raise HTTPException(
+                status_code=502,
+                detail="Payment gateway authentication failed. Check Razorpay test credentials.",
+            )
+        logger.exception("Razorpay order creation failed category=gateway_error")
         raise HTTPException(status_code=502, detail="Payment gateway error. Please try again.")
 
     razorpay_order_id: str = order_data["id"]
@@ -138,8 +148,33 @@ def verify_payment(
     if payment is None:
         raise HTTPException(status_code=404, detail="Payment record not found")
 
+    if (
+        payment.razorpay_order_id
+        and payload.razorpay_order_id != payment.razorpay_order_id
+    ):
+        raise HTTPException(status_code=400, detail="Payment order mismatch. Please retry.")
+
     settings = get_settings()
-    secret = settings.RAZORPAY_KEY_SECRET
+    secret = settings.RAZORPAY_KEY_SECRET.strip()
+    if not secret:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Payment gateway not configured. Please contact support.",
+        )
+
+    # Idempotent: already verified this payment
+    if (
+        payment.payment_status == "PAID"
+        and booking.status == BookingStatus.BOOKED.value
+        and payment.razorpay_payment_id == payload.razorpay_payment_id
+    ):
+        return VerifyPaymentResponse(
+            success=True,
+            booking_id=booking.id,
+            payment_status="PAID",
+            booking_status="BOOKED",
+            message="Payment confirmed. Your charging session is booked!",
+        )
 
     # Verify signature: HMAC-SHA256(order_id + "|" + payment_id, secret)
     expected = hmac.new(

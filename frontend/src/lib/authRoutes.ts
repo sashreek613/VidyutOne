@@ -1,7 +1,7 @@
 import type { Profile, UserRole } from "../types";
 
-export function homeForRole(roleOrProfile: UserRole | Profile | string | undefined, profileObj?: Profile | null): string {
-  const profile = typeof roleOrProfile === "object" ? roleOrProfile : profileObj;
+export function homeForRole(roleOrProfile: UserRole | Profile | string | null | undefined, profileObj?: Profile | null): string {
+  const profile = roleOrProfile && typeof roleOrProfile === "object" ? roleOrProfile : profileObj;
   const role = typeof roleOrProfile === "string" ? roleOrProfile : profile?.role;
 
   if (role === "admin") {
