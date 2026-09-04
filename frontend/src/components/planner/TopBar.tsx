@@ -70,11 +70,11 @@ export function TopBar({
         <button
           type="button"
           onClick={() => void handleSignOut()}
-          className="rounded-full border border-vo-border px-3 py-1.5 text-[12px] text-vo-soft hover:border-vo-border hover:text-vo-text"
+          className="vo-hover-interactive rounded-[8px] border border-vo-border px-3 py-1.5 text-[12px] text-vo-soft hover:border-vo-border hover:text-vo-text"
         >
           Logout
         </button>
-        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-vo-accent text-[11px] font-semibold text-[#06231b]">
+        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#EEF2F7] dark:bg-[#1c242f] border border-[#4F6F9F]/30 dark:border-[#6F8FB8]/40 text-[11px] font-bold text-[#4F6F9F] dark:text-[#6F8FB8] select-none">
           {initials}
         </span>
       </div>

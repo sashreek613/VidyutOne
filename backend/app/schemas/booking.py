@@ -9,16 +9,19 @@ from app.models.booking import Booking
 
 class BookingStatus(str, Enum):
     AVAILABLE = "AVAILABLE"
+    PAYMENT_PENDING = "PAYMENT_PENDING"
     BOOKED = "BOOKED"
     ACTIVE = "ACTIVE"
     COMPLETED = "COMPLETED"
     CANCELLED = "CANCELLED"
+    PAYMENT_FAILED = "PAYMENT_FAILED"
 
 
 class BookingCreate(BaseModel):
     charger_id: str
     slot_time: datetime
     price: float | None = None
+    duration_minutes: int | None = 30
 
 
 class BookingRead(BaseModel):
@@ -41,7 +44,16 @@ class BookingRead(BaseModel):
             if obj.charger:
                 from app.services.charger_service import _to_charger_read_from_db
                 charger_val = _to_charger_read_from_db(obj.charger)
-                
+            elif obj.charger_id:
+                # REAL OCM charger — no DB row, look up from JSON cache
+                try:
+                    from app.services.charger_service import get_charger
+                    from app.database.session import SessionLocal
+                    with SessionLocal() as session:
+                        charger_val = get_charger(session, obj.charger_id)
+                except Exception:
+                    charger_val = None
+
             return cls(
                 id=obj.id,
                 user_id=obj.user_id,
@@ -54,3 +66,4 @@ class BookingRead(BaseModel):
                 charger=charger_val,
             )
         return super().model_validate(obj, **kwargs)
+

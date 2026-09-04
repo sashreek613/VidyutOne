@@ -133,7 +133,7 @@ export function AdminDashboardPage() {
               <span className="text-xs font-bold uppercase tracking-wider">Pending Requests</span>
               <Clock className="w-4 h-4" />
             </div>
-            <div className="text-2xl font-bold text-white font-mono">{pendingCount}</div>
+            <div className="text-2xl font-bold text-vo-text font-mono">{pendingCount}</div>
             <p className="text-xs text-vo-muted">Requires admin review and approval</p>
           </div>
 
@@ -147,7 +147,7 @@ export function AdminDashboardPage() {
               <span className="text-xs font-bold uppercase tracking-wider">Approved Planners</span>
               <UserCheck className="w-4 h-4" />
             </div>
-            <div className="text-2xl font-bold text-white font-mono">{approvedCount}</div>
+            <div className="text-2xl font-bold text-vo-text font-mono">{approvedCount}</div>
             <p className="text-xs text-vo-muted">Authorized for Planner Console</p>
           </div>
 
@@ -161,7 +161,7 @@ export function AdminDashboardPage() {
               <span className="text-xs font-bold uppercase tracking-wider">Rejected Requests</span>
               <XCircle className="w-4 h-4" />
             </div>
-            <div className="text-2xl font-bold text-white font-mono">{rejectedCount}</div>
+            <div className="text-2xl font-bold text-vo-text font-mono">{rejectedCount}</div>
             <p className="text-xs text-vo-muted">Denied planner privileges</p>
           </div>
         </div>
@@ -170,7 +170,7 @@ export function AdminDashboardPage() {
         <div className="rounded-2xl border border-vo-line bg-vo-card p-6 space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h2 className="text-base font-bold text-white">Planner Verification Requests</h2>
+              <h2 className="text-base font-bold text-vo-text">Planner Verification Requests</h2>
               <p className="text-xs text-vo-muted">Review government authority registration applications</p>
             </div>
 
@@ -189,7 +189,7 @@ export function AdminDashboardPage() {
               <button
                 type="button"
                 onClick={() => void loadData()}
-                className="p-2 rounded-xl border border-vo-line hover:border-vo-accent/40 text-vo-muted hover:text-white transition-colors"
+                className="p-2 rounded-xl border border-vo-line hover:border-vo-accent/40 text-vo-muted hover:text-vo-text transition-colors"
                 title="Refresh requests"
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
@@ -205,7 +205,7 @@ export function AdminDashboardPage() {
                 type="button"
                 onClick={() => setActiveTab(tab)}
                 className={`pb-2.5 border-b-2 capitalize transition-colors ${
-                  activeTab === tab ? "border-vo-accent text-vo-accent font-semibold" : "border-transparent hover:text-white"
+                  activeTab === tab ? "border-vo-accent text-vo-accent font-semibold" : "border-transparent hover:text-vo-text"
                 }`}
               >
                 {tab} Requests
@@ -229,7 +229,7 @@ export function AdminDashboardPage() {
                   <th className="pb-3 font-semibold text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-vo-line/40 text-gray-300">
+              <tbody className="divide-y divide-vo-line/40 text-vo-text">
                 {filteredPlanners.map((p) => {
                   const isPending = p.verification_status === "pending";
                   const isApproved = p.verification_status === "approved";
@@ -238,18 +238,18 @@ export function AdminDashboardPage() {
                   return (
                     <tr key={p.id} className="hover:bg-white/5 transition-colors">
                       <td className="py-3.5">
-                        <p className="font-bold text-white">{p.full_name}</p>
+                        <p className="font-bold text-vo-text">{p.full_name}</p>
                         <p className="text-[11px] text-vo-muted font-mono">{p.email}</p>
                       </td>
 
                       <td className="py-3.5">
-                        <div className="flex items-center space-x-1.5 text-white">
+                        <div className="flex items-center space-x-1.5 text-vo-text">
                           <Building2 className="w-3.5 h-3.5 text-vo-accent shrink-0" />
                           <span>{p.organization ?? "N/A"}</span>
                         </div>
                       </td>
 
-                      <td className="py-3.5 text-gray-300">{p.designation ?? "N/A"}</td>
+                      <td className="py-3.5 text-vo-text">{p.designation ?? "N/A"}</td>
                       <td className="py-3.5 font-mono text-vo-muted">{p.phone_number ?? "N/A"}</td>
                       <td className="py-3.5 text-vo-muted">{new Date(p.created_at).toLocaleDateString()}</td>
 
@@ -300,7 +300,7 @@ export function AdminDashboardPage() {
 
             {filteredPlanners.length === 0 ? (
               <div className="py-12 text-center text-xs text-vo-muted space-y-1">
-                <p className="text-sm font-semibold text-white">No planner verification requests found.</p>
+                <p className="text-sm font-semibold text-vo-text">No planner verification requests found.</p>
                 <p>No records match the active filter status.</p>
               </div>
             ) : null}

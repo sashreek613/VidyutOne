@@ -72,7 +72,7 @@ export function SignupPage() {
     <AuthShell>
       <form onSubmit={(event) => void handleSubmit(event)}>
         <AuthCard>
-          <h2 className="text-[28px] font-semibold text-white">Create account</h2>
+          <h2 className="text-[28px] font-semibold text-vo-text">Create account</h2>
           <p className="mt-1 text-[13px] text-vo-muted">
             Choose Planner or Driver. This role is stored on your profile and cannot be switched from the login screen.
           </p>
@@ -141,7 +141,7 @@ export function SignupPage() {
           </AuthSubmit>
           <p className="mt-4 text-center text-[12px] text-vo-muted">
             Already registered?{" "}
-            <Link to="/" className="text-white hover:underline">
+            <Link to="/" className="text-vo-text hover:underline">
               Sign in
             </Link>
           </p>

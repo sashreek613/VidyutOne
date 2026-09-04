@@ -22,7 +22,7 @@ export function PlannerPendingPage() {
           <span>Authority Authorization Status</span>
         </div>
 
-        <h2 className="text-[26px] font-bold text-white">
+        <h2 className="text-[26px] font-bold text-vo-text">
           {isRejected ? "Planner Authorization Rejected" : "Planner Verification Pending"}
         </h2>
 
@@ -32,7 +32,7 @@ export function PlannerPendingPage() {
               <ShieldAlert className="w-5 h-5" />
             </div>
             <div className="space-y-1">
-              <p className="text-xs font-bold text-white uppercase tracking-wider">
+              <p className="text-xs font-bold text-vo-text uppercase tracking-wider">
                 {isRejected ? "Application Rejected" : "Pending Administrator Review"}
               </p>
               <p className="text-xs text-vo-muted leading-relaxed">
@@ -46,20 +46,20 @@ export function PlannerPendingPage() {
           <div className="pt-3 border-t border-vo-line/60 space-y-2 text-xs">
             <div className="flex justify-between text-vo-muted">
               <span>Account Holder:</span>
-              <span className="font-semibold text-white">{profile?.full_name ?? "Planner Officer"}</span>
+              <span className="font-semibold text-vo-text">{profile?.full_name ?? "Planner Officer"}</span>
             </div>
             <div className="flex justify-between text-vo-muted">
               <span>Official Email:</span>
-              <span className="font-mono text-white">{profile?.email}</span>
+              <span className="font-mono text-vo-text">{profile?.email}</span>
             </div>
             <div className="flex justify-between text-vo-muted">
               <span>Organization:</span>
-              <span className="font-semibold text-white">{profile?.organization ?? "N/A"}</span>
+              <span className="font-semibold text-vo-text">{profile?.organization ?? "N/A"}</span>
             </div>
             {profile?.designation ? (
               <div className="flex justify-between text-vo-muted">
                 <span>Designation:</span>
-                <span className="font-semibold text-white">{profile.designation}</span>
+                <span className="font-semibold text-vo-text">{profile.designation}</span>
               </div>
             ) : null}
             <div className="flex justify-between text-vo-muted pt-1">
@@ -90,12 +90,12 @@ export function PlannerPendingPage() {
           <button
             type="button"
             onClick={() => void handleSignOut()}
-            className="flex h-11 items-center justify-center space-x-2 rounded-xl bg-vo-card border border-vo-line text-xs font-semibold text-white hover:border-vo-accent/40 transition-colors"
+            className="flex h-11 items-center justify-center space-x-2 rounded-xl bg-vo-card border border-vo-line text-xs font-semibold text-vo-text hover:border-vo-accent/40 transition-colors"
           >
             <LogOut className="w-4 h-4 text-vo-muted" />
             <span>Sign Out</span>
           </button>
-          <Link to="/login" className="text-center text-[12px] text-vo-muted hover:text-white pt-2">
+          <Link to="/login" className="text-center text-[12px] text-vo-muted hover:text-vo-text pt-2">
             Back to Sign In
           </Link>
         </div>

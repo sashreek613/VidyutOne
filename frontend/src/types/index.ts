@@ -18,10 +18,12 @@ export interface ScoredFactor {
 
 export type BookingStatus =
   | "AVAILABLE"
+  | "PAYMENT_PENDING"
   | "BOOKED"
   | "ACTIVE"
   | "COMPLETED"
-  | "CANCELLED";
+  | "CANCELLED"
+  | "PAYMENT_FAILED";
 
 export type UserRole = "planner" | "driver" | "admin";
 
@@ -144,6 +146,7 @@ export interface BookingCreate {
   charger_id: string;
   slot_time: string;
   price?: number;
+  duration_minutes?: number;
 }
 
 export interface Vehicle {
@@ -287,3 +290,24 @@ export interface ChargingQuote {
   quotes: ChargingSlotQuote[];
 }
 
+// ── Planner Consideration & Reports ─────────────────────────────────────────
+
+export interface ConsiderationItem {
+  id: string;
+  site_id: string;
+  added_at: string;
+}
+
+export interface PlannerReport {
+  id: string;
+  title: string;
+  site_ids: string[];
+  division: string | null;
+  created_at: string;
+}
+
+export interface ReportCreate {
+  site_ids: string[];
+  title?: string;
+  division?: string | null;
+}

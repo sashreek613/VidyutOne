@@ -75,11 +75,11 @@ def get_or_create_profile(
     phone = metadata.get("phone_number") if isinstance(metadata, dict) and isinstance(metadata.get("phone_number"), str) else None
     designation = metadata.get("designation") if isinstance(metadata, dict) and isinstance(metadata.get("designation"), str) else None
 
-    # New planners must be approved by an Admin before accessing Planner dashboard
+    # Planners are verified & active by default
     is_planner = (role == ROLE_PLANNER)
-    is_verified = not is_planner
-    is_active = not is_planner
-    verification_status = "pending" if is_planner else "approved"
+    is_verified = True
+    is_active = True
+    verification_status = "approved"
 
     user = User(
         id=user_id,

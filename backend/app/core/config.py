@@ -1,6 +1,7 @@
 from functools import lru_cache
 from pathlib import Path
 
+# pyrefly: ignore [missing-import]
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BACKEND_DIR = Path(__file__).resolve().parents[2]
@@ -29,9 +30,15 @@ class Settings(BaseSettings):
 
     OCM_API_KEY: str = ""
 
+    GEMINI_API_KEY: str = ""
+
     LYZR_API_KEY: str = ""
     LYZR_AGENT_ID: str = ""
     LYZR_DRIVER_AGENT_ID: str = ""
+
+    RAZORPAY_KEY_ID: str = ""
+    RAZORPAY_KEY_SECRET: str = ""
+    DEFAULT_FALLBACK_TARIFF: float = 18.0
 
     @property
     def cors_origin_list(self) -> list[str]:

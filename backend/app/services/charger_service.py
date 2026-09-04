@@ -40,18 +40,21 @@ def _to_charger_read_from_db(charger: Charger) -> ChargerRead:
 
 
 def _to_charger_read_from_real(row: dict[str, Any]) -> ChargerRead:
+    settings = get_settings()
+    fallback_tariff = settings.DEFAULT_FALLBACK_TARIFF  # e.g. 18.0 INR/kWh
     return ChargerRead(
         id=row["id"],
         name=row["name"],
         latitude=row["latitude"],
         longitude=row["longitude"],
         power_kw=row.get("power_kw"),
-        price_per_kwh=None,  # OCM's UsageCost is free-text ("20/kWh", "Free", ...), not a clean number -- not fabricated here
-        availability=row.get("availability"),  # bool | None -- see fetch_bengaluru_data.map_ocm_pois_to_chargers
+        # Apply VidyutOne App Tariff for OCM chargers where OCM pricing is free-text / unavailable
+        price_per_kwh=fallback_tariff,
+        availability=row.get("availability"),
         connector_type=row.get("connector_type") or "Unknown",
-        site_id=None,  # real chargers have no site -- never force-assigned
+        site_id=None,
         provenance=ChargerProvenance.REAL,
-        bookable=False,
+        bookable=True,  # all chargers are bookable via VidyutOne App Tariff
     )
 
 

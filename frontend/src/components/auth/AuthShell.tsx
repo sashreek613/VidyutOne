@@ -1,59 +1,85 @@
 import type { ReactNode } from "react";
-
-import { BrandMark } from "../common/BrandMark";
+import { Zap } from "lucide-react";
+import { ThemeToggle } from "../common/ThemeToggle";
 
 export function AuthShell({ children }: { children: ReactNode }) {
   return (
-    <div className="relative min-h-screen overflow-hidden bg-vo-bg text-vo-text">
-      <div className="pointer-events-none absolute inset-0 vo-radar opacity-70" />
-      <div className="relative mx-auto grid min-h-screen max-w-[1280px] grid-cols-1 lg:grid-cols-[1.15fr_0.85fr]">
-        <section className="flex flex-col justify-between px-10 py-10 lg:px-16 lg:py-14">
-          <div className="flex items-center gap-3">
-            <BrandMark size={32} />
-            <div>
-              <p className="text-[18px] font-semibold text-white">VidyutOne</p>
-              <p className="text-[11px] tracking-[0.22em] text-vo-accent">GRID-AWARE EV INFRASTRUCTURE PLATFORM</p>
+    <div className="relative min-h-screen bg-[var(--vo-bg)] text-[var(--vo-text)] vo-radar flex flex-col justify-between font-sans selection:bg-blue-100 selection:text-blue-900 transition-colors">
+      {/* Top Bar / Theme Switcher Header */}
+      <header className="w-full border-b border-[var(--vo-border)] py-3 px-6 bg-[var(--vo-surface)]/80 backdrop-blur-xs sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="w-7 h-7 rounded-lg bg-[#4F6F9F] dark:bg-[#6F8FB8] text-white flex items-center justify-center shadow-xs shrink-0">
+              <Zap className="w-3.5 h-3.5 fill-current stroke-[2.5]" />
+            </div>
+            <span className="text-base font-bold tracking-tight text-[var(--vo-text)]">
+              VidyutOne
+            </span>
+          </div>
+          
+          <div className="flex items-center space-x-3">
+            <ThemeToggle />
+          </div>
+        </div>
+      </header>
+
+      {/* Container */}
+      <div className="mx-auto w-full max-w-7xl px-6 py-8 sm:py-12 lg:px-12 grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 items-center flex-1 my-auto">
+        
+        {/* Left Column: Branding & Overview */}
+        <section className="lg:col-span-5 flex flex-col justify-between space-y-8 py-4">
+          <div className="space-y-6">
+            {/* Subheader Title */}
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 rounded-lg bg-[#4F6F9F] dark:bg-[#6F8FB8] text-white flex items-center justify-center shadow-xs shrink-0">
+                <Zap className="w-4 h-4 fill-current stroke-[2.5]" />
+              </div>
+              <div>
+                <span className="text-xl font-bold tracking-tight text-[var(--vo-text)] block leading-none">
+                  VidyutOne
+                </span>
+                <span className="text-xs font-medium text-[var(--vo-muted)] block mt-1">
+                  EV Infrastructure Planning & Grid Intelligence
+                </span>
+              </div>
+            </div>
+
+            {/* Hero Copy */}
+            <div className="space-y-3 pt-4 sm:pt-6">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-[var(--vo-text)] leading-tight">
+                Plan EV infrastructure with grid intelligence.
+              </h1>
+              <p className="text-sm sm:text-base text-[var(--vo-soft)] leading-relaxed max-w-md">
+                VidyutOne helps planners identify suitable charging locations and helps EV drivers find reliable charging infrastructure.
+              </p>
             </div>
           </div>
-          <div className="max-w-[560px] py-16">
-            <h1 className="text-[52px] leading-[1.05] font-semibold tracking-[-0.03em] text-white">
-              Build chargers where the grid can carry them.
-            </h1>
-            <p className="mt-6 max-w-[460px] text-[16px] leading-7 text-vo-soft">
-              One backend, two doors. Planners see demand, grid headroom and siting verdicts across Bengaluru. Drivers see
-              chargers that actually work.
-            </p>
+
+          <div className="text-xs text-[var(--vo-muted)] font-mono tracking-wider border-t border-[var(--vo-border)] pt-4">
+            BENGALURU URBAN GRID PLATFORM
           </div>
-          <dl className="grid max-w-[560px] grid-cols-3 gap-6">
-            <div>
-              <dt className="text-[28px] font-semibold text-white">148</dt>
-              <dd className="text-[12px] text-vo-muted">candidate sites</dd>
-            </div>
-            <div>
-              <dt className="text-[28px] font-semibold text-white">14</dt>
-              <dd className="text-[12px] text-vo-muted">BESCOM divisions</dd>
-            </div>
-            <div>
-              <dt className="flex items-center gap-2 text-[28px] font-semibold text-white">
-                <span className="h-2 w-2 rounded-full bg-vo-amber" />
-                2.1 GW
-              </dt>
-              <dd className="text-[12px] text-vo-muted">feeder capacity modelled</dd>
-            </div>
-          </dl>
         </section>
-        <section className="flex items-center justify-center px-6 py-10 lg:px-12">{children}</section>
+
+        {/* Right Column: Role Selection or Interactive Card */}
+        <section className="lg:col-span-7 flex justify-center w-full">
+          {children}
+        </section>
       </div>
-      <p className="absolute right-8 bottom-5 text-[10px] tracking-[0.18em] text-vo-muted">
-        SAMPLE DATA · BENGALURU URBAN · NOT FOR OPERATIONAL USE
-      </p>
+
+      {/* Footer */}
+      <footer className="w-full border-t border-[var(--vo-border)] py-4 px-6 text-center text-xs text-[var(--vo-muted)] bg-[var(--vo-surface)]/60 backdrop-blur-xs">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
+          <span>© 2026 VidyutOne • EV Infrastructure Planning & Grid Intelligence</span>
+          <span className="text-[var(--vo-muted)] text-[11px]">Authorized & Public Mobility Portal</span>
+        </div>
+      </footer>
     </div>
   );
 }
 
 export function AuthCard({ children }: { children: ReactNode }) {
   return (
-    <div className="w-full max-w-[420px] rounded-3xl border border-vo-border bg-vo-surface/90 p-8 shadow-[0_30px_80px_rgba(0,0,0,0.35)] backdrop-blur">
+    <div className="w-full max-w-md rounded-xl border border-[var(--vo-border)] bg-[var(--vo-surface)] p-6 sm:p-8 shadow-xs">
       {children}
     </div>
   );
@@ -74,19 +100,21 @@ export function RoleCard({
     <button
       type="button"
       onClick={onSelect}
-      className={`rounded-2xl border px-3 py-3 text-left transition ${
-        selected ? "border-vo-accent bg-vo-accent-dim" : "border-vo-border bg-[#0e1318]"
+      className={`w-full text-left rounded-xl border p-4 transition-colors ${
+        selected
+          ? "border-[#4F6F9F] bg-[#EEF2F7] dark:bg-[#6F8FB8]/15 ring-1 ring-[#4F6F9F]"
+          : "border-[var(--vo-border)] bg-[var(--vo-surface)] hover:border-slate-300 dark:hover:border-slate-700"
       }`}
     >
-      <span className="flex items-start justify-between">
-        <span className="text-[14px] font-semibold text-white">{title}</span>
+      <span className="flex items-center justify-between">
+        <span className="text-sm font-bold text-[var(--vo-text)]">{title}</span>
         <span
-          className={`mt-0.5 h-3 w-3 rounded-full border ${
-            selected ? "border-vo-accent bg-vo-accent" : "border-vo-muted bg-transparent"
+          className={`h-3.5 w-3.5 rounded-full border ${
+            selected ? "border-[#4F6F9F] bg-[#4F6F9F]" : "border-[var(--vo-border)] bg-transparent"
           }`}
         />
       </span>
-      <span className="mt-1 block text-[11px] leading-4 text-vo-muted">{description}</span>
+      <span className="mt-1.5 block text-xs leading-relaxed text-[var(--vo-soft)]">{description}</span>
     </button>
   );
 }
@@ -99,7 +127,7 @@ export function AuthField({
   children: ReactNode;
 }) {
   return (
-    <label className="mt-4 block text-[11px] tracking-[0.16em] text-vo-muted">
+    <label className="mt-4 block text-xs font-semibold tracking-wider text-[var(--vo-soft)] uppercase">
       {label}
       {children}
     </label>
@@ -107,7 +135,7 @@ export function AuthField({
 }
 
 export function authInputClassName(): string {
-  return "mt-2 h-11 w-full rounded-xl border border-vo-border bg-[#0e1318] px-3 text-[13px] text-white outline-none focus:border-vo-accent";
+  return "mt-1.5 h-11 w-full rounded-lg border border-[var(--vo-border)] bg-[var(--vo-card)] px-3.5 text-sm text-[var(--vo-text)] placeholder:text-[var(--vo-muted)] outline-none focus:border-[#4F6F9F] focus:ring-1 focus:ring-[#4F6F9F] transition-colors";
 }
 
 export function AuthSubmit({
@@ -121,7 +149,7 @@ export function AuthSubmit({
     <button
       type="submit"
       disabled={disabled}
-      className="mt-6 h-12 w-full rounded-xl bg-vo-accent text-[14px] font-semibold text-[#06231b] transition hover:brightness-110 disabled:opacity-60"
+      className="mt-6 h-11 w-full rounded-lg bg-[#4F6F9F] hover:bg-[#3F5F8F] dark:bg-[#6F8FB8] dark:hover:bg-[#5D7EA8] text-sm font-semibold text-white transition-colors disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
     >
       {children}
     </button>

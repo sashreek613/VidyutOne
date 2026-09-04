@@ -34,6 +34,9 @@ const client = axios.create({
 });
 
 client.interceptors.request.use(async (config) => {
+  if (config.headers.Authorization) {
+    return config;
+  }
   const stored = localStorage.getItem("vidyutone-mock-session");
   if (stored) {
     try {
@@ -47,10 +50,14 @@ client.interceptors.request.use(async (config) => {
     }
   }
   if (supabase) {
-    const { data } = await supabase.auth.getSession();
-    const token = data.session?.access_token;
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    try {
+      const { data } = await supabase.auth.getSession();
+      const token = data.session?.access_token;
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+    } catch {
+      // ignore
     }
   }
   return config;
@@ -122,6 +129,7 @@ export async function createBooking(payload: BookingCreate): Promise<Booking> {
   const { data } = await client.post<Booking>("/api/bookings", {
     charger_id: payload.charger_id,
     slot_time: payload.slot_time,
+    duration_minutes: payload.duration_minutes,
   });
   return data;
 }
@@ -202,10 +210,11 @@ export async function getChargingSummary(): Promise<ChargingSummary> {
   return data;
 }
 
-export async function getChargingQuote(chargerId: string, slots: string[]): Promise<ChargingQuote> {
+export async function getChargingQuote(chargerId: string, slots: string[], durationMinutes?: number): Promise<ChargingQuote> {
   const { data } = await client.post<ChargingQuote>("/api/driver/charging-quote", {
     charger_id: chargerId,
     slots,
+    duration_minutes: durationMinutes,
   });
   return data;
 }
@@ -229,8 +238,20 @@ export async function rejectPlanner(userId: string, reason?: string): Promise<Pr
   return data;
 }
 
+// Gemini/Lyzr-backed endpoints can genuinely take longer than the default
+// 10s client timeout -- gemini_service.ask_assistant() tries up to 3 models
+// in sequence (30s each) before giving up, so a slow-but-real reply can take
+// well over 10s without anything being wrong. Longer per-request timeout
+// only for these two calls; everything else keeps the snappy 10s default so
+// a genuinely broken endpoint still fails fast.
+const ASSISTANT_TIMEOUT_MS = 60_000;
+
 export async function sendAssistantMessage(message: string, sessionId: string): Promise<{ reply: string }> {
-  const { data } = await client.post("/api/assistant/chat", { message, session_id: sessionId });
+  const { data } = await client.post(
+    "/api/assistant/chat",
+    { message, session_id: sessionId },
+    { timeout: ASSISTANT_TIMEOUT_MS },
+  );
   return data;
 }
 
@@ -239,11 +260,90 @@ export async function sendDriverAssistantMessage(
   sessionId: string,
   contextSummary: string,
 ): Promise<{ reply: string }> {
-  const { data } = await client.post("/api/driver/voice-assistant", {
-    message,
-    session_id: sessionId,
-    context_summary: contextSummary,
-  });
+  const { data } = await client.post(
+    "/api/driver/voice-assistant",
+    { message, session_id: sessionId, context_summary: contextSummary },
+    { timeout: ASSISTANT_TIMEOUT_MS },
+  );
+  return data;
+}
+
+// ── Planner Consideration ────────────────────────────────────────────────────
+
+export async function getConsideration(): Promise<import("../types").ConsiderationItem[]> {
+  const { data } = await client.get("/api/planner/consideration");
+  return data;
+}
+
+export async function addToConsideration(siteId: string): Promise<import("../types").ConsiderationItem> {
+  const { data } = await client.post(`/api/planner/consideration/${siteId}`);
+  return data;
+}
+
+export async function removeFromConsideration(siteId: string): Promise<void> {
+  await client.delete(`/api/planner/consideration/${siteId}`);
+}
+
+// ── Planner Reports ──────────────────────────────────────────────────────────
+
+export async function getPlannerReports(): Promise<import("../types").PlannerReport[]> {
+  const { data } = await client.get("/api/planner/reports");
+  return data;
+}
+
+export async function createPlannerReport(
+  payload: import("../types").ReportCreate,
+): Promise<import("../types").PlannerReport> {
+  const { data } = await client.post("/api/planner/reports", payload);
+  return data;
+}
+
+export async function getPlannerReport(id: string): Promise<import("../types").PlannerReport> {
+  const { data } = await client.get(`/api/planner/reports/${id}`);
+  return data;
+}
+
+export async function deletePlannerReport(id: string): Promise<void> {
+  await client.delete(`/api/planner/reports/${id}`);
+}
+
+// ── Payments ─────────────────────────────────────────────────────────────────
+
+export interface CreateOrderPayload {
+  booking_id: string;
+  amount: number;
+  currency?: string;
+}
+
+export interface CreateOrderResult {
+  razorpay_order_id: string;
+  amount_paise: number;
+  currency: string;
+  razorpay_key_id: string;
+}
+
+export interface VerifyPaymentPayload {
+  booking_id: string;
+  razorpay_order_id: string;
+  razorpay_payment_id: string;
+  razorpay_signature: string;
+}
+
+export interface VerifyPaymentResult {
+  success: boolean;
+  booking_id: string;
+  payment_status: string;
+  booking_status: string;
+  message: string;
+}
+
+export async function createPaymentOrder(payload: CreateOrderPayload): Promise<CreateOrderResult> {
+  const { data } = await client.post<CreateOrderResult>("/api/payments/create-order", payload);
+  return data;
+}
+
+export async function verifyPayment(payload: VerifyPaymentPayload): Promise<VerifyPaymentResult> {
+  const { data } = await client.post<VerifyPaymentResult>("/api/payments/verify", payload);
   return data;
 }
 

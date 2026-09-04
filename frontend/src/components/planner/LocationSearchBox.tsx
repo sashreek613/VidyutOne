@@ -98,7 +98,7 @@ export function LocationSearchBox({
       <form
         onSubmit={handleSubmit}
         className={`flex items-center gap-2 border border-vo-line bg-vo-card px-3 shadow-sm ${
-          compact ? "h-9 rounded-full py-0" : "rounded-xl py-2"
+          compact ? "h-9 rounded-full py-0" : "rounded-[8px] py-2"
         }`}
       >
         <Search className="h-4 w-4 shrink-0 text-vo-muted" />
@@ -126,7 +126,7 @@ export function LocationSearchBox({
       </form>
 
       {open && effectiveSuggestions.length > 0 ? (
-        <ul className="absolute left-0 right-0 z-50 mt-1 max-h-72 overflow-auto rounded-xl border border-vo-line bg-vo-card shadow-lg">
+        <ul className="absolute left-0 right-0 z-50 mt-1 max-h-72 overflow-auto rounded-[8px] border border-vo-line bg-vo-card shadow-lg">
           {effectiveSuggestions.map((suggestion) => (
             <li key={suggestion.id}>
               <button

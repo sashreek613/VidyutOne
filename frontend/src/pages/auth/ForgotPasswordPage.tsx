@@ -40,7 +40,7 @@ export function ForgotPasswordPage() {
     <AuthShell>
       <form onSubmit={(event) => void handleSubmit(event)}>
         <AuthCard>
-          <h2 className="text-[28px] font-semibold text-white">Forgot password</h2>
+          <h2 className="text-[28px] font-semibold text-vo-text">Forgot password</h2>
           <p className="mt-1 text-[13px] text-vo-muted">
             We will email a reset link. The link expires; request a new one if it no longer works.
           </p>
@@ -59,7 +59,7 @@ export function ForgotPasswordPage() {
           </AuthField>
           <AuthSubmit disabled={submitting}>{submitting ? "Sending…" : "Send reset email"}</AuthSubmit>
           <p className="mt-4 text-center text-[12px] text-vo-muted">
-            <Link to="/" className="text-white hover:underline">
+            <Link to="/" className="text-vo-text hover:underline">
               Back to sign in
             </Link>
           </p>

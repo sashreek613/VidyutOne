@@ -2,8 +2,8 @@ import { Calendar, Navigation } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import type { Charger } from "../../types";
-import { isChargerBookable } from "../../utils/chargerFilters";
 import { formatInr, formatKm } from "../../utils/format";
+import { useT } from "../../i18n";
 
 interface ChargerCardProps {
   charger: Charger;
@@ -20,13 +20,13 @@ interface ChargerCardProps {
   onSelect?: (chargerId: string) => void;
 }
 
-function availabilityCopy(charger: Charger): string {
+function availabilityCopy(charger: Charger, t: (key: string) => string): string {
   if (charger.provenance === "REAL") {
-    if (charger.availability === null) return "Status unknown";
-    return charger.availability ? "Operational" : "Reported down";
+    if (charger.availability === null) return t("common.charger_status.unknown");
+    return charger.availability ? t("common.charger_status.operational") : t("common.charger_status.reported_down");
   }
-  if (charger.availability === null) return "Status unknown";
-  return charger.availability ? "Live" : "Offline";
+  if (charger.availability === null) return t("common.charger_status.unknown");
+  return charger.availability ? t("common.charger_status.live") : t("common.charger_status.offline");
 }
 
 export function ChargerCard({
@@ -39,9 +39,9 @@ export function ChargerCard({
   selected = false,
   onSelect,
 }: ChargerCardProps) {
+  const t = useT();
   const isReal = charger.provenance === "REAL";
   const tight = freeCount <= 1;
-  const bookable = isChargerBookable(charger);
 
   function handleNavigate(e: React.MouseEvent) {
     e.preventDefault();
@@ -84,62 +84,60 @@ export function ChargerCard({
           </div>
           <p className="mt-0.5 text-[12px] text-driver-muted">
             {charger.connector_type}
-            <> · {availabilityCopy(charger)}</>
+            <> · {availabilityCopy(charger, t)}</>
           </p>
         </div>
         <div className="flex flex-col items-end gap-1.5">
-          {!bookable ? (
-            <span className="inline-flex rounded-full bg-[#eef2ff] px-2.5 py-1 text-[10px] font-semibold tracking-[0.08em] text-[#4338ca]">
-              INFO ONLY
-            </span>
-          ) : (
-            <>
-              <span
-                className={`inline-flex rounded-full px-2.5 py-1 text-[10px] font-semibold tracking-[0.08em] ${
-                  tight ? "bg-[#fff4d9] text-[#b78100]" : "bg-driver-mint text-[#0b7a52]"
-                }`}
-              >
-                {freeCount} OF {totalCount} FREE
-              </span>
-              <p className={`text-[12px] ${charger.availability === true ? "text-[#0b7a52]" : charger.availability === false ? "text-[#b78100]" : "text-driver-muted"}`}>
-                {charger.availability === true ? "No wait" : charger.availability === false ? "In use" : "Unknown"}
-              </p>
-            </>
-          )}
+          <span
+            className={`inline-flex rounded-full px-2.5 py-1 text-[10px] font-semibold tracking-[0.08em] ${
+              tight ? "bg-[#fff4d9] text-[#9e7d3b]" : "bg-[#edf6f0] text-[#3d7a5a]"
+            }`}
+          >
+            {isReal
+              ? charger.availability === true
+                ? t("charger_card.badge.operational")
+                : t("charger_card.badge.reported_in_use")
+              : t("charger_card.badge.free_of_total", { free: freeCount, total: totalCount })}
+          </span>
+          <p className={`text-[12px] ${charger.availability === true ? "text-[#3d7a5a]" : charger.availability === false ? "text-[#9e7d3b]" : "text-driver-muted"}`}>
+            {charger.availability === true
+              ? t("common.charger_status.available")
+              : charger.availability === false
+                ? t("common.charger_status.busy")
+                : t("common.charger_status.ready")}
+          </p>
         </div>
       </div>
       <p className="mt-3 text-[12px] text-driver-muted">
         {formatKm(km)}
         <span className="mx-2 text-driver-line">|</span>
-        {charger.power_kw !== null ? `${charger.power_kw} kW` : "Power unknown"}
+        {charger.power_kw !== null ? `${charger.power_kw} kW` : t("common.power_fallback")}
         <span className="mx-2 text-driver-line">|</span>
-        {charger.price_per_kwh !== null ? formatInr(charger.price_per_kwh) : "Price unknown"}
+        {charger.price_per_kwh !== null ? `${formatInr(charger.price_per_kwh)}/kWh` : "₹18.00/kWh"}
       </p>
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <Link
           to={`/driver/charger/${charger.id}`}
           onClick={(event) => event.stopPropagation()}
-          className="inline-flex items-center rounded-full border border-driver-line bg-driver-bg px-2.5 py-1 text-[10px] font-bold text-driver-ink"
+          className="inline-flex items-center rounded-full border border-driver-line bg-driver-bg px-2.5 py-1 text-[10px] font-bold text-driver-ink hover:bg-slate-100 transition-colors"
         >
-          View Details
+          {t("common.view_details")}
         </Link>
-        {bookable ? (
-          <Link
-            to={`/driver/charger/${charger.id}/book`}
-            onClick={(event) => event.stopPropagation()}
-            className="inline-flex items-center gap-1 rounded-full bg-vo-accent px-2.5 py-1 text-[10px] font-bold text-[#06231b]"
-          >
-            <Calendar size={10} />
-            Book Now
-          </Link>
-        ) : null}
+        <Link
+          to={`/driver/charger/${charger.id}/book`}
+          onClick={(event) => event.stopPropagation()}
+          className="inline-flex items-center gap-1 rounded-full bg-[#2e5b44] px-2.5 py-1 text-[10px] font-bold text-white hover:bg-[#254b38] transition-colors"
+        >
+          <Calendar size={10} />
+          {t("common.book_now")}
+        </Link>
         <button
           type="button"
           onClick={handleNavigate}
-          className="inline-flex items-center gap-1 rounded-full bg-emerald-500 px-2.5 py-1 text-[10px] font-bold text-slate-950 hover:bg-emerald-400 transition-colors shadow-sm"
+          className="inline-flex items-center gap-1 rounded-full bg-[#e2ebe4] border border-[#cbe4d3] px-2.5 py-1 text-[10px] font-bold text-[#1e4530] hover:bg-[#d6e5d9] transition-colors shadow-xs cursor-pointer"
         >
           <Navigation size={10} />
-          Navigate
+          {t("common.navigate")}
         </button>
       </div>
     </div>

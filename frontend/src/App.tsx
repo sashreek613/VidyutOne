@@ -22,6 +22,7 @@ import { ChargingWindowPage } from "./pages/driver/ChargingWindowPage";
 import { DriverHomePage } from "./pages/driver/DriverHomePage";
 import { DriverSavingsPage } from "./pages/driver/DriverSavingsPage";
 import { PlannerBuildPlanPage } from "./pages/planner/PlannerBuildPlanPage";
+import { PlannerConsiderationPage } from "./pages/planner/PlannerConsiderationPage";
 import { PlannerDashboardPage } from "./pages/planner/PlannerDashboardPage";
 import { PlannerExplorerPage } from "./pages/planner/PlannerExplorerPage";
 import { PlannerGridPage } from "./pages/planner/PlannerGridPage";
@@ -114,6 +115,7 @@ function App() {
             <Route path="explorer" element={<PlannerExplorerPage />} />
             <Route path="grid" element={<PlannerGridPage />} />
             <Route path="plan" element={<PlannerBuildPlanPage />} />
+            <Route path="consideration" element={<PlannerConsiderationPage />} />
             <Route path="reports" element={<PlannerReportsPage />} />
             <Route path="site/:siteId" element={<PlannerSiteDetailsPage />} />
           </Route>
