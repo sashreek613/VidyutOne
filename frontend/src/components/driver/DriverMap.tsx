@@ -1,4 +1,4 @@
-import { Calendar, Navigation, Zap, X } from "lucide-react";
+import { Calendar, LocateFixed, Navigation, Zap, X } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Map as MapLibreMap, Marker, type GeoJSONSource } from "maplibre-gl";
@@ -8,6 +8,7 @@ import { hasValidCoordinates } from "../../utils/chargerFilters";
 import { formatInr } from "../../utils/format";
 import { centroid, haversineKm } from "../../utils/geo";
 import { getLightBasemapStyle } from "../../utils/mapStyle";
+import { useT } from "../../i18n";
 
 interface DriverMapProps {
   chargers: Charger[];
@@ -17,6 +18,16 @@ interface DriverMapProps {
   selectedChargerId?: string | null;
   onSelectCharger?: (chargerId: string | null) => void;
   onMapClick?: (lat: number, lon: number) => void;
+  /** Called when the "recenter" button is tapped -- the caller's job is to
+   * clear any active location search (so `origin` goes back to real GPS).
+   * Omit to hide the button entirely (e.g. ChargerDetailsPage's map, which
+   * has no search/GPS state of its own to recenter to). */
+  onRecenter?: () => void;
+  /** Bump this (e.g. a counter) on every recenter tap to force the camera
+   * back to `here` even when `origin` itself hasn't changed -- e.g. the
+   * driver panned the map by hand with no search active, so the effect that
+   * watches origin for changes never fires on its own. */
+  recenterSignal?: number;
 }
 
 const RANGE_SOURCE_ID = "driver-range-circle";
@@ -53,14 +64,22 @@ function rangeCircleGeoJSON(centerLat: number, centerLon: number, radiusKm: numb
   };
 }
 
-function availabilityLabel(charger: Charger): { text: string; className: string; dot: string } {
+function availabilityLabel(charger: Charger, t: (key: string) => string): { text: string; className: string; dot: string } {
   if (charger.availability === true) {
-    return { text: charger.provenance === "REAL" ? "Operational" : "Available", className: "text-emerald-700", dot: "bg-emerald-500" };
+    return {
+      text: charger.provenance === "REAL" ? t("common.charger_status.operational") : t("common.charger_status.available"),
+      className: "text-emerald-700",
+      dot: "bg-emerald-500",
+    };
   }
   if (charger.availability === false) {
-    return { text: charger.provenance === "REAL" ? "Reported down" : "In use", className: "text-amber-700", dot: "bg-amber-500" };
+    return {
+      text: charger.provenance === "REAL" ? t("common.charger_status.reported_down") : t("common.charger_status.in_use"),
+      className: "text-amber-700",
+      dot: "bg-amber-500",
+    };
   }
-  return { text: "Status unknown", className: "text-gray-500", dot: "bg-gray-400" };
+  return { text: t("common.charger_status.unknown"), className: "text-gray-500", dot: "bg-gray-400" };
 }
 
 export function DriverMap({
@@ -71,7 +90,10 @@ export function DriverMap({
   selectedChargerId = null,
   onSelectCharger,
   onMapClick,
+  onRecenter,
+  recenterSignal,
 }: DriverMapProps) {
+  const t = useT();
   const ref = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const markersRef = useRef<Marker[]>([]);
@@ -80,6 +102,7 @@ export function DriverMap({
   const onMapClickRef = useRef(onMapClick);
   const lastOriginRef = useRef<{ latitude: number; longitude: number } | null>(null);
   const lastFocusedChargerRef = useRef<string | null>(null);
+  const isFirstRecenterRef = useRef(true);
   const navigate = useNavigate();
 
   onSelectRef.current = onSelectCharger;
@@ -178,6 +201,37 @@ export function DriverMap({
       map.once("load", fly);
     }
   }, [here.latitude, here.longitude]);
+
+  // Recenter button: forces the camera back to `here` even when `here`
+  // itself hasn't changed -- e.g. the driver dragged/pinched the map by hand
+  // with no search active, so the origin-watching effect above never fires
+  // on its own (it only reacts to an actual coordinate change). Skips the
+  // initial mount so it doesn't double up with the map-creation effect's own
+  // first flyTo.
+  useEffect(() => {
+    if (isFirstRecenterRef.current) {
+      isFirstRecenterRef.current = false;
+      return;
+    }
+    const map = mapRef.current;
+    if (!map) {
+      return;
+    }
+    lastOriginRef.current = { latitude: here.latitude, longitude: here.longitude };
+    lastFocusedChargerRef.current = null;
+    const fly = () => {
+      map.flyTo({ center: [here.longitude, here.latitude], zoom: 13.5, duration: 600 });
+    };
+    if (map.loaded()) {
+      fly();
+    } else {
+      map.once("load", fly);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- deliberately
+    // keyed only on recenterSignal: `here` is read at fire time, and adding
+    // it here would make this fire on every ordinary origin change too,
+    // duplicating the effect above.
+  }, [recenterSignal]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -295,11 +349,23 @@ export function DriverMap({
   const selectedKm = selectedCharger
     ? haversineKm(here.latitude, here.longitude, selectedCharger.latitude, selectedCharger.longitude)
     : 0;
-  const selectedStatus = selectedCharger ? availabilityLabel(selectedCharger) : null;
+  const selectedStatus = selectedCharger ? availabilityLabel(selectedCharger, t) : null;
 
   return (
     <div className="relative h-full w-full">
       <div ref={ref} className="h-full w-full" />
+
+      {onRecenter ? (
+        <button
+          type="button"
+          onClick={onRecenter}
+          aria-label={t("driver_map.recenter_aria")}
+          title={t("driver_map.recenter_aria")}
+          className="absolute top-3 right-3 z-20 flex h-9 w-9 items-center justify-center rounded-full bg-white/95 border border-gray-200 text-driver-ink shadow-md backdrop-blur hover:bg-white transition-colors cursor-pointer"
+        >
+          <LocateFixed size={16} />
+        </button>
+      ) : null}
 
       {selectedCharger && selectedStatus ? (
         <div className="absolute bottom-3 left-3 right-3 z-20 rounded-2xl border border-gray-200 bg-white/95 p-4 shadow-xl backdrop-blur text-gray-900 max-w-md mx-auto font-sans">
@@ -310,7 +376,7 @@ export function DriverMap({
                 <span className={`text-[11px] font-bold uppercase tracking-wider ${selectedStatus.className}`}>
                   {selectedStatus.text}
                 </span>
-                <span className="text-[11px] font-semibold text-emerald-600 font-mono">{selectedKm.toFixed(1)} km away</span>
+                <span className="text-[11px] font-semibold text-emerald-600 font-mono">{t("driver_map.km_away", { km: selectedKm.toFixed(1) })}</span>
               </div>
               <h4 className="mt-1 text-[15px] font-bold text-gray-900 leading-tight">
                 {selectedCharger.name.replace(" (demo)", "")}
@@ -328,10 +394,10 @@ export function DriverMap({
           <div className="mt-3 flex items-center justify-between gap-2 border-t border-gray-100 pt-2 text-[12px] text-gray-600">
             <div className="flex items-center gap-1.5 font-medium">
               <Zap size={14} className="text-emerald-500" />
-              <span>{selectedCharger.power_kw !== null ? `${selectedCharger.power_kw} kW` : "Power unknown"}</span>
+              <span>{selectedCharger.power_kw !== null ? `${selectedCharger.power_kw} kW` : t("common.power_unknown")}</span>
             </div>
             <div className="font-semibold text-gray-900 font-mono">
-              {selectedCharger.price_per_kwh !== null ? `${formatInr(selectedCharger.price_per_kwh)}/kWh` : "Price unknown"}
+              {selectedCharger.price_per_kwh !== null ? `${formatInr(selectedCharger.price_per_kwh)}/kWh` : t("common.price_unknown")}
             </div>
           </div>
 
@@ -342,14 +408,14 @@ export function DriverMap({
               className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-[#e2ebe4] border border-[#cbe4d3] py-2.5 text-[12px] font-semibold text-[#1e4530] hover:bg-[#d6e5d9] transition-colors cursor-pointer"
             >
               <Navigation size={14} />
-              <span>Navigate</span>
+              <span>{t("common.navigate")}</span>
             </button>
             <button
               type="button"
               onClick={() => navigate(`/driver/charger/${selectedCharger.id}`)}
               className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-gray-300 bg-gray-50 py-2.5 text-[12px] font-semibold text-gray-800 hover:bg-gray-100 transition-colors cursor-pointer"
             >
-              View Details
+              {t("common.view_details")}
             </button>
             <button
               type="button"
@@ -357,13 +423,13 @@ export function DriverMap({
               className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-[#2e5b44] py-2.5 text-[12px] font-semibold text-white hover:bg-[#254b38] transition-colors cursor-pointer"
             >
               <Calendar size={14} />
-              Book Now
+              {t("common.book_now")}
             </button>
           </div>
         </div>
       ) : (
         <span className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-white/95 border border-gray-200 px-3.5 py-1 text-[11px] font-semibold tracking-[0.12em] text-gray-700 shadow backdrop-blur font-mono">
-          {plottableCount} CHARGERS
+          {t("driver_map.charger_count", { count: plottableCount })}
         </span>
       )}
     </div>

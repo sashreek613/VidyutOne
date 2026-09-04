@@ -9,8 +9,10 @@ import { useCharger, useChargers } from "../../hooks/useApiData";
 import { formatInr, formatKm } from "../../utils/format";
 import { centroid, haversineKm } from "../../utils/geo";
 import { loadDriverDiscoveryState } from "../../utils/driverDiscoveryState";
+import { useT } from "../../i18n";
 
 export function ChargerDetailsPage() {
+  const t = useT();
   const { chargerId } = useParams<{ chargerId: string }>();
   const navigate = useNavigate();
   const { data: charger, error, loading } = useCharger(chargerId);
@@ -67,7 +69,7 @@ export function ChargerDetailsPage() {
                 }
               }}
               className="flex h-9 w-9 items-center justify-center rounded-full bg-white/90 backdrop-blur text-driver-ink shadow-md border border-driver-line hover:bg-white transition-colors"
-              aria-label="Back"
+              aria-label={t("common.back")}
             >
               <ArrowLeft size={16} />
             </button>
@@ -75,7 +77,13 @@ export function ChargerDetailsPage() {
         </div>
       </div>
 
-      <ScreenState loading={loading} error={error} tone="light">
+      <ScreenState
+        loading={loading}
+        error={error}
+        tone="light"
+        loadingText={t("common.loading")}
+        errorLabel={t("common.load_error_prefix")}
+      >
         {charger ? (
           <div className="px-5 pt-6">
             {/* Charger Main Title & Meta */}
@@ -95,7 +103,7 @@ export function ChargerDetailsPage() {
                 )}
               </div>
               <p className="mt-1 text-[13px] text-driver-muted">
-                {charger.connector_type} · {isReal ? "Verified public station" : "VidyutOne fast charging hub"}
+                {charger.connector_type} · {isReal ? t("charger_details.descriptor.verified") : t("charger_details.descriptor.hub")}
               </p>
               <div className="mt-2.5 flex items-center gap-2 text-[12px]">
                 <span
@@ -109,44 +117,46 @@ export function ChargerDetailsPage() {
                 />
                 <span className="text-driver-ink font-medium">
                   {charger.availability === true
-                    ? "Operational & Ready"
+                    ? t("charger_details.status.operational_ready")
                     : charger.availability === false
-                      ? "Currently In Use"
-                      : "Operational Status Reported"}
+                      ? t("charger_details.status.currently_in_use")
+                      : t("charger_details.status.operational_status_reported")}
                 </span>
               </div>
             </div>
 
             {/* Metrics Grid */}
             <div className="mt-6 grid grid-cols-2 gap-3">
-              <Metric label="DISTANCE" value={formatKm(km)} />
-              <Metric label="ESTIMATED ETA" value={`${Math.max(4, Math.round(km * 4))} mins`} />
+              <Metric label={t("charger_details.metric.distance")} value={formatKm(km)} />
+              <Metric label={t("charger_details.metric.eta")} value={`${Math.max(4, Math.round(km * 4))} mins`} />
               <Metric
-                label="CHARGING POWER"
-                value={charger.power_kw !== null ? `${charger.power_kw} kW` : "7.4 kW standard"}
+                label={t("charger_details.metric.power")}
+                value={charger.power_kw !== null ? `${charger.power_kw} kW` : t("common.power_fallback")}
               />
               <Metric
-                label="BASE TARIFF"
+                label={t("charger_details.metric.tariff")}
                 value={
                   charger.price_per_kwh !== null
                     ? `${formatInr(charger.price_per_kwh)} /kWh`
                     : "₹18.00 /kWh"
                 }
-                sublabel={isReal && charger.price_per_kwh === 18 ? "VidyutOne Tariff" : undefined}
+                sublabel={isReal && charger.price_per_kwh === 18 ? t("charger_details.vidyutone_tariff") : undefined}
               />
               <Metric
-                label="WAIT TIME"
-                value={charger.availability === true ? "0 min" : charger.availability === false ? "15 min" : "Low wait"}
+                label={t("charger_details.metric.wait")}
+                value={charger.availability === true ? "0 min" : charger.availability === false ? "15 min" : t("charger_details.wait.low")}
               />
-              <Metric label="CONNECTOR TYPE" value={charger.connector_type} />
+              <Metric label={t("charger_details.metric.connector")} value={charger.connector_type} />
             </div>
 
             {/* Connectors / Bays Section */}
             <div className="mt-6">
               <div className="flex items-center justify-between">
-                <h2 className="text-[15px] font-semibold text-driver-ink">Available Charging Bays</h2>
+                <h2 className="text-[15px] font-semibold text-driver-ink">{t("charger_details.bays_heading")}</h2>
                 <span className="text-[10px] font-semibold tracking-wider text-driver-muted uppercase">
-                  {siblings.length || 1} Total {siblings.length === 1 ? "Bay" : "Bays"}
+                  {siblings.length === 1
+                    ? t("charger_details.bays_total_singular", { count: siblings.length || 1 })
+                    : t("charger_details.bays_total_plural", { count: siblings.length || 1 })}
                 </span>
               </div>
               <ul className="mt-3 divide-y divide-driver-line rounded-2xl border border-driver-line bg-driver-card px-4">
@@ -159,10 +169,10 @@ export function ChargerDetailsPage() {
                         }`}
                       />
                       <span className="font-medium text-driver-ink">
-                        BAY {String(index + 1).padStart(2, "0")} · {bay.connector_type}
+                        {t("charger_details.bay_prefix")} {String(index + 1).padStart(2, "0")} · {bay.connector_type}
                       </span>
                       <span className="text-[12px] text-driver-muted">
-                        ({bay.power_kw !== null ? `${bay.power_kw} kW` : "Standard"})
+                        ({bay.power_kw !== null ? `${bay.power_kw} kW` : t("common.standard")})
                       </span>
                     </div>
                     <span
@@ -170,7 +180,7 @@ export function ChargerDetailsPage() {
                         bay.availability === true ? "text-[#3d7a5a]" : "text-[#9e7d3b]"
                       }`}
                     >
-                      {bay.availability === true ? "Available" : "In Use"}
+                      {bay.availability === true ? t("common.charger_status.available") : t("charger_details.bay_in_use")}
                     </span>
                   </li>
                 ))}
@@ -188,13 +198,13 @@ export function ChargerDetailsPage() {
                 className="flex h-12 items-center justify-center gap-2 rounded-2xl bg-[#e2ebe4] border border-[#cbe4d3] px-5 text-[14px] font-semibold text-[#1e4530] hover:bg-[#d6e5d9] transition-colors shadow-sm shrink-0 cursor-pointer"
               >
                 <Navigation size={16} />
-                Navigate
+                {t("common.navigate")}
               </button>
               <Link
                 to={`/driver/charger/${charger.id}/book`}
                 className="flex h-12 flex-1 items-center justify-center rounded-2xl bg-[#2e5b44] text-[14px] font-semibold text-white shadow-md hover:bg-[#254b38] transition-colors"
               >
-                Book Now
+                {t("common.book_now")}
               </Link>
             </div>
           </div>

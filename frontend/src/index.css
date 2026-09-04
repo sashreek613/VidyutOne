@@ -1,8 +1,31 @@
 @import "tailwindcss";
 @import "maplibre-gl/dist/maplibre-gl.css";
 
+/* Self-hosted (not fonts.googleapis.com) -- the driver PWA's Kannada/Hindi
+ * toggle must render correctly with no network dependency at demo time.
+ * Lazy by default (only fetched once matching glyphs are actually painted),
+ * so this costs nothing on English-only or planner screens. Only the
+ * script-specific weight range is subset here -- Latin/numerals in the same
+ * string still come from Inter via the --font-sans fallback order below. */
+@font-face {
+  font-family: "Noto Sans Kannada";
+  src: url("/fonts/noto-sans-kannada-var.woff2") format("woff2");
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0951-0952, U+0964-0965, U+0C80-0CF3, U+1CD0, U+1CD2-1CD3, U+1CDA, U+1CF2, U+1CF4, U+200C-200D, U+A830-A835;
+}
+@font-face {
+  font-family: "Noto Sans Devanagari";
+  src: url("/fonts/noto-sans-devanagari-var.woff2") format("woff2");
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0900-097F, U+1CD0-1CF9, U+200C-200D, U+A830-A839, U+A8E0-A8FF;
+}
+
 @theme {
-  --font-sans: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-sans: "Inter", "Noto Sans Kannada", "Noto Sans Devanagari", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 
   --color-vo-bg: var(--vo-bg);
   --color-vo-surface: var(--vo-surface);

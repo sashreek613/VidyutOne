@@ -1,4 +1,5 @@
 import { formatInr } from "../../utils/format";
+import { useT } from "../../i18n";
 
 interface PeakOffPeakCompareProps {
   peakTariff: number;
@@ -21,37 +22,44 @@ export function PeakOffPeakCompare({
   cheaper,
   tone = "light",
 }: PeakOffPeakCompareProps) {
+  const t = useT();
   const dark = tone === "dark";
   const card = dark
     ? "rounded-2xl border border-vo-line bg-vo-card/80 p-4"
     : "rounded-[18px] border border-driver-line bg-white p-4";
   const muted = dark ? "text-vo-muted" : "text-driver-muted";
   const ink = dark ? "text-white" : "text-driver-ink";
-  const recommended = cheaper === "off-peak" ? "Off-Peak" : cheaper === "peak" ? "Peak" : null;
+  const peakLabel = t("common.peak");
+  const offPeakLabel = t("common.off_peak");
+  const recommended = cheaper === "off-peak" ? offPeakLabel : cheaper === "peak" ? peakLabel : null;
 
   return (
     <div className="space-y-3">
       <div className="grid grid-cols-2 gap-2">
         <div className={`${card} ${cheaper === "peak" ? "ring-1 ring-vo-accent/40" : ""}`}>
-          <p className={`text-[10px] font-semibold tracking-[0.16em] uppercase ${muted}`}>Peak</p>
+          <p className={`text-[10px] font-semibold tracking-[0.16em] uppercase ${muted}`}>{peakLabel}</p>
           <p className={`mt-2 text-[18px] font-semibold ${ink}`}>{formatInr(peakTariff)}/kWh</p>
           <p className={`mt-1 text-[12px] ${muted}`}>
-            {peakTotal == null ? "Add a vehicle for a session total" : formatInr(peakTotal)}
+            {peakTotal == null ? t("peak_compare.no_vehicle") : formatInr(peakTotal)}
           </p>
         </div>
         <div className={`${card} ${cheaper === "off-peak" ? "ring-1 ring-vo-accent/40" : ""}`}>
-          <p className={`text-[10px] font-semibold tracking-[0.16em] uppercase ${muted}`}>Off-Peak</p>
+          <p className={`text-[10px] font-semibold tracking-[0.16em] uppercase ${muted}`}>{offPeakLabel}</p>
           <p className={`mt-2 text-[18px] font-semibold ${ink}`}>{formatInr(offPeakTariff)}/kWh</p>
           <p className={`mt-1 text-[12px] ${muted}`}>
-            {offPeakTotal == null ? "Add a vehicle for a session total" : formatInr(offPeakTotal)}
+            {offPeakTotal == null ? t("peak_compare.no_vehicle") : formatInr(offPeakTotal)}
           </p>
         </div>
       </div>
       {savingsTotal != null && savingsTotal > 0 && savingsPct != null && recommended ? (
         <div className={dark ? "rounded-2xl bg-emerald-500/10 px-4 py-3 text-[13px] text-emerald-300" : "rounded-[18px] bg-driver-mint px-4 py-3 text-[13px] text-[#0b7a52]"}>
-          <p className="font-semibold">Recommended · {recommended}</p>
+          <p className="font-semibold">{t("peak_compare.recommended", { window: recommended })}</p>
           <p className="mt-0.5">
-            Save {formatInr(savingsTotal)} ({savingsPct}%) compared with {cheaper === "off-peak" ? "Peak" : "Off-Peak"}.
+            {t("peak_compare.savings_line", {
+              amount: formatInr(savingsTotal),
+              pct: savingsPct,
+              other: cheaper === "off-peak" ? peakLabel : offPeakLabel,
+            })}
           </p>
         </div>
       ) : null}

@@ -93,7 +93,7 @@ export function AuthCallbackPage() {
   return (
     <AuthShell>
       <AuthCard>
-        <h2 className="text-[28px] font-semibold text-white">
+        <h2 className="text-[28px] font-semibold text-vo-text">
           {state === "error" ? "Verification failed" : "Email verified"}
         </h2>
         <p className={`mt-3 text-[14px] leading-6 ${state === "error" ? "text-vo-red" : "text-vo-soft"}`}>{message}</p>
@@ -106,7 +106,7 @@ export function AuthCallbackPage() {
               >
                 Resend verification email
               </Link>
-              <Link to="/" className="text-center text-[12px] text-vo-muted hover:text-white">
+              <Link to="/" className="text-center text-[12px] text-vo-muted hover:text-vo-text">
                 Back to sign in
               </Link>
             </>

@@ -17,10 +17,10 @@ export function ForbiddenPage() {
   return (
     <AuthShell>
       <AuthCard>
-        <h2 className="text-[28px] font-semibold text-white">Access denied</h2>
+        <h2 className="text-[28px] font-semibold text-vo-text">Access denied</h2>
         <p className="mt-3 text-[14px] leading-6 text-vo-soft">
           This console is limited to a different role. Your profile role is{" "}
-          <span className="text-white">{profile?.role ?? "unknown"}</span>.
+          <span className="text-vo-text">{profile?.role ?? "unknown"}</span>.
         </p>
         <Link
           to={home}
@@ -31,7 +31,7 @@ export function ForbiddenPage() {
         <button
           type="button"
           onClick={() => void handleSignOut()}
-          className="mt-4 w-full text-center text-[12px] text-vo-muted hover:text-white"
+          className="mt-4 w-full text-center text-[12px] text-vo-muted hover:text-vo-text"
         >
           Logout
         </button>

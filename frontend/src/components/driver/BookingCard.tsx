@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import type { Booking } from "../../types";
 import { formatInr } from "../../utils/format";
+import { useT } from "../../i18n";
 
 interface BookingCardProps {
   booking: Booking;
@@ -9,6 +10,7 @@ interface BookingCardProps {
 }
 
 export function BookingCard({ booking, onCancelRequest }: BookingCardProps) {
+  const t = useT();
   const stationName = booking.charger?.name.replace(" (demo)", "") ?? booking.charger_id;
 
   const dateLabel = useMemo(() => {
@@ -26,25 +28,25 @@ export function BookingCard({ booking, onCancelRequest }: BookingCardProps) {
       case "BOOKED":
         return (
           <span className="inline-flex rounded-full bg-emerald-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.08em] text-[#0b7a52]">
-            Confirmed
+            {t("booking_card.status.confirmed")}
           </span>
         );
       case "ACTIVE":
         return (
           <span className="inline-flex rounded-full bg-blue-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.08em] text-blue-700 animate-pulse">
-            Active
+            {t("booking_card.status.active")}
           </span>
         );
       case "COMPLETED":
         return (
           <span className="inline-flex rounded-full bg-gray-100 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.08em] text-gray-500">
-            Completed
+            {t("booking_card.status.completed")}
           </span>
         );
       case "CANCELLED":
         return (
           <span className="inline-flex rounded-full bg-red-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.08em] text-red-600">
-            Cancelled
+            {t("booking_card.status.cancelled")}
           </span>
         );
       default:
@@ -54,7 +56,10 @@ export function BookingCard({ booking, onCancelRequest }: BookingCardProps) {
           </span>
         );
     }
-  }, [booking.status]);
+    // t's identity changes with the active locale (see useT()), so it must
+    // be a dep here -- otherwise the badge would keep showing stale-locale
+    // text after a language switch until booking.status itself changed.
+  }, [booking.status, t]);
 
   const isCancellable = useMemo(() => {
     return booking.status === "BOOKED" && new Date() < new Date(booking.slot_time);

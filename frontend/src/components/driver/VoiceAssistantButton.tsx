@@ -5,15 +5,17 @@ import { useDriverAssistant } from "../../hooks/useDriverAssistant";
 import { useVoiceInput, type VoiceInputStatus } from "../../hooks/useVoiceInput";
 import { matchVoiceCommand } from "../../utils/voiceCommands";
 import type { Charger } from "../../types";
+import { useT } from "../../i18n";
 
-// Same "written like a short status line" style as DriverHomePage's
-// GEO_STATUS_COPY -- one clear sentence per terminal state, never a raw
-// error object or a silent failure.
-const VOICE_STATUS_COPY: Record<Exclude<VoiceInputStatus, "idle" | "listening">, string> = {
-  unsupported: "Voice commands aren't supported in this browser",
-  insecure_context: "Voice requires HTTPS (or localhost) -- this page isn't served securely",
-  denied: "Microphone permission denied",
-  error: "Didn't catch that -- try again",
+// Same "written like a short status line" style as DriverHomePage's geo
+// status copy -- one clear sentence per terminal state, never a raw error
+// object or a silent failure. Keys into locales/en.json (this constant lives
+// outside the component, so it can't call useT() itself).
+const VOICE_STATUS_KEY: Record<Exclude<VoiceInputStatus, "idle" | "listening">, string> = {
+  unsupported: "voice.status.unsupported",
+  insecure_context: "voice.status.insecure_context",
+  denied: "voice.status.denied",
+  error: "voice.status.error",
 };
 
 export interface VoiceRecommendedRow {
@@ -98,6 +100,7 @@ function confirmationFor(
  * zero network calls, executes existing handlers directly); only an
  * unmatched transcript falls through to the driver-scoped Lyzr agent. */
 export function VoiceAssistantButton({ onSearchLocation, onClearSearch, onSetSort, bufferedRangeKm, recommended }: VoiceAssistantButtonProps) {
+  const t = useT();
   const { status, startListening, speak } = useVoiceInput();
   const { status: assistantStatus, sendMessage } = useDriverAssistant();
   const [transcript, setTranscript] = useState<string | null>(null);
@@ -181,7 +184,7 @@ export function VoiceAssistantButton({ onSearchLocation, onClearSearch, onSetSor
           type="button"
           onClick={() => void handleTap()}
           disabled={busy}
-          aria-label="Tap to speak a voice command"
+          aria-label={t("voice.tap_to_speak_aria")}
           className={
             "flex h-16 w-16 shrink-0 items-center justify-center rounded-full transition-colors " +
             (status === "listening"
@@ -193,9 +196,9 @@ export function VoiceAssistantButton({ onSearchLocation, onClearSearch, onSetSor
         </button>
         <div className="min-w-0">
           <p className="text-[14px] font-bold text-driver-ink">
-            {status === "listening" ? "Listening…" : thinking ? "Thinking…" : "Voice assistant"}
+            {status === "listening" ? t("voice.listening") : thinking ? t("voice.thinking") : t("voice.assistant_label")}
           </p>
-          <p className="text-[11px] text-vo-muted">Tap and speak when stopped -- not while driving</p>
+          <p className="text-[11px] text-vo-muted">{t("voice.hint")}</p>
         </div>
         {assistantStatus === "sending" || thinking ? <Volume2 size={16} className="ml-auto shrink-0 text-vo-accent-ink animate-pulse" /> : null}
       </div>
@@ -208,7 +211,7 @@ export function VoiceAssistantButton({ onSearchLocation, onClearSearch, onSetSor
 
       {showStatusMessage ? (
         <p className="rounded-xl border border-vo-warn-border bg-vo-warn-bg px-3 py-2 text-[11px] text-vo-warn-ink">
-          {VOICE_STATUS_COPY[status]}
+          {t(VOICE_STATUS_KEY[status])}
         </p>
       ) : null}
     </div>

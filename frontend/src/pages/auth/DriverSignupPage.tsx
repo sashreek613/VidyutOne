@@ -82,7 +82,7 @@ export function DriverSignupPage() {
             <span>Driver Registration</span>
           </div>
 
-          <h2 className="text-[26px] font-bold text-white">Create Driver Account</h2>
+          <h2 className="text-[26px] font-bold text-vo-text">Create Driver Account</h2>
           <p className="mt-1 text-[13px] text-vo-muted">
             For EV owners and fleet drivers. Vehicle setup can be completed after sign in.
           </p>
@@ -152,11 +152,11 @@ export function DriverSignupPage() {
           </AuthSubmit>
 
           <div className="mt-4 flex items-center justify-between text-[12px] text-vo-muted">
-            <Link to="/get-started" className="flex items-center space-x-1 hover:text-white">
+            <Link to="/get-started" className="flex items-center space-x-1 hover:text-vo-text">
               <ArrowLeft className="w-3.5 h-3.5" />
               <span>Change Role</span>
             </Link>
-            <Link to="/login" className="hover:text-white">
+            <Link to="/login" className="hover:text-vo-text">
               Already registered? Sign in
             </Link>
           </div>

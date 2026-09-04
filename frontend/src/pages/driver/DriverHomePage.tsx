@@ -8,8 +8,10 @@ import { ChargerCard } from "../../components/driver/ChargerCard";
 import { DriverMap } from "../../components/driver/DriverMap";
 import { StatusBar } from "../../components/driver/StatusBar";
 import { VoiceAssistantButton } from "../../components/driver/VoiceAssistantButton";
+import { LanguageToggle } from "../../components/driver/LanguageToggle";
 import { ScreenState } from "../../components/common/ScreenState";
 import { ThemeToggle } from "../../components/common/ThemeToggle";
+import { useT } from "../../i18n";
 // Reused as-is from the planner side -- generic offline place search
 // (GET /api/sites/suggest), nothing planner-specific about it.
 import { LocationSearchBox } from "../../components/planner/LocationSearchBox";
@@ -24,7 +26,7 @@ import {
   type ChargerFilterState,
 } from "../../utils/chargerFilters";
 import { sortByRecommendation } from "../../utils/chargerRanking";
-import { firstNameFromFullName, greetingForHour, initialsFromName } from "../../utils/format";
+import { firstNameFromFullName, greetingBucketForHour, initialsFromName } from "../../utils/format";
 import { centroid, haversineKm, isWithinRange } from "../../utils/geo";
 import { loadDriverDiscoveryState, saveDriverDiscoveryState } from "../../utils/driverDiscoveryState";
 
@@ -47,16 +49,20 @@ interface SearchedLocation {
 // would otherwise silently look identical to "denied".
 type GeoStatus = "pending" | "granted" | "denied" | "unavailable" | "insecure_context";
 
-const GEO_STATUS_COPY: Record<Exclude<GeoStatus, "granted">, string> = {
-  pending: "Detecting your location…",
-  denied: "Location permission denied",
-  unavailable: "Location unavailable on this device",
-  insecure_context: "Location requires HTTPS (or localhost) -- this page isn't served securely",
+// Keys into locales/en.json -- resolved to actual copy inside the component
+// via t(), since GEO_STATUS_COPY itself lives outside any component and
+// can't call the useT() hook.
+const GEO_STATUS_KEY: Record<Exclude<GeoStatus, "granted">, string> = {
+  pending: "driver_home.geo.pending",
+  denied: "driver_home.geo.denied",
+  unavailable: "driver_home.geo.unavailable",
+  insecure_context: "driver_home.geo.insecure_context",
 };
 
 const REFRESH_COOLDOWN_MS = 60_000;
 
 export function DriverHomePage() {
+  const t = useT();
   const navigate = useNavigate();
   const { profile, signOut } = useAuth();
   const { data: chargers, error, loading } = useChargers();
@@ -86,6 +92,10 @@ export function DriverHomePage() {
   const [searchedLocation, setSearchedLocation] = useState<SearchedLocation | null>(() => loadDriverDiscoveryState()?.searchedLocation ?? null);
   const [searchError, setSearchError] = useState<string | null>(null);
   const [searchBoxKey, setSearchBoxKey] = useState(0);
+  // Bumped on every "recenter to my location" tap -- see DriverMap's
+  // recenterSignal prop. A plain counter, not a boolean: it must change on
+  // every click (even consecutive ones) for DriverMap's effect to refire.
+  const [recenterSignal, setRecenterSignal] = useState(0);
   const hour = new Date().getHours();
 
   useEffect(() => {
@@ -129,13 +139,13 @@ export function DriverHomePage() {
       const matches = await suggestLocations(query, 1);
       const best = matches[0];
       if (!best) {
-        setSearchError(`No known location matches "${query}".`);
+        setSearchError(t("driver_home.search_no_match", { query }));
         return;
       }
       setSelectedChargerId(null);
       setSearchedLocation({ latitude: best.latitude, longitude: best.longitude, name: best.name });
     } catch (err: unknown) {
-      setSearchError(err instanceof Error ? err.message : "Couldn't search for that location.");
+      setSearchError(err instanceof Error ? err.message : t("driver_home.search_error_generic"));
     }
   }
 
@@ -146,13 +156,29 @@ export function DriverHomePage() {
     setSearchBoxKey((key) => key + 1);
   }
 
+  // "Recenter to my location": clears any active search (only if one is
+  // active, so an idle tap doesn't needlessly remount the search box) so
+  // `origin` falls back to real GPS, (re)requests location if it was denied
+  // or never granted, and always bumps recenterSignal so DriverMap forces
+  // the camera back even if origin doesn't end up changing (e.g. the driver
+  // just panned the map by hand with no search active).
+  function handleRecenter() {
+    if (searchedLocation) {
+      handleClearSearch();
+    }
+    if (geoStatus !== "granted") {
+      requestLocation();
+    }
+    setRecenterSignal((n) => n + 1);
+  }
+
   function handleMapPickLocation(lat: number, lon: number) {
     setSearchError(null);
     setSelectedChargerId(null);
     setSearchedLocation({
       latitude: lat,
       longitude: lon,
-      name: "Selected map location",
+      name: t("driver_home.selected_map_location"),
     });
     setSearchBoxKey((key) => key + 1);
   }
@@ -212,7 +238,14 @@ export function DriverHomePage() {
       (err) => {
         setGeoStatus(err.code === err.PERMISSION_DENIED ? "denied" : "unavailable");
       },
-      { enableHighAccuracy: false, timeout: 8000, maximumAge: 5 * 60 * 1000 },
+      // enableHighAccuracy: true asks the OS for its best available fix
+      // (GPS/Wi-Fi-positioning) instead of a quick, coarse IP-based lookup --
+      // on a laptop with no GPS chip, the coarse lookup can be off by whole
+      // city districts or more. maximumAge: 0 refuses a stale cached fix, so
+      // "current location" always means an actual fresh reading, not
+      // whatever the browser happened to cache up to 5 minutes ago. Costs a
+      // bit more time/battery to acquire, hence the longer timeout below.
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 },
     );
   }
 
@@ -355,7 +388,7 @@ export function DriverHomePage() {
       setRefreshedReal(fresh);
       setLastRefreshAt(Date.now());
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Couldn't refresh nearby chargers.";
+      const msg = err instanceof Error ? err.message : t("driver_home.refresh_error_generic");
       setRefreshError(msg);
     } finally {
       setRefreshing(false);
@@ -367,14 +400,20 @@ export function DriverHomePage() {
     <div className="flex min-h-screen flex-col bg-driver-bg text-driver-ink pb-8">
       <StatusBar />
       <div className="px-5 pt-4 space-y-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-vo-accent-ink">EV Driver Portal</p>
+        {/* Language toggle gets its own row -- with the greeting, theme
+            toggle, avatar and logout all in one row, "EN / ಕನ್ನಡ / हिंदी"
+            plus a long Kannada/Hindi greeting has no room at 390px width. */}
+        <div className="flex items-center justify-end">
+          <LanguageToggle />
+        </div>
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-vo-accent-ink">{t("driver_home.portal_label")}</p>
             <h1 className="text-[26px] font-bold tracking-tight">
-              {greetingForHour(hour)}, {firstNameFromFullName(profile?.full_name ?? "there")}
+              {t(`driver_home.greeting_${greetingBucketForHour(hour)}`)}, {firstNameFromFullName(profile?.full_name ?? "there")}
             </h1>
           </div>
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-3 shrink-0">
             <ThemeToggle compact />
             <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#EEF2F7] dark:bg-[#1c242f] border border-[#4F6F9F]/30 dark:border-[#6F8FB8]/40 text-[13px] font-bold text-[#4F6F9F] dark:text-[#6F8FB8] select-none">
               {initialsFromName(profile?.full_name ?? "Driver")}
@@ -385,7 +424,7 @@ export function DriverHomePage() {
                 void signOut().then(() => navigate("/", { replace: true }));
               }}
               className="vo-hover-interactive p-2 rounded-[8px] bg-driver-card hover:bg-driver-line text-driver-muted hover:text-driver-ink transition-colors"
-              title="Logout"
+              title={t("driver_home.logout_title")}
             >
               <LogOut size={16} />
             </button>
@@ -424,10 +463,10 @@ export function DriverHomePage() {
           className="vo-hover-interactive block rounded-[12px] border border-vo-border bg-vo-card p-4 hover:border-vo-accent/40"
         >
           <p className="text-[10px] font-semibold uppercase tracking-wider text-vo-accent-ink">
-            Charging cost & savings
+            {t("driver_home.savings_card.eyebrow")}
           </p>
-          <p className="mt-1 text-[16px] font-bold text-driver-ink">See live tariffs, history, and off-peak savings</p>
-          <p className="mt-1 text-[12px] text-vo-muted">Powered by the existing pricing engine · your bookings only</p>
+          <p className="mt-1 text-[16px] font-bold text-driver-ink">{t("driver_home.savings_card.title")}</p>
+          <p className="mt-1 text-[12px] text-vo-muted">{t("driver_home.savings_card.subtitle")}</p>
         </Link>
 
         <Link
@@ -435,10 +474,10 @@ export function DriverHomePage() {
           className="vo-hover-interactive block rounded-[12px] border border-vo-border bg-vo-card p-4 hover:border-vo-accent/40"
         >
           <p className="text-[10px] font-semibold uppercase tracking-wider text-vo-accent-ink">
-            Reservations
+            {t("driver_home.bookings_card.eyebrow")}
           </p>
-          <p className="mt-1 text-[16px] font-bold text-driver-ink">My Bookings</p>
-          <p className="mt-1 text-[12px] text-vo-muted">View upcoming and past charging reservations</p>
+          <p className="mt-1 text-[16px] font-bold text-driver-ink">{t("common.my_bookings")}</p>
+          <p className="mt-1 text-[12px] text-vo-muted">{t("driver_home.bookings_card.subtitle")}</p>
         </Link>
 
         {/* Name filter only -- location search sits on the map so choosing a
@@ -450,7 +489,7 @@ export function DriverHomePage() {
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Filter this list by charger name..."
+            placeholder={t("driver_home.filter_placeholder")}
             className="w-full bg-transparent text-[14px] text-driver-ink outline-none placeholder:text-vo-muted"
           />
         </label>
@@ -464,60 +503,60 @@ export function DriverHomePage() {
           >
             <RefreshCw size={12} className={refreshing ? "animate-spin" : ""} />
             {refreshing
-              ? "Refreshing…"
+              ? t("driver_home.refresh_refreshing")
               : refreshCooldownRemainingMs > 0
-                ? `Refresh available in ${Math.ceil(refreshCooldownRemainingMs / 1000)}s`
-                : "Refresh nearby chargers"}
+                ? t("driver_home.refresh_cooldown", { seconds: Math.ceil(refreshCooldownRemainingMs / 1000) })
+                : t("driver_home.refresh_nearby")}
           </button>
           {refreshError ? <p className="text-[11px] text-vo-bad-ink">{refreshError}</p> : null}
         </div>
 
         <div className="grid grid-cols-2 gap-2">
           <label className="space-y-1">
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-vo-muted">Sort</span>
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-vo-muted">{t("driver_home.filter.sort_label")}</span>
             <select
               value={filters.sort}
               onChange={(event) => setFilters((current) => ({ ...current, sort: event.target.value as ChargerFilterState["sort"] }))}
               className="w-full rounded-[6px] border border-vo-line bg-vo-card px-2.5 py-2 text-[11px] text-driver-ink"
             >
-              <option value="nearest">Nearest first</option>
-              <option value="cheapest">Cheapest first</option>
-              <option value="fastest">Fastest charging</option>
+              <option value="nearest">{t("driver_home.filter.sort_nearest")}</option>
+              <option value="cheapest">{t("driver_home.filter.sort_cheapest")}</option>
+              <option value="fastest">{t("driver_home.filter.sort_fastest")}</option>
             </select>
           </label>
           <label className="space-y-1">
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-vo-muted">Booking</span>
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-vo-muted">{t("driver_home.filter.booking_label")}</span>
             <select
               value={filters.bookable}
               onChange={(event) => setFilters((current) => ({ ...current, bookable: event.target.value as ChargerFilterState["bookable"] }))}
               className="w-full rounded-[6px] border border-vo-line bg-vo-card px-2.5 py-2 text-[11px] text-driver-ink"
             >
-              <option value="all">All chargers</option>
-              <option value="bookable">Bookable</option>
-              <option value="info">Info only</option>
+              <option value="all">{t("driver_home.filter.booking_all")}</option>
+              <option value="bookable">{t("driver_home.filter.booking_bookable")}</option>
+              <option value="info">{t("driver_home.filter.booking_info")}</option>
             </select>
           </label>
           <label className="space-y-1">
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-vo-muted">Status</span>
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-vo-muted">{t("driver_home.filter.status_label")}</span>
             <select
               value={filters.availability}
               onChange={(event) => setFilters((current) => ({ ...current, availability: event.target.value as ChargerFilterState["availability"] }))}
               className="w-full rounded-[6px] border border-vo-line bg-vo-card px-2.5 py-2 text-[11px] text-driver-ink"
             >
-              <option value="all">All statuses</option>
-              <option value="available">Available</option>
-              <option value="unavailable">Unavailable</option>
-              <option value="unknown">Unknown</option>
+              <option value="all">{t("driver_home.filter.status_all")}</option>
+              <option value="available">{t("driver_home.filter.status_available")}</option>
+              <option value="unavailable">{t("driver_home.filter.status_unavailable")}</option>
+              <option value="unknown">{t("driver_home.filter.status_unknown")}</option>
             </select>
           </label>
           <label className="space-y-1">
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-vo-muted">Connector</span>
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-vo-muted">{t("driver_home.filter.connector_label")}</span>
             <select
               value={filters.connector}
               onChange={(event) => setFilters((current) => ({ ...current, connector: event.target.value }))}
               className="w-full rounded-[6px] border border-vo-line bg-vo-card px-2.5 py-2 text-[11px] text-driver-ink"
             >
-              <option value="all">All connectors</option>
+              <option value="all">{t("driver_home.filter.connector_all")}</option>
               {connectorOptions.map((connector) => (
                 <option key={connector} value={connector}>
                   {connector}
@@ -526,7 +565,7 @@ export function DriverHomePage() {
             </select>
           </label>
           <label className="col-span-2 space-y-1">
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-vo-muted">Max price (₹/kWh)</span>
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-vo-muted">{t("driver_home.filter.max_price_label")}</span>
             <input
               type="number"
               min={0}
@@ -539,20 +578,27 @@ export function DriverHomePage() {
                   maxPrice: raw === "" || !Number.isFinite(Number(raw)) ? null : Number(raw),
                 }));
               }}
-              placeholder="Known prices only — unknown prices stay hidden"
+              placeholder={t("driver_home.filter.max_price_placeholder")}
               className="w-full rounded-[6px] border border-vo-line bg-vo-card px-2.5 py-2 text-[11px] text-driver-ink placeholder:text-vo-muted"
             />
           </label>
         </div>
       </div>
 
-      <ScreenState loading={loading} error={error} empty={!loading && !error && allRanked.length === 0}>
+      <ScreenState
+        loading={loading}
+        error={error}
+        empty={!loading && !error && allRanked.length === 0}
+        emptyMessage={t("driver_home.empty_no_chargers")}
+        loadingText={t("common.loading")}
+        errorLabel={t("common.load_error_prefix")}
+      >
         <div className="mt-4 px-5 space-y-4">
           <div className="relative z-20 space-y-2">
             <LocationSearchBox
               key={searchBoxKey}
               initialQuery={searchedLocation?.name ?? ""}
-              placeholder="Search a location or click the map..."
+              placeholder={t("driver_home.search_placeholder")}
               onSelectSuggestion={(s) => void handleSelectSearchSuggestion(s)}
               onSubmitFreeText={(q) => void handleSubmitSearchFreeText(q)}
               onClear={handleClearSearch}
@@ -573,6 +619,8 @@ export function DriverHomePage() {
               selectedChargerId={selectedChargerId}
               onSelectCharger={setSelectedChargerId}
               onMapClick={handleMapPickLocation}
+              onRecenter={handleRecenter}
+              recenterSignal={recenterSignal}
             />
           </div>
 
@@ -580,7 +628,7 @@ export function DriverHomePage() {
             <div className="flex items-center justify-between gap-2 rounded-[8px] border border-cyan-500/20 bg-cyan-500/5 px-3 py-2">
               <div className="flex items-center gap-1.5 text-[11px] text-vo-info-ink">
                 <MapPin size={12} />
-                <span>Showing chargers near "{searchedLocation.name}"</span>
+                <span>{t("driver_home.search_showing_near", { name: searchedLocation.name })}</span>
               </div>
               <button
                 type="button"
@@ -588,22 +636,22 @@ export function DriverHomePage() {
                 className="flex shrink-0 items-center gap-1 text-[11px] font-medium text-vo-info-ink hover:opacity-80"
               >
                 <X size={12} />
-                Back to my location
+                {t("driver_home.back_to_my_location")}
               </button>
             </div>
           ) : geoStatus === "granted" ? (
             <div className="flex items-center gap-1.5 text-[11px] text-vo-accent-ink">
               <span className="h-1.5 w-1.5 rounded-full bg-vo-accent-ink" />
-              <span>Using your live location</span>
+              <span>{t("driver_home.using_live_location")}</span>
             </div>
           ) : (
             <div className="flex items-center justify-between gap-2 rounded-[8px] border border-amber-500/20 bg-amber-500/5 px-3 py-2">
-              <div className="flex items-center gap-1.5 text-[11px] text-vo-warn-ink" title={GEO_STATUS_COPY[geoStatus]}>
+              <div className="flex items-center gap-1.5 text-[11px] text-vo-warn-ink" title={t(GEO_STATUS_KEY[geoStatus])}>
                 <span className="h-1.5 w-1.5 rounded-full bg-vo-warn-ink" />
                 <span>
                   {geoStatus === "pending"
-                    ? GEO_STATUS_COPY.pending
-                    : "Using estimated area -- enable location for accurate results"}
+                    ? t(GEO_STATUS_KEY.pending)
+                    : t("driver_home.geo.estimated_area")}
                 </span>
               </div>
               {geoStatus === "denied" || geoStatus === "unavailable" ? (
@@ -613,7 +661,7 @@ export function DriverHomePage() {
                   className="flex shrink-0 items-center gap-1 text-[11px] font-medium text-vo-warn-ink hover:opacity-80"
                 >
                   <LocateFixed size={12} />
-                  Try again
+                  {t("driver_home.try_again")}
                 </button>
               ) : null}
             </div>
@@ -621,30 +669,30 @@ export function DriverHomePage() {
 
           <div className="flex items-center justify-between">
             <h2 className="text-[16px] font-bold text-driver-ink">
-              {isRangeLimited ? "Reachable Chargers" : "Nearby Chargers"}
+              {isRangeLimited ? t("driver_home.reachable_chargers") : t("driver_home.nearby_chargers")}
             </h2>
             <span className="text-[12px] text-vo-accent-ink font-mono">
               {isRangeLimited
-                ? `${ranked.length} within your ${Math.round(bufferedRangeKm!)} km range`
-                : `${ranked.length} Available`}
+                ? t("driver_home.within_range_count", { count: ranked.length, km: Math.round(bufferedRangeKm!) })
+                : t("driver_home.available_count", { count: ranked.length })}
             </span>
           </div>
 
           {isRangeLimited && ranked.length === 0 && reachable.length === 0 ? (
             <div className="rounded-[12px] border border-amber-500/20 bg-amber-500/5 p-6 text-center space-y-1.5">
-              <p className="text-sm font-semibold text-vo-warn-ink">No chargers within your current range</p>
-              <p className="text-xs text-vo-muted">Consider charging soon, or widen your search once your battery's topped up.</p>
+              <p className="text-sm font-semibold text-vo-warn-ink">{t("driver_home.no_range_title")}</p>
+              <p className="text-xs text-vo-muted">{t("driver_home.no_range_body")}</p>
             </div>
           ) : ranked.length === 0 ? (
             <div className="rounded-[12px] border border-vo-line bg-vo-card p-6 text-center space-y-1.5">
-              <p className="text-sm font-semibold text-driver-ink">No chargers match these filters</p>
-              <p className="text-xs text-vo-muted">Try clearing a filter or searching a different location.</p>
+              <p className="text-sm font-semibold text-driver-ink">{t("driver_home.no_match_title")}</p>
+              <p className="text-xs text-vo-muted">{t("driver_home.no_match_body")}</p>
             </div>
           ) : (
             <>
               <div className="flex items-center justify-between pt-1">
-                <h3 className="text-[13px] font-bold text-driver-ink">Recommended for you</h3>
-                <span className="text-[10px] uppercase tracking-wider text-vo-muted">Closer · known status · faster charging</span>
+                <h3 className="text-[13px] font-bold text-driver-ink">{t("driver_home.recommended_heading")}</h3>
+                <span className="text-[10px] uppercase tracking-wider text-vo-muted">{t("driver_home.recommended_caption")}</span>
               </div>
               {/* No placeholder rows when fewer than 5 are in range --
                   .slice(0, 5) already just returns what exists. */}
@@ -670,7 +718,7 @@ export function DriverHomePage() {
                   onClick={() => setShowAllReachable((v) => !v)}
                   className="text-[12px] font-medium text-vo-accent-ink hover:opacity-80"
                 >
-                  {showAllReachable ? "Hide full list" : `Show all ${ranked.length} reachable`}
+                  {showAllReachable ? t("driver_home.hide_full_list") : t("driver_home.show_all_reachable", { count: ranked.length })}
                 </button>
               ) : null}
 

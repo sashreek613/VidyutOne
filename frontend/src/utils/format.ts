@@ -14,14 +14,17 @@ export function formatCoord(value: number, axis: "N" | "E"): string {
   return `${value.toFixed(4)}° ${axis}`;
 }
 
-export function greetingForHour(hour: number): string {
+// Returns a bucket, not English copy -- the caller (DriverHomePage) resolves
+// this to a locale string via t(`driver_home.greeting_${bucket}`), since
+// this is a plain util with no access to the driver i18n context.
+export function greetingBucketForHour(hour: number): "morning" | "afternoon" | "evening" {
   if (hour < 12) {
-    return "Good morning";
+    return "morning";
   }
   if (hour < 17) {
-    return "Good afternoon";
+    return "afternoon";
   }
-  return "Good evening";
+  return "evening";
 }
 
 export function firstNameFromFullName(name: string): string {
