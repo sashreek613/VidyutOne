@@ -34,10 +34,11 @@ services:
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /api/health # public, no auth -- see backend/app/api/routes/health.py
     envVars:
+      # Must be the same Supabase Postgres URI used locally (Dashboard → Environment).
+      # Do not use Render Postgres: that database has no planner sites, so Overview
+      # is empty even though GET /api/sites returns 200. Never put the URI in git.
       - key: DATABASE_URL
-        fromDatabase:
-          name: vidyutone-db
-          property: connectionString
+        sync: false
       - key: CORS_ORIGINS
         value: https://vidyutone-frontend.onrender.com
       - key: SECRET_KEY

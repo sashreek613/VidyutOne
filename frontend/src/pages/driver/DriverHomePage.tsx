@@ -97,6 +97,7 @@ export function DriverHomePage() {
   // every click (even consecutive ones) for DriverMap's effect to refire.
   const [recenterSignal, setRecenterSignal] = useState(0);
   const geoRequestId = useRef(0);
+  const geoWatchId = useRef<number | null>(null);
   const hour = new Date().getHours();
 
   useEffect(() => {
@@ -121,11 +122,13 @@ export function DriverHomePage() {
 
   // A searched location takes priority over real GPS -- searching is an
   // explicit "show me chargers over there instead" action. Clearing the
-  // search (see handleClearSearch) drops back to GPS/centroid exactly as
-  // before this feature existed.
+  // search (see handleClearSearch) drops back to GPS. Distances/range still
+  // use the charger-centroid only until a real browser fix exists so the
+  // list does not break; the map marker never uses that fallback.
+  const liveOrigin = searchedLocation ?? driverLocation;
   const origin = useMemo(
-    () => searchedLocation ?? driverLocation ?? centroid(chargers ?? []),
-    [searchedLocation, driverLocation, chargers],
+    () => liveOrigin ?? centroid(chargers ?? []),
+    [liveOrigin, chargers],
   );
 
   async function handleSelectSearchSuggestion(suggestion: LocationSuggestion) {
@@ -210,12 +213,20 @@ export function DriverHomePage() {
     };
   }, []);
 
-  // Real driver location via the browser Geolocation API. On denial,
-  // unavailability, or any error, driverLocation stays at its last value
-  // (or null) and origin falls back to centroid(chargers). geoStatus is what
-  // makes that fallback VISIBLE instead of silently labeling centroid as live.
+  // Real driver location via the browser Geolocation API (watchPosition so
+  // the marker follows the device). On denial / unavailability / timeout,
+  // driverLocation stays at its last real fix (or null) -- never a fake
+  // coordinate. The map marker is only shown when liveOrigin is set.
+  function clearGeoWatch() {
+    if (geoWatchId.current !== null && "geolocation" in navigator) {
+      navigator.geolocation.clearWatch(geoWatchId.current);
+      geoWatchId.current = null;
+    }
+  }
+
   function requestLocation(onSettled?: () => void) {
     const requestId = ++geoRequestId.current;
+    clearGeoWatch();
 
     if (!window.isSecureContext) {
       setGeoStatus("insecure_context");
@@ -228,31 +239,49 @@ export function DriverHomePage() {
       return;
     }
     setGeoStatus("pending");
-    navigator.geolocation.getCurrentPosition(
+    let settled = false;
+    const settleOnce = () => {
+      if (!settled) {
+        settled = true;
+        onSettled?.();
+      }
+    };
+
+    geoWatchId.current = navigator.geolocation.watchPosition(
       (position) => {
         if (requestId !== geoRequestId.current) {
           return;
         }
-        const { latitude, longitude, accuracy } = position.coords;
+        const { latitude, longitude } = position.coords;
+        if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+          return;
+        }
         setDriverLocation({ latitude, longitude });
-        // IP/cell-level fixes (often 5–50 km) are not a live device location.
-        const accurate = Number.isFinite(accuracy) && accuracy <= 5000;
-        setGeoStatus(accurate ? "granted" : "unavailable");
-        onSettled?.();
+        setGeoStatus("granted");
+        settleOnce();
       },
       (err) => {
         if (requestId !== geoRequestId.current) {
           return;
         }
-        setGeoStatus(err.code === err.PERMISSION_DENIED ? "denied" : "unavailable");
-        onSettled?.();
+        if (err.code === err.PERMISSION_DENIED) {
+          setGeoStatus("denied");
+          clearGeoWatch();
+          settleOnce();
+          return;
+        }
+        setGeoStatus((prev) => (prev === "granted" ? "granted" : "unavailable"));
+        settleOnce();
       },
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 },
+      { enableHighAccuracy: true, timeout: 20000, maximumAge: 5000 },
     );
   }
 
   useEffect(() => {
     requestLocation();
+    return () => {
+      clearGeoWatch();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- requestLocation is stable in behaviour (reads window/navigator, not props/state) and is also exposed as the "Try again" handler; re-running this effect on every render would re-trigger the browser permission flow.
   }, []);
 
@@ -615,8 +644,8 @@ export function DriverHomePage() {
           <div className="h-[280px] overflow-hidden rounded-[16px] border border-vo-line">
             <DriverMap
               chargers={mapChargers}
-              origin={origin}
-              rangeKm={isRangeLimited ? bufferedRangeKm : null}
+              origin={liveOrigin ?? undefined}
+              rangeKm={liveOrigin && isRangeLimited ? bufferedRangeKm : null}
               isLiveLocation={geoStatus === "granted" && driverLocation !== null && !searchedLocation}
               selectedChargerId={selectedChargerId}
               onSelectCharger={setSelectedChargerId}
@@ -650,13 +679,13 @@ export function DriverHomePage() {
             <div className="flex items-center justify-between gap-2 rounded-[8px] border border-amber-500/20 bg-amber-500/5 px-3 py-2">
               <div
                 className="flex items-center gap-1.5 text-[11px] text-vo-warn-ink"
-                title={geoStatus === "granted" ? t("driver_home.geo.estimated_area") : t(GEO_STATUS_KEY[geoStatus])}
+                title={geoStatus === "granted" ? undefined : t(GEO_STATUS_KEY[geoStatus])}
               >
                 <span className="h-1.5 w-1.5 rounded-full bg-vo-warn-ink" />
                 <span>
-                  {geoStatus === "pending"
-                    ? t(GEO_STATUS_KEY.pending)
-                    : t("driver_home.geo.estimated_area")}
+                  {geoStatus === "granted"
+                    ? t("driver_home.geo.estimated_area")
+                    : t(GEO_STATUS_KEY[geoStatus])}
                 </span>
               </div>
               {geoStatus === "denied" || geoStatus === "unavailable" ? (

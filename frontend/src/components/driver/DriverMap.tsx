@@ -190,7 +190,14 @@ export function DriverMap({
     if (previous && previous.latitude === here.latitude && previous.longitude === here.longitude) {
       return;
     }
+    const isSmallLiveMove =
+      isLiveLocation &&
+      previous !== null &&
+      haversineKm(previous.latitude, previous.longitude, here.latitude, here.longitude) < 0.08;
     lastOriginRef.current = { latitude: here.latitude, longitude: here.longitude };
+    if (isSmallLiveMove) {
+      return;
+    }
     lastFocusedChargerRef.current = null;
     const fly = () => {
       map.flyTo({ center: [here.longitude, here.latitude], zoom: 12.5, duration: 800 });
@@ -200,7 +207,7 @@ export function DriverMap({
     } else {
       map.once("load", fly);
     }
-  }, [here.latitude, here.longitude]);
+  }, [here.latitude, here.longitude, isLiveLocation]);
 
   // Recenter button: forces the camera back to `here` even when `here`
   // itself hasn't changed -- e.g. the driver dragged/pinched the map by hand
@@ -271,13 +278,15 @@ export function DriverMap({
       markersRef.current.forEach((marker) => marker.remove());
       markersRef.current = [];
 
-      const you = document.createElement("div");
-      you.className = "relative flex h-4 w-4 items-center justify-center z-20";
-      you.setAttribute("data-origin-marker", "true");
-      you.innerHTML = isLiveLocation
-        ? '<span class="absolute h-8 w-8 rounded-full bg-emerald-500/35 animate-ping"></span><span class="relative h-4 w-4 rounded-full bg-slate-950 ring-4 ring-white shadow-lg"></span>'
-        : '<span class="h-4 w-4 rounded-full bg-slate-950 ring-4 ring-white shadow-md"></span>';
-      markersRef.current.push(new Marker({ element: you }).setLngLat([here.longitude, here.latitude]).addTo(map));
+      if (origin) {
+        const you = document.createElement("div");
+        you.className = "relative flex h-4 w-4 items-center justify-center z-20";
+        you.setAttribute("data-origin-marker", "true");
+        you.innerHTML = isLiveLocation
+          ? '<span class="absolute h-8 w-8 rounded-full bg-emerald-500/35 animate-ping"></span><span class="relative h-4 w-4 rounded-full bg-slate-950 ring-4 ring-white shadow-lg"></span>'
+          : '<span class="h-4 w-4 rounded-full bg-slate-950 ring-4 ring-white shadow-md"></span>';
+        markersRef.current.push(new Marker({ element: you }).setLngLat([origin.longitude, origin.latitude]).addTo(map));
+      }
 
       plottable.forEach((charger) => {
         const isSelected = selectedChargerId === charger.id;
@@ -320,7 +329,7 @@ export function DriverMap({
     } else {
       map.once("load", paint);
     }
-  }, [markerKey, here.latitude, here.longitude, isLiveLocation, selectedChargerId]);
+  }, [markerKey, here.latitude, here.longitude, origin, isLiveLocation, selectedChargerId]);
 
   useEffect(() => {
     const map = mapRef.current;
